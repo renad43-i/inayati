@@ -1,0 +1,25 @@
+{
+  "name": "inayati",
+  "version": "1.0.0",
+  "description": "عنايتي — منصة كيتات العناية الشخصية (IT473)",
+  "main": "server.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "pdf": "node scripts/build-pdf.js",
+    "reset": "rm -rf data"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}

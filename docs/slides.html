@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>عرض مشروع عنايتي</title>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --sage:#6F9277; --sage-dark:#4E6E56; --sage-soft:#E3ECE4; --blush:#F2D4D2; --cream:#FBF7F1; --sand:#F1E8DC; --ink:#2F3B30; --muted:#6B736C; }
+  @page { size: 1280px 720px; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Tajawal, sans-serif; color: var(--ink); background: #ccc; }
+  .s { width: 1280px; height: 720px; position: relative; overflow: hidden; background: var(--cream); padding: 64px 80px; break-after: page; margin: 0 auto 20px; display: flex; flex-direction: column; }
+  @media print { body { background: none; } .s { margin: 0; } }
+  h1, h2, h3 { font-family: "El Messiri", sans-serif; margin: 0; line-height: 1.3; }
+  h2 { font-size: 44px; margin-bottom: 26px; color: var(--ink); }
+  h2 small { display: block; font-family: Tajawal; font-size: 18px; color: var(--sage-dark); font-weight: 700; margin-bottom: 6px; }
+  p, li { font-size: 24px; line-height: 1.6; }
+  ul { margin: 0; padding-inline-start: 30px; }
+  li { margin-bottom: 10px; }
+  .num { position: absolute; bottom: 26px; left: 40px; font-size: 15px; color: var(--muted); }
+  .logo-sm { position: absolute; bottom: 20px; right: 40px; height: 34px; }
+  .grid { display: grid; gap: 20px; }
+  .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); }
+  .card { background: #fff; border: 1px solid #E6DED2; border-radius: 20px; padding: 24px; }
+  .card h3 { font-size: 26px; margin-bottom: 8px; color: var(--sage-dark); }
+  .card p { font-size: 19px; margin: 0; color: var(--muted); }
+  .big { font-family: "El Messiri"; font-size: 54px; color: var(--sage-dark); font-weight: 700; }
+  .shot { border-radius: 14px; border: 1px solid #E6DED2; box-shadow: 0 10px 30px rgba(0,0,0,.08); width: 100%; }
+  .pill { display: inline-block; background: var(--sage-soft); color: var(--sage-dark); border-radius: 99px; padding: 6px 20px; font-size: 20px; font-weight: 700; margin: 4px; }
+  .arrow { color: var(--muted); font-size: 24px; margin: 0 4px; }
+  .center { text-align: center; }
+  .cover { background: radial-gradient(700px 400px at 90% 0%, var(--blush), transparent 70%), radial-gradient(600px 400px at 0% 100%, var(--sage-soft), transparent 70%), var(--cream); justify-content: center; align-items: center; text-align: center; }
+  .dark { background: var(--ink); color: var(--cream); }
+  .dark h2 { color: #fff; }
+  table { border-collapse: collapse; width: 100%; font-size: 20px; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid #E6DED2; text-align: right; }
+  th { color: var(--sage-dark); }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="s cover">
+  <img src="../public/assets/logo.svg" style="width:440px">
+  <h1 style="font-size:46px;margin-top:30px">روتينك، مصمَّم لكِ</h1>
+  <p style="color:var(--muted);margin-top:10px">منصة تجارة إلكترونية لكيتات العناية الشخصية المبنية على احتياج كل عميلة</p>
+  <p style="font-size:20px;margin-top:40px">ريناد · ريفال · رنيم &nbsp;|&nbsp; IT473 أنظمة التجارة الإلكترونية</p>
+</section>
+
+<!-- 2 -->
+<section class="s">
+  <h2><small>المشكلة</small>مئات المنتجات… ولا تعرفين وش يناسبك</h2>
+  <div class="grid g2" style="flex:1;align-items:center">
+    <ul>
+      <li>تشكيلة ضخمة بدون توجيه شخصي</li>
+      <li>مصطلحات علمية: نياسيناميد؟ ساليسيليك؟</li>
+      <li>منتج فيه عطر أو كحول = تحسس وهدر</li>
+      <li>لا تعرفين الترتيب الصحيح للروتين</li>
+      <li>ينتهي المنتج وتنسين تعيدين الطلب</li>
+    </ul>
+    <div class="card center" style="background:var(--blush);border:0">
+      <div class="big" style="color:var(--ink)">100+ منتج</div>
+      <p style="font-size:24px;color:var(--ink)">أمام عميلة واحدة محتارة</p>
+    </div>
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">2</span>
+</section>
+
+<!-- 3 -->
+<section class="s">
+  <h2><small>الحل</small>6 أسئلة ← كيت روتين جاهز ← يتجدد كل شهر</h2>
+  <div class="grid g4" style="margin-top:20px">
+    <div class="card"><div class="big">1</div><h3>جاوبي</h3><p>البشرة، الشعر، الحساسية، الميزانية</p></div>
+    <div class="card"><div class="big">2</div><h3>نختار</h3><p>قواعد توصية تشرح سبب الاختيار وتستبعد ما تتحسسين منه</p></div>
+    <div class="card"><div class="big">3</div><h3>يوصلك</h3><p>كيت + طريقة الاستخدام + فيديو تيك توك</p></div>
+    <div class="card"><div class="big">4</div><h3>يتجدد</h3><p>اشتراك شهري، وتحدّثين احتياجك قبل كل تجديد</p></div>
+  </div>
+  <p class="center" style="margin-top:40px;font-family:'El Messiri';font-size:30px;color:var(--sage-dark)">12 كيت · 25 منتج · 3 مستويات لكل ميزانية</p>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">3</span>
+</section>
+
+<!-- 4 -->
+<section class="s">
+  <h2><small>الهوية</small>اسم يقول «هذا الروتين لي»</h2>
+  <div class="grid g2" style="flex:1;align-items:center">
+    <div>
+      <p><b>عنايتي</b> = العناية + ياء الملكية ← التخصيص هو جوهر الفكرة.</p>
+      <p>الشعار: <b>قطرة</b> (الترطيب والعناية) + <b>ورقة</b> (مكونات لطيفة) في دائرة وردية.</p>
+      <p>الخطوط: <span style="font-family:'El Messiri'">المسيري</span> للعناوين · تجوال للنصوص</p>
+      <p>نبرة: لهجة سعودية ودودة بصيغة المؤنث</p>
+    </div>
+    <div>
+      <div class="grid g2" style="gap:12px">
+        <div class="card" style="background:#6F9277;color:#fff;border:0"><b>#6F9277</b><br>مريمية — ثقة</div>
+        <div class="card" style="background:#F2D4D2;border:0"><b>#F2D4D2</b><br>وردي — عناية</div>
+        <div class="card" style="background:#FBF7F1"><b>#FBF7F1</b><br>كريمي — هدوء</div>
+        <div class="card" style="background:#2F3B30;color:#fff;border:0"><b>#2F3B30</b><br>داكن — وضوح</div>
+      </div>
+    </div>
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">4</span>
+</section>
+
+<!-- 5 -->
+<section class="s">
+  <h2><small>نموذج العمل</small>من نخدم وكيف</h2>
+  <div class="grid g3">
+    <div class="card"><h3>العميلات</h3><p>نساء 18–35 في السعودية: طالبات بميزانية محدودة، موظفات مشغولات، صاحبات البشرة الحساسة</p></div>
+    <div class="card" style="background:var(--blush);border:0"><h3 style="color:var(--ink)">القيمة</h3><p style="color:var(--ink)">روتين مخصص وآمن بدون حيرة، طريقة استخدام واضحة، توفير 15% + 10% بالاشتراك</p></div>
+    <div class="card"><h3>القنوات</h3><p>موقع متجاوب للجوال، تيك توك وانستقرام، صانعات محتوى</p></div>
+    <div class="card"><h3>الشركاء</h3><p>موردون معتمدون، علامات سعودية ناشئة، استشارية جلدية، بوابة دفع، شركة شحن</p></div>
+    <div class="card"><h3>الأنشطة</h3><p>تصميم الكيتات والقواعد، تطوير المنصة، التجهيز والشحن، المحتوى</p></div>
+    <div class="card"><h3>المنافسة</h3><p>الصيدليات والمتاجر تبيع منتجاً منتجاً — نحن نبيع <b>روتيناً</b> بالعربي</p></div>
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">5</span>
+</section>
+
+<!-- 6 -->
+<section class="s">
+  <h2><small>نموذج الإيراد</small>هامش الكيت + إيراد شهري متكرر</h2>
+  <div class="grid g2" style="flex:1">
+    <div>
+      <ul>
+        <li><b>بيع الكيتات:</b> شراء بالجملة، بيع بخصم 15% عن التجزئة</li>
+        <li><b>الاشتراك الشهري:</b> −10% إضافية، إيراد متوقع (MRR)</li>
+        <li><b>شراكات العلامات:</b> رسوم إدراج منتج أو عينات</li>
+        <li><b>مستقبلاً:</b> استشارة مدفوعة، كيتات هدايا</li>
+      </ul>
+    </div>
+    <div class="card">
+      <table>
+        <tr><th>كيت صفاء المتكامل</th><th>ر.س</th></tr>
+        <tr><td>سعر البيع</td><td>259</td></tr>
+        <tr><td>تكلفة المنتجات (تقديري)</td><td>≈ 169</td></tr>
+        <tr><td>تغليف + دفع + شحن</td><td>≈ 34</td></tr>
+        <tr><th>هامش الربح</th><th>≈ 56 (22%)</th></tr>
+      </table>
+      <p style="font-size:16px;margin-top:10px">أرقام تقديرية للتخطيط</p>
+    </div>
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">6</span>
+</section>
+
+<!-- 7 -->
+<section class="s">
+  <h2><small>تقنية التوصية</small>قواعد شفافة تشرح «ليش هذا الكيت؟»</h2>
+  <div class="grid g2" style="flex:1;align-items:center">
+    <ul style="font-size:22px">
+      <li>البشرة الحساسة أولاً ← كيت التهدئة</li>
+      <li>المشكلة قبل النوع: حبوب ← صفاء، تصبغات ← الإشراقة</li>
+      <li>الميزانية تحدد المستوى، ونخفّض حتى نلتزم بها</li>
+      <li>منتج فيه مكوّن تتحسسين منه ← بديل من نفس الخطوة</li>
+      <li>نفس المحرك يعمل في المتصفح والخادم</li>
+    </ul>
+    <img class="shot" src="screens/03-result.png">
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">7</span>
+</section>
+
+<!-- 8 -->
+<section class="s">
+  <h2><small>تصميم الواجهة</small>كل صفحة خطوة في رحلة العميلة</h2>
+  <div class="grid g2" style="flex:1;align-items:center">
+    <img class="shot" src="screens/04-product.png">
+    <ul style="font-size:21px">
+      <li>زر «حددي روتينك» هو الزر الأساسي</li>
+      <li>سؤال واحد في كل شاشة + شريط تقدم</li>
+      <li>3 مستويات و«الاشتراك» محدد مسبقاً</li>
+      <li>السعر الأصلي مشطوب لإظهار التوفير</li>
+      <li>زر <b>تيك توك</b> لطريقة الاستخدام</li>
+      <li>وسم المكونات الحساسة لكل منتج</li>
+      <li>عربي من اليمين لليسار، جوال أولاً</li>
+    </ul>
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">8</span>
+</section>
+
+<!-- 9 -->
+<section class="s">
+  <h2><small>التنفيذ التقني</small>منصة كاملة تعمل فعلياً</h2>
+  <div class="grid g3">
+    <div class="card"><h3>الواجهة</h3><p>HTML · CSS · JavaScript<br>8 صفحات متجاوبة بالعربي</p></div>
+    <div class="card"><h3>الخادم</h3><p>Node.js + Express<br>REST API · جلسات · bcrypt</p></div>
+    <div class="card"><h3>قاعدة البيانات</h3><p>SQLite — 9 جداول<br>مستخدمين، منتجات، كيتات، طلبات، اشتراكات…</p></div>
+  </div>
+  <div class="grid g4" style="margin-top:22px">
+    <div class="card"><p>✔ تسجيل ودخول</p></div><div class="card"><p>✔ سلة ودفع تجريبي</p></div>
+    <div class="card"><p>✔ تتبع الطلب</p></div><div class="card"><p>✔ لوحة إدارة</p></div>
+    <div class="card"><p>✔ حفظ نتائج الاختبار</p></div><div class="card"><p>✔ اشتراك وتجديد تلقائي</p></div>
+    <div class="card"><p>✔ الأسعار تُحسب في الخادم</p></div><div class="card"><p>✔ اختبار آلي كامل</p></div>
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">9</span>
+</section>
+
+<!-- 10 -->
+<section class="s">
+  <h2><small>الاشتراك الشهري</small>يتجدد… ويتغير مع احتياجك</h2>
+  <div class="grid g2" style="flex:1;align-items:center">
+    <div>
+      <p><span class="pill">إيقاف مؤقت</span><span class="pill">تخطي شهر</span><span class="pill">تغيير المستوى</span><span class="pill">إلغاء</span></p>
+      <p style="margin-top:20px"><b>«حدّثي احتياجك لهذا الشهر»</b>: تعيد الاختبار، والكيت القادم يتغير تلقائياً.</p>
+      <p>التجديد ينشئ طلباً جديداً يظهر في التتبع، ولوحة الإدارة تعرض الإيراد الشهري المتكرر.</p>
+    </div>
+    <img class="shot" src="screens/11-subscription.png">
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">10</span>
+</section>
+
+<!-- 11 -->
+<section class="s dark" style="justify-content:center;align-items:center;text-align:center">
+  <h2 style="font-size:60px">عرض حي للموقع</h2>
+  <p style="opacity:.8">الاختبار ← النتيجة ← صفحة المنتج ← السلة ← الدفع ← التتبع ← لوحة الإدارة</p>
+  <p style="opacity:.6;font-size:20px;margin-top:30px" dir="ltr">http://localhost:3000 · بطاقة تجريبية 4242 4242 4242 4242</p>
+  <span class="num" style="color:#aaa">11</span>
+</section>
+
+<!-- 12 -->
+<section class="s">
+  <h2><small>الخطوات القادمة</small>من نموذج أولي إلى متجر حقيقي</h2>
+  <div class="grid g2">
+    <ul>
+      <li>بوابة دفع حقيقية (مدى، Apple Pay، الدفع المتكرر)</li>
+      <li>تنبيه واتساب قبل التجديد</li>
+      <li>مراجعة القواعد مع استشارية جلدية</li>
+      <li>تقييم الكيت بعد شهر لتحسين التوصية</li>
+      <li>تطبيق جوال وبرنامج «ادعي صديقتك»</li>
+    </ul>
+    <div class="card"><h3>توزيع العمل</h3>
+      <p style="color:var(--ink)"><b>ريناد:</b> الهوية والمحتوى والقواعد والواجهات</p>
+      <p style="color:var(--ink);margin-top:8px"><b>ريفال:</b> قاعدة البيانات والحسابات ولوحة الإدارة والدفع</p>
+      <p style="color:var(--ink);margin-top:8px"><b>رنيم:</b> المنافسون والإيراد والتوصية والاشتراك والتتبع</p>
+    </div>
+  </div>
+  <img class="logo-sm" src="../public/assets/logo.svg"><span class="num">12</span>
+</section>
+
+<!-- 13 -->
+<section class="s cover">
+  <img src="../public/assets/logo-mark.svg" style="width:140px">
+  <h1 style="font-size:64px;margin-top:20px">شكراً لكم</h1>
+  <p style="color:var(--muted)">أسئلتكم؟</p>
+</section>
+
+</body>
+</html>

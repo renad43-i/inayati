@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>حددي روتينك | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/engine.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<main class="container">
+  <div class="quiz-wrap">
+    <div id="quiz" class="card">
+      <div class="row small muted"><span id="stepLabel"></span><span class="spacer"></span><button class="link-btn" id="backBtn">رجوع</button></div>
+      <div class="progress"><div id="bar" style="width:0"></div></div>
+      <h2 id="qTitle"></h2>
+      <p class="muted" id="qSub"></p>
+      <div class="options" id="options"></div>
+      <button class="btn block" id="nextBtn" disabled>التالي</button>
+    </div>
+    <div id="result" class="hidden"></div>
+  </div>
+</main>
+<script>
+App.layout("quiz");
+const answers = {};
+let steps = [], idx = 0;
+const visible = () => Engine.QUIZ.filter(q => !q.when || q.when(answers));
+
+function render() {
+  steps = visible();
+  const q = steps[idx];
+  App.qs("#stepLabel").textContent = `سؤال ${idx + 1} من ${steps.length}`;
+  App.qs("#bar").style.width = `${(idx / steps.length) * 100}%`;
+  App.qs("#qTitle").textContent = q.title;
+  App.qs("#qSub").textContent = q.sub || "";
+  App.qs("#backBtn").classList.toggle("hidden", idx === 0);
+  const cur = answers[q.id];
+  App.qs("#options").innerHTML = q.options.map(o => {
+    const on = q.type === "multi" ? (cur || []).includes(o.v) : cur === o.v;
+    return `<button class="option ${q.type === "multi" ? "multi" : ""} ${on ? "active" : ""}" data-v="${o.v}">
+      <span class="mark"></span><span><b>${o.t}</b>${o.d ? `<small>${o.d}</small>` : ""}</span></button>`;
+  }).join("");
+  App.qs("#nextBtn").disabled = !(q.type === "multi" ? (cur || []).length : cur);
+  App.qs("#nextBtn").textContent = idx === steps.length - 1 ? "اعرضي روتيني" : "التالي";
+  App.qsa(".option").forEach(b => b.onclick = () => {
+    const v = b.dataset.v;
+    if (q.type === "multi") {
+      let arr = answers[q.id] || [];
+      if (v === "none") arr = arr.includes("none") ? [] : ["none"];
+      else { arr = arr.filter(x => x !== "none"); arr = arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]; }
+      answers[q.id] = arr; render();
+    } else { answers[q.id] = v; render(); setTimeout(next, 180); }
+  });
+}
+function next() {
+  const q = steps[idx];
+  if (q.type === "multi" ? !(answers[q.id] || []).length : !answers[q.id]) return;
+  steps = visible();
+  if (idx < steps.length - 1) { idx++; render(); } else submit();
+}
+App.qs("#nextBtn").onclick = next;
+App.qs("#backBtn").onclick = () => { if (idx > 0) { idx--; render(); } };
+
+async function submit() {
+  // ننظف إجابات الأسئلة اللي ما ظهرت (مثلاً لو غيرت المجال)
+  const clean = {}; visible().forEach(q => clean[q.id] = answers[q.id]);
+  App.qs("#nextBtn").disabled = true;
+  const [res, cat, user] = await Promise.all([App.api("/api/recommend", { body: { answers: clean } }), App.catalog(), App.me()]);
+  try { sessionStorage.setItem("inayati_last_rec", JSON.stringify({ answers: clean, res })); } catch {}
+  showResult(res, cat, user, clean);
+}
+
+function showResult(res, cat, user, ans) {
+  App.qs("#quiz").classList.add("hidden");
+  const box = App.qs("#result"); box.classList.remove("hidden");
+  const subId = App.params.get("sub");
+  box.innerHTML = `<div class="center" style="margin-bottom:22px"><span class="eyebrow">نتيجتك جاهزة</span><h1>روتينك المقترح</h1>
+    <p class="muted">${[ans.skinType && "بشرة " + ({dry:"جافة",oily:"دهنية",combo:"مختلطة",normal:"عادية",sensitive:"حساسة"})[ans.skinType], ans.hairType && "شعر " + ({dry:"جاف",oily:"دهني",curly:"مجعد",damaged:"مصبوغ/تالف",normal:"عادي"})[ans.hairType]].filter(Boolean).join(" · ")}</p></div>
+    ${res.kits.map((r, i) => {
+      const k = cat.kMap[r.kitId];
+      return `<div class="card result-kit" style="margin-bottom:16px">
+        <div class="kit-visual" style="background:${k.color}">${App.kitSVG(k, r.productIds.length)}</div>
+        <div><span class="tag sage">${App.TIER_AR[r.tier]}</span> <h2 style="margin:6px 0">${App.esc(k.name)}</h2>
+        <p>${App.esc(r.why)}</p>
+        <ul class="small" style="padding-inline-start:18px;margin:0 0 8px">${r.productIds.map(id => `<li>${App.esc(cat.pMap[id].name)}</li>`).join("")}</ul>
+        ${r.swaps.length ? `<p class="small alert info" style="margin:0 0 10px">${r.swaps.map(s => s.to ? `استبدلنا «${App.esc(cat.pMap[s.from].name)}» بـ«${App.esc(cat.pMap[s.to].name)}» لأنه يحتوي على ${s.reason.map(a => App.ALLERGEN_AR[a]).join(" و")}.` : `حذفنا «${App.esc(cat.pMap[s.from].name)}» لعدم وجود بديل آمن.`).join("<br>")}</p>` : ""}
+        <div class="row"><span class="price">${App.fmt(r.price)}</span><span class="spacer"></span>
+          <a class="btn outline sm" href="kit.html?id=${k.id}&tier=${r.tier}&rec=${i}">التفاصيل وطريقة الاستخدام</a></div></div></div>`;
+    }).join("")}
+    ${res.notes.map(n => `<p class="alert info small">${App.esc(n)}</p>`).join("")}
+    <div class="card"><div class="row"><div><b>المجموع</b><div class="muted small">أو ${App.fmt(res.kits.reduce((s, r) => s + Engine.kitPrice(r.productIds, cat.pMap, "subscription"), 0))} شهرياً مع الاشتراك</div></div>
+      <span class="spacer"></span><span class="price">${App.fmt(res.total)}</span></div>
+      <div class="row" style="margin-top:14px">
+        ${subId ? `<button class="btn" id="applySub">طبّقي على اشتراكي #${App.esc(subId)}</button>` :
+        `<button class="btn" id="addSub">اشتركي شهرياً (وفري 10%)</button><button class="btn outline" id="addOnce">شراء مرة واحدة</button>`}
+        <button class="link-btn" onclick="location.href='quiz.html'">أعيدي الاختبار</button></div>
+      ${user ? `<p class="small muted" style="margin:10px 0 0">حفظنا النتيجة في حسابك.</p>` : `<p class="small muted" style="margin:10px 0 0">سجلي دخولك عشان نحفظ نتيجتك ونقدر نجدد كيتك كل شهر.</p>`}</div>`;
+  const add = type => { res.kits.forEach(r => App.cart.add({ kitId: r.kitId, tier: r.tier, productIds: r.productIds, purchaseType: type, qty: 1 })); location.href = "cart.html"; };
+  if (subId) App.qs("#applySub").onclick = async () => {
+    const r = res.kits.find(x => x.kitId.startsWith(App.params.get("cat") === "hair" ? "h-" : "k-")) || res.kits[0];
+    try { await App.api(`/api/subscriptions/${subId}`, { method: "PATCH", body: { action: "update", kitId: r.kitId, tier: r.tier, productIds: r.productIds } });
+      location.href = "account.html#subs"; } catch (e) { App.toast(e.message); }
+  };
+  else { App.qs("#addSub").onclick = () => add("subscription"); App.qs("#addOnce").onclick = () => add("once"); }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+// في حال إعادة الاختبار لتحديث اشتراك
+if (App.params.get("cat")) answers.focus = App.params.get("cat");
+render();
+</script>
+</body>
+</html>
