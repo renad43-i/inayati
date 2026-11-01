@@ -10,7 +10,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "pdf": "node scripts/build-pdf.js",
-    "reset": "rm -rf data"
+    "reset": "rm -rf data",
+    "static": "node scripts/build-static.js"
   },
   "author": "",
   "license": "ISC",
