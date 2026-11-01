@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/engine.js"></script><script src="js/app.js"></script>
+<script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
 <body>
 <main class="container">
@@ -43,9 +43,9 @@ App.layout("kits");
     const r = kit.routine || {};
     const list = (arr) => arr && arr.length ? `<ol>${arr.map(s => `<li>${App.esc(s)}</li>`).join("")}</ol>` : `<p class="muted small">لا يوجد</p>`;
     App.qs("#product").innerHTML = `
-      <div class="gallery" style="background:${kit.color}">${App.kitSVG(kit, pids.length)}</div>
+      <div class="gallery" style="background:${kit.color}">${App.kitSVG(kit, pids)}</div>
       <div>
-        <span class="tag sage">${App.esc(kit.for)}</span>
+        <span class="tag sage">${App.esc(kit.for)}</span> <span class="tag">${[...new Set(pids.map(id => cat.pMap[id].country))].join(" · ")}</span>
         <h1 style="margin:8px 0 4px">${App.esc(kit.name)}</h1>
         <p class="muted">${App.esc(kit.tagline)}</p>
         ${custom && custom.tier === state.tier ? `<p class="alert ok small">هذا الكيت مخصص لك حسب نتيجة الاختبار${custom.swaps.length ? " (مع استبدال المكونات اللي تتحسسين منها)" : ""}.</p>` : ""}
@@ -68,8 +68,8 @@ App.layout("kits");
 
         <div class="tiktok-box">
           <svg width="34" viewBox="0 0 24 24" fill="#111" aria-hidden="true"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2-2.8V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>
-          <div style="flex:1"><b>شوفي طريقة الاستخدام</b><div class="small muted">فيديو قصير يشرح روتين هذا الكيت خطوة بخطوة</div></div>
-          <a class="btn tiktok sm" href="${App.esc(kit.tiktok || "https://www.tiktok.com/@inayati.sa")}" target="_blank" rel="noopener">شاهدي على تيك توك</a>
+          <div style="flex:1"><b>ريفيوهات حقيقية على تيك توك</b><div class="small muted">شوفي تجارب الناس مع منتجات هذا الكيت، ولكل منتج زر ريفيو خاص تحت</div></div>
+          <a class="btn tiktok sm" href="${App.esc(kit.tiktok || "https://www.tiktok.com/@inayati.sa")}" target="_blank" rel="noopener">${App.tiktokIcon} شاهدي الريفيوهات</a>
         </div>
 
         <div class="card" style="margin-top:22px">
@@ -79,10 +79,13 @@ App.layout("kits");
             <button data-tab="info" class="${state.tab === "info" ? "active" : ""}">معلومات</button>
           </div>
           <div class="${state.tab === "products" ? "" : "hidden"}"><ul class="prod-list">${pids.map(id => { const p = cat.pMap[id]; return `<li>
-            <span class="prod-dot">${App.productIcon(p.cat)}</span><div style="flex:1"><b>${App.esc(p.name)}</b> <span class="small muted">· ${App.esc(p.size)} · ${App.STEP_AR[p.step] || p.step}</span>
+            <span class="prod-img">${App.productImg(p)}</span>
+            <div style="flex:1;min-width:0"><div class="brand-name" dir="ltr">${App.esc(p.brand)}</div><b>${App.esc(p.name)}</b>
+            <div class="small muted"><span dir="ltr">${App.esc(p.nameEn || "")}</span> · ${App.esc(p.size)} · ${App.STEP_AR[p.step] || p.step} · ${App.esc(p.country || "")}</div>
             <div class="small">${App.esc(p.desc)}</div>
-            ${p.contains.length ? `<div class="small muted">يحتوي: ${p.contains.map(a => App.ALLERGEN_AR[a]).join("، ")}</div>` : `<div class="small" style="color:var(--ok)">خالٍ من العطور والكحول وزيوت المكسرات</div>`}</div>
-            <span class="small muted">${App.fmt(p.price)}</span></li>`; }).join("")}</ul></div>
+            ${p.contains.length ? `<div class="small muted">يحتوي: ${p.contains.map(a => App.ALLERGEN_AR[a]).join("، ")}</div>` : `<div class="small" style="color:var(--ok)">خالٍ من العطور والكحول وزيوت المكسرات</div>`}
+            <div class="row" style="margin-top:6px"><span class="small muted">قيمته منفرد ${App.fmt(p.price)}</span><span class="spacer"></span>
+            ${p.tiktok ? `<a class="tt-link" href="${App.esc(p.tiktok)}" target="_blank" rel="noopener">${App.tiktokIcon} ريفيوهات تيك توك</a>` : ""}</div></div></li>`; }).join("")}</ul></div>
           <div class="routine ${state.tab === "routine" ? "" : "hidden"}">
             ${kit.cat === "skin" ? `<h4>☀️ الصباح</h4>${list(r.morning)}<h4>🌙 المساء</h4>${list(r.evening)}` : (r.morning && r.morning.length ? `<h4>يومياً</h4>${list(r.morning)}` : "") + (r.evening && r.evening.length ? `<h4>المساء</h4>${list(r.evening)}` : "")}
             ${r.weekly && r.weekly.length ? `<h4>${kit.cat === "skin" ? "أسبوعياً ونصائح" : "روتين الغسيل الأسبوعي"}</h4>${list(r.weekly)}` : ""}
@@ -90,6 +93,7 @@ App.layout("kits");
           <div class="${state.tab === "info" ? "" : "hidden"} small">
             <p>• الكيت يكفي تقريباً لمدة شهر بالاستخدام اليومي.</p><p>• كل كيت يوصلك مع كرت مطبوع للروتين ورمز QR لفيديو الطريقة.</p>
             <p>• الاشتراك يتجدد تلقائياً كل شهر، وقبل التجديد تقدرين تعيدين الاختبار ونحدّث الكيت حسب احتياجك.</p><p>• إذا ظهر أي تهيج أوقفي الاستخدام واستشيري طبيبة الجلدية.</p>
+            <p class="muted">• منتجات أصلية من موزعين معتمدين. معلومات المكونات والأسعار تقريبية لأغراض المشروع، والمرجع هو قائمة المكونات على العبوة.</p>
           </div>
         </div>
       </div>`;

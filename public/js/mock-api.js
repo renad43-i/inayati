@@ -5,7 +5,7 @@
    (scripts/build-static.js)، أما المشروع الأصلي فيستخدم الخادم الحقيقي.
    ========================================================= */
 (function () {
-  const KEY = "inayati_demo_db_v1", SESS = "inayati_demo_session_v1";
+  const KEY = "inayati_demo_db_v2", SESS = "inayati_demo_session_v1";
   const now = () => new Date().toISOString().slice(0, 19).replace("T", " ");
   const addMonth = (d = new Date()) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString().slice(0, 10); };
   const today = () => new Date().toISOString().slice(0, 10);
@@ -185,14 +185,16 @@
     ["GET", /^\/api\/admin\/catalog$/, () => { needAdmin(); return clone(catalog(true)); }],
     ["POST", /^\/api\/admin\/products$/, (p) => {
       needAdmin(); const d = load();
-      if (!p.id || !p.name || !["skin", "hair"].includes(p.cat) || !p.step || !(p.price >= 0)) bad("بيانات المنتج ناقصة");
+      if (!p.id || !p.name || !p.brand || !["skin", "hair"].includes(p.cat) || !p.step || !(p.price >= 0)) bad("بيانات المنتج ناقصة (الرمز، البراند، الاسم، السعر)");
       if (d.products.find(x => x.id === p.id)) bad("رمز المنتج مستخدم");
-      d.products.push({ id: p.id, cat: p.cat, step: p.step, name: p.name, size: p.size || "", price: +p.price, desc: p.desc || "", suits: p.suits || [], contains: p.contains || [], stock: +p.stock || 0, active: p.active !== false });
+      d.products.push({ id: p.id, cat: p.cat, step: p.step, brand: p.brand, country: p.country || "", name: p.name, nameEn: p.nameEn || "", size: p.size || "", price: +p.price, desc: p.desc || "",
+        suits: p.suits || [], contains: p.contains || [], pack: { shape: "bottle", body: "#FFFFFF", cap: "#DDDDDD", accent: "#333333" },
+        tiktok: p.tiktok || "https://www.tiktok.com/search?q=" + encodeURIComponent(`${p.brand} ${p.nameEn || p.name} review`), stock: +p.stock || 0, active: p.active !== false });
       save(); return { ok: true };
     }],
     ["PUT", /^\/api\/admin\/products\/([\w-]+)$/, (p, m) => {
       needAdmin(); const x = load().products.find(q => q.id === m[1]) || bad("المنتج غير موجود", 404);
-      Object.assign(x, { name: p.name, step: p.step, size: p.size || "", price: +p.price, desc: p.desc || "", suits: p.suits || [], contains: p.contains || [], stock: +p.stock || 0, active: p.active !== false });
+      Object.assign(x, { brand: p.brand || x.brand, country: p.country || x.country, nameEn: p.nameEn || x.nameEn, tiktok: p.tiktok || x.tiktok, name: p.name, step: p.step, size: p.size || "", price: +p.price, desc: p.desc || "", suits: p.suits || [], contains: p.contains || [], stock: +p.stock || 0, active: p.active !== false });
       save(); return { ok: true };
     }],
     ["POST", /^\/api\/admin\/kits$/, (k) => saveKit(k, true, k && k.id)],

@@ -249,3 +249,24 @@ dialog::backdrop { background: rgba(47,59,48,.4); }
   .cta-band { padding: 26px; }
   .tracker { font-size: .78rem; }
 }
+
+/* ---------- صور المنتجات (packshots) ---------- */
+.kit-visual svg, .product .gallery svg { width: 94%; max-height: 92%; }
+.kit-visual { align-items: end; padding-bottom: 4%; }
+.product .gallery { align-items: end; padding-bottom: 6%; }
+.result-kit .kit-visual svg, .cart-item .kit-visual svg { width: 96%; }
+.prod-img { width: 74px; height: 96px; flex: none; border-radius: 12px; background: var(--sand); display: grid; place-items: end center; padding: 4px 0 2px; }
+.prod-img svg { width: 84%; height: auto; }
+.brand-name { font-family: "Helvetica Neue", Arial, sans-serif; font-weight: 700; font-size: .78rem; letter-spacing: .08em; color: var(--muted); text-align: right; }
+.brands-line { display: block; unicode-bidi: isolate; font-family: "Helvetica Neue", Arial, sans-serif; font-size: .72rem; letter-spacing: .04em; color: var(--muted); direction: ltr; text-align: right; }
+.tt-link { display: inline-flex; align-items: center; gap: 6px; background: #111; color: #fff; border-radius: 99px; padding: 4px 12px; font-size: .82rem; font-weight: 700; }
+.tt-link:hover { background: #000; }
+.btn.tiktok svg { margin-inline-end: 2px; }
+.brand-strip { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; font-family: "Helvetica Neue", Arial, sans-serif; font-weight: 700; letter-spacing: .12em; color: var(--muted); font-size: .95rem; }
+.hero-art.real { background: radial-gradient(circle at 50% 55%, var(--blush) 0 58%, transparent 59%); display: grid; place-items: end center; padding-bottom: 8%; }
+.hero-art.real svg { width: 100%; }
+.mini-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin: 10px 0 12px; }
+.mini-product { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; min-width: 0; }
+.mini-product .prod-img { width: 76px; height: 96px; }
+.mini-product .brand-name { text-align: center; font-size: .66rem; }
+.mini-product .small { font-size: .78rem; line-height: 1.4; }

@@ -243,16 +243,18 @@ app.get("/api/admin/catalog", requireAdmin, (req, res) => res.json(getCatalog({ 
 
 app.post("/api/admin/products", requireAdmin, (req, res) => {
   const p = req.body || {};
-  if (!p.id || !p.name || !["skin", "hair"].includes(p.cat) || !p.step || !(p.price >= 0)) return bad(res, "بيانات المنتج ناقصة");
+  if (!p.id || !p.name || !p.brand || !["skin", "hair"].includes(p.cat) || !p.step || !(p.price >= 0)) return bad(res, "بيانات المنتج ناقصة (الرمز، البراند، الاسم، السعر)");
   if (db.prepare("SELECT id FROM products WHERE id=?").get(p.id)) return bad(res, "رمز المنتج مستخدم");
-  db.prepare("INSERT INTO products (id,cat,step,name,size,price,description,suits,contains,stock,active) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
-    .run(p.id, p.cat, p.step, p.name, p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []), +p.stock || 0, p.active === false ? 0 : 1);
+  const tiktok = p.tiktok || "https://www.tiktok.com/search?q=" + encodeURIComponent(`${p.brand} ${p.nameEn || p.name} review`);
+  db.prepare("INSERT INTO products (id,cat,step,brand,country,name,name_en,size,price,description,suits,contains,pack,tiktok,stock,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+    .run(p.id, p.cat, p.step, p.brand, p.country || "", p.name, p.nameEn || "", p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []),
+      JSON.stringify(p.pack || { shape: "bottle", body: "#FFFFFF", cap: "#DDDDDD", accent: "#333333" }), tiktok, +p.stock || 0, p.active === false ? 0 : 1);
   res.json({ ok: true });
 });
 app.put("/api/admin/products/:id", requireAdmin, (req, res) => {
   const p = req.body || {};
-  const r = db.prepare("UPDATE products SET name=?, step=?, size=?, price=?, description=?, suits=?, contains=?, stock=?, active=? WHERE id=?")
-    .run(p.name, p.step, p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []), +p.stock || 0, p.active === false ? 0 : 1, req.params.id);
+  const r = db.prepare("UPDATE products SET brand=COALESCE(?,brand), country=COALESCE(?,country), name=?, name_en=COALESCE(?,name_en), tiktok=COALESCE(?,tiktok), step=?, size=?, price=?, description=?, suits=?, contains=?, stock=?, active=? WHERE id=?")
+    .run(p.brand || null, p.country || null, p.name, p.nameEn || null, p.tiktok || null, p.step, p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []), +p.stock || 0, p.active === false ? 0 : 1, req.params.id);
   if (!r.changes) return bad(res, "المنتج غير موجود", 404);
   res.json({ ok: true });
 });

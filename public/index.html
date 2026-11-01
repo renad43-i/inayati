@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/engine.js"></script><script src="js/app.js"></script>
+<script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
 <body>
 <main>
@@ -17,32 +17,24 @@
       <div>
         <span class="eyebrow">عناية شخصية مبنية على احتياجك</span>
         <h1>لا تحتارين بين مئة منتج.<br>روتينك جاهز في كيت واحد.</h1>
-        <p class="lead">جاوبي على 6 أسئلة بسيطة عن بشرتك وشعرك وحساسيتك وميزانيتك، ونجهز لك كيت روتين يومي مع طريقة الاستخدام خطوة بخطوة — ويتجدد كل شهر حسب احتياجك.</p>
+        <p class="lead">براندات عالمية تحبينها من كوريا وفرنسا واليابان وأمريكا. جاوبي على 6 أسئلة بسيطة عن بشرتك وشعرك وحساسيتك وميزانيتك، ونجهز لك كيت روتين يومي مع طريقة الاستخدام خطوة بخطوة — ويتجدد كل شهر حسب احتياجك.</p>
         <div class="row">
           <a class="btn" href="quiz.html">حددي روتينك — دقيقتين</a>
           <a class="btn outline" href="kits.html">تصفحي الكيتات</a>
         </div>
         <div class="hero-stats">
+          <div><b>29</b><span class="muted small">براند عالمي أصلي</span></div>
           <div><b>12</b><span class="muted small">كيت للبشرة والشعر</span></div>
           <div><b>15%</b><span class="muted small">أوفر من الشراء منفرد</span></div>
           <div><b>+10%</b><span class="muted small">خصم إضافي للاشتراك</span></div>
         </div>
       </div>
-      <div class="hero-art">
-        <svg viewBox="0 0 400 400" aria-hidden="true">
-          <circle cx="200" cy="200" r="180" fill="#F2D4D2"/>
-          <circle cx="200" cy="200" r="130" fill="#FBF7F1" opacity=".6"/>
-          <rect x="95" y="150" width="70" height="170" rx="20" fill="#fff"/><rect x="112" y="118" width="36" height="34" rx="8" fill="#6F9277"/>
-          <rect x="108" y="210" width="44" height="50" rx="6" fill="#E3ECE4"/>
-          <rect x="180" y="110" width="80" height="210" rx="24" fill="#fff"/><rect x="200" y="80" width="40" height="32" rx="8" fill="#D79C99"/>
-          <rect x="194" y="180" width="52" height="60" rx="6" fill="#F2D4D2"/>
-          <rect x="275" y="220" width="70" height="100" rx="18" fill="#fff"/><rect x="275" y="206" width="70" height="20" rx="10" fill="#6F9277"/>
-          <path d="M70 110 C90 70 130 70 140 60 C130 100 100 120 70 110Z" fill="#6F9277" opacity=".8"/>
-          <path d="M320 120 C335 95 360 95 368 88 C360 115 340 126 320 120Z" fill="#6F9277" opacity=".6"/>
-          <ellipse cx="220" cy="330" rx="150" ry="10" fill="rgba(0,0,0,.06)"/>
-        </svg>
-      </div>
+      <div class="hero-art real" id="heroArt" aria-label="منتجات من كيتات عنايتي"></div>
     </div>
+  </section>
+
+  <section class="section" style="padding:34px 0">
+    <div class="container"><p class="center small muted" style="margin-bottom:14px">براندات أصلية في كيتاتنا 🇰🇷 🇫🇷 🇯🇵 🇺🇸 🇨🇦</p><div class="brand-strip" id="brandStrip" dir="ltr"></div></div>
   </section>
 
   <section class="section alt">
@@ -51,7 +43,7 @@
       <div class="steps">
         <div class="card step"><div class="num">1</div><h3>جاوبي الاختبار</h3><p class="muted small">نوع البشرة، الشعر، الحساسية، والميزانية.</p></div>
         <div class="card step"><div class="num">2</div><h3>نختار كيتك</h3><p class="muted small">قواعد توصية مبنية على المكونات تختار الأنسب وتستبعد اللي تتحسسين منه.</p></div>
-        <div class="card step"><div class="num">3</div><h3>يوصلك لبابك</h3><p class="muted small">كيت جاهز مع كرت الروتين وفيديو الطريقة على تيك توك.</p></div>
+        <div class="card step"><div class="num">3</div><h3>يوصلك لبابك</h3><p class="muted small">كيت جاهز مع كرت الروتين، ولكل منتج ريفيوهات حقيقية على تيك توك.</p></div>
         <div class="card step"><div class="num">4</div><h3>يتجدد كل شهر</h3><p class="muted small">حدّثي احتياجك قبل التجديد، أو أوقفي الاشتراك متى ما بغيتي.</p></div>
       </div>
     </div>
@@ -90,6 +82,8 @@ App.layout("home");
 App.catalog().then(cat => {
   const ids = ["k-acne", "k-dry", "k-bright", "h-curly"];
   App.qs("#featured").innerHTML = ids.map(id => cat.kMap[id]).filter(Boolean).map(k => App.kitCard(k, cat)).join("");
+  App.qs("#heroArt").innerHTML = Packshots.kit(["s05", "s09", "s20", "s19", "s10"].map(id => cat.pMap[id]).filter(Boolean));
+  App.qs("#brandStrip").innerHTML = [...new Set(cat.products.map(p => p.brand))].map(b => `<span>${App.esc(b)}</span>`).join("");
 });
 </script>
 </body>

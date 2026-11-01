@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/engine.js"></script><script src="js/app.js"></script>
+<script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
 <body>
 <main class="container">
@@ -81,11 +81,10 @@ function showResult(res, cat, user, ans) {
     <p class="muted">${[ans.skinType && "بشرة " + ({dry:"جافة",oily:"دهنية",combo:"مختلطة",normal:"عادية",sensitive:"حساسة"})[ans.skinType], ans.hairType && "شعر " + ({dry:"جاف",oily:"دهني",curly:"مجعد",damaged:"مصبوغ/تالف",normal:"عادي"})[ans.hairType]].filter(Boolean).join(" · ")}</p></div>
     ${res.kits.map((r, i) => {
       const k = cat.kMap[r.kitId];
-      return `<div class="card result-kit" style="margin-bottom:16px">
-        <div class="kit-visual" style="background:${k.color}">${App.kitSVG(k, r.productIds.length)}</div>
+      return `<div class="card" style="margin-bottom:16px;border-top:6px solid ${k.color}">
         <div><span class="tag sage">${App.TIER_AR[r.tier]}</span> <h2 style="margin:6px 0">${App.esc(k.name)}</h2>
         <p>${App.esc(r.why)}</p>
-        <ul class="small" style="padding-inline-start:18px;margin:0 0 8px">${r.productIds.map(id => `<li>${App.esc(cat.pMap[id].name)}</li>`).join("")}</ul>
+        <div class="mini-products">${r.productIds.map(id => { const p = cat.pMap[id]; return `<div class="mini-product"><span class="prod-img">${App.productImg(p)}</span><span class="brand-name" dir="ltr">${App.esc(p.brand)}</span><span class="small">${App.esc(p.name)}</span></div>`; }).join("")}</div>
         ${r.swaps.length ? `<p class="small alert info" style="margin:0 0 10px">${r.swaps.map(s => s.to ? `استبدلنا «${App.esc(cat.pMap[s.from].name)}» بـ«${App.esc(cat.pMap[s.to].name)}» لأنه يحتوي على ${s.reason.map(a => App.ALLERGEN_AR[a]).join(" و")}.` : `حذفنا «${App.esc(cat.pMap[s.from].name)}» لعدم وجود بديل آمن.`).join("<br>")}</p>` : ""}
         <div class="row"><span class="price">${App.fmt(r.price)}</span><span class="spacer"></span>
           <a class="btn outline sm" href="kit.html?id=${k.id}&tier=${r.tier}&rec=${i}">التفاصيل وطريقة الاستخدام</a></div></div></div>`;

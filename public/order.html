@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/engine.js"></script><script src="js/app.js"></script>
+<script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
 <body>
 <main class="container" style="max-width:820px;padding:36px 0">
@@ -29,7 +29,7 @@ App.layout("account");
       ${o.status === "cancelled" ? `<p class="alert error">تم إلغاء هذا الطلب.</p>` : `<div class="tracker">${labels.map((l, i) => `<div class="t-step ${i <= reached ? "done" : ""}"><div class="dot">${i <= reached ? "✓" : i + 1}</div>${l}</div>`).join("")}</div>`}
       <h3>المنتجات</h3>
       ${o.items.map(it => { const k = cat.kMap[it.kit_id]; return `<div class="cart-item" style="grid-template-columns:64px 1fr auto">
-        <div class="kit-visual" style="background:${k ? k.color : "#eee"}">${k ? App.kitSVG(k, it.product_ids.length) : ""}</div>
+        <div class="kit-visual" style="background:${k ? k.color : "#eee"}">${k ? App.kitSVG(k, it.product_ids) : ""}</div>
         <div><b>${App.esc(it.kit_name)}</b> <span class="tag">${App.TIER_AR[it.tier]}</span> × ${it.qty}
         <div class="small muted">${it.purchase_type === "subscription" ? "🔁 اشتراك شهري" : "مرة واحدة"} · ${it.product_ids.map(id => App.esc(cat.pMap[id] ? cat.pMap[id].name : id)).join("، ")}</div></div>
         <span>${App.fmt(it.unit_price * it.qty)}</span></div>`; }).join("")}

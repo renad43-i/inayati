@@ -23,9 +23,11 @@ const App = (() => {
     return data;
   }
   let catalogPromise, mePromise;
-  const catalog = () => catalogPromise ||= api("/api/catalog").then(c => ({
-    ...c, pMap: Object.fromEntries(c.products.map(p => [p.id, p])), kMap: Object.fromEntries(c.kits.map(k => [k.id, k]))
-  }));
+  const catalog = () => catalogPromise ||= api("/api/catalog").then(c => {
+    const pMap = Object.fromEntries(c.products.map(p => [p.id, p]));
+    pMapCache = pMap;
+    return { ...c, pMap, kMap: Object.fromEntries(c.kits.map(k => [k.id, k])) };
+  });
   const me = (refresh) => (refresh || !mePromise) ? (mePromise = api("/api/auth/me").then(r => r.user)) : mePromise;
 
   /* ---------- السلة (تُحفظ في المتصفح، والسعر النهائي يحسبه الخادم) ---------- */
@@ -45,36 +47,25 @@ const App = (() => {
   };
   function updateBadge() { const b = qs("#cartBadge"); if (b) { const n = cart.count(); b.textContent = n; b.classList.toggle("hidden", !n); } }
 
-  /* ---------- رسم الكيت (بديل الصور في الـ MVP) ---------- */
-  function kitSVG(kit, n = 4) {
-    const c = kit.color || "#EEE";
-    const isHair = kit.cat === "hair";
-    const shapes = [
-      `<rect x="30" y="58" width="34" height="82" rx="10" fill="#fff"/><rect x="38" y="44" width="18" height="16" rx="4" fill="${shade(c)}"/>`,
-      `<rect x="74" y="40" width="40" height="100" rx="12" fill="#fff"/><rect x="84" y="24" width="20" height="18" rx="5" fill="${shade(c)}"/><rect x="80" y="76" width="28" height="24" rx="4" fill="${c}"/>`,
-      `<rect x="124" y="70" width="30" height="70" rx="8" fill="#fff"/><circle cx="139" cy="62" r="9" fill="${shade(c)}"/>`,
-      `<rect x="160" y="96" width="44" height="44" rx="12" fill="#fff"/><rect x="160" y="88" width="44" height="12" rx="6" fill="${shade(c)}"/>`
-    ].slice(0, Math.max(2, Math.min(4, n)));
-    return `<svg viewBox="0 0 230 160" aria-hidden="true"><ellipse cx="115" cy="142" rx="100" ry="8" fill="rgba(0,0,0,.06)"/>${shapes.join("")}
-      <text x="96" y="94" font-size="9" text-anchor="middle" fill="${shade(c, .45)}" font-family="El Messiri">${isHair ? "شعر" : "بشرة"}</text></svg>`;
+  /* ---------- صور المنتجات والكيتات (packshots.js) ---------- */
+  let pMapCache = {};
+  const ids2products = ids => ids.map(id => pMapCache[id]).filter(Boolean);
+  function kitSVG(kit, ids) {
+    if (!Array.isArray(ids)) ids = kit.tiers.full;
+    return Packshots.kit(ids2products(ids));
   }
-  function shade(hex, amt = .25) {
-    const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
-    r = Math.round(r * (1 - amt)); g = Math.round(g * (1 - amt)); b = Math.round(b * (1 - amt));
-    return `rgb(${r},${g},${b})`;
-  }
-  const productIcon = cat => cat === "hair"
-    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3h6v3H9zM8 6h8l1 15H7z"/></svg>`
-    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2h4v4h-4zM8 6h8v15a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z"/><path d="M8 12h8"/></svg>`;
+  const productImg = p => Packshots.product(p);
+  const tiktokIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2-2.8V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>`;
 
   function kitCard(kit, cat, tier = "full") {
     const ids = kit.tiers[tier];
     const price = Engine.kitPrice(ids, cat.pMap);
     const orig = Engine.sumProducts(ids, cat.pMap);
     return `<a class="card kit-card" href="kit.html?id=${kit.id}">
-      <div class="kit-visual" style="background:${kit.color}">${kitSVG(kit, ids.length)}<span class="tag">${kit.cat === "hair" ? "شعر" : "بشرة"}</span></div>
+      <div class="kit-visual" style="background:${kit.color}">${kitSVG(kit, ids)}<span class="tag">${kit.cat === "hair" ? "شعر" : "بشرة"}</span></div>
       <div class="kit-body"><h3>${esc(kit.name)}</h3><span class="muted small">${esc(kit.for)} · ${ids.length} منتجات</span>
-      <p class="small" style="margin:0">${esc(kit.tagline)}</p><div class="spacer"></div>
+      <p class="small" style="margin:0">${esc(kit.tagline)}</p>
+      <span class="brands-line">${[...new Set(ids.map(id => cat.pMap[id] && cat.pMap[id].brand))].filter(Boolean).join(" · ")}</span><div class="spacer"></div>
       <div class="price">يبدأ من ${fmt(Engine.kitPrice(kit.tiers.basic, cat.pMap))}</div>
       <span class="small muted">المتكامل ${fmt(price)} <s>${fmt(orig)}</s></span></div></a>`;
   }
@@ -121,5 +112,5 @@ const App = (() => {
   const ALLERGEN_AR = { fragrance: "عطور", alcohol: "كحول", nuts: "زيوت مكسرات" };
   const dateAr = d => new Date(d.replace(" ", "T") + (d.length > 10 ? "Z" : "")).toLocaleDateString("ar-SA-u-nu-latn-ca-gregory", { year: "numeric", month: "long", day: "numeric" });
 
-  return { api, catalog, me, cart, layout, toast, fmt, esc, qs, qsa, params, kitSVG, kitCard, productIcon, TIER_AR, STEP_AR, ALLERGEN_AR, dateAr };
+  return { api, catalog, me, cart, layout, toast, fmt, esc, qs, qsa, params, kitSVG, kitCard, productImg, tiktokIcon, TIER_AR, STEP_AR, ALLERGEN_AR, dateAr };
 })();

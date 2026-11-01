@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/engine.js"></script><script src="js/app.js"></script>
+<script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
 <body>
 <main class="container">
@@ -104,7 +104,7 @@ async function loadSubs() {
   App.qs("#sec-subs").innerHTML = `<h2 style="font-size:1.3rem">اشتراكي الشهري</h2>` + (subs.length ? subs.map(s => {
     const k = cat.kMap[s.kit_id];
     return `<div class="order-card"><div class="cart-item" style="border:0;padding:0;grid-template-columns:72px 1fr">
-      <div class="kit-visual" style="background:${k.color}">${App.kitSVG(k, s.product_ids.length)}</div>
+      <div class="kit-visual" style="background:${k.color}">${App.kitSVG(k, s.product_ids)}</div>
       <div><div class="row"><b>${App.esc(k.name)}</b><span class="tag">${App.TIER_AR[s.tier]}</span><span class="status ${s.status}">${ST[s.status]}</span><span class="spacer"></span><b>${App.fmt(s.price)}/شهر</b></div>
       <div class="small muted">${s.product_ids.map(id => App.esc(cat.pMap[id] ? cat.pMap[id].name : id)).join("، ")}</div>
       ${s.status === "active" ? `<div class="small">التجديد القادم: <b>${App.dateAr(s.next_renewal)}</b></div>` : ""}</div></div>
