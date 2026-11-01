@@ -29,6 +29,8 @@
     { id: "concern", title: "وش أكثر شي يضايقك في بشرتك؟", sub: "اختاري الأهم", type: "single", when: a => a.focus !== "hair",
       options: [
         { v: "acne", t: "حبوب ورؤوس سوداء" },
+        { v: "hormonal", t: "حبوب هرمونية", d: "عميقة حول الذقن والفك، وتزيد مع الدورة" },
+        { v: "fungal", t: "حبوب فطرية", d: "حبوب صغيرة متشابهة تحك، غالباً على الجبهة" },
         { v: "pigment", t: "تصبغات وبهتان" },
         { v: "dryness", t: "جفاف وخشونة" },
         { v: "pores", t: "مسام واسعة ولمعان" },
@@ -80,7 +82,11 @@
      القاعدة 8: أي منتج فيه مكوّن تتحسس منه يُستبدل ببديل من نفس الخطوة يناسب نوعها،
                وإذا ما فيه بديل يُحذف ونوضح ذلك */
   function pickSkinKit(type, concern) {
-    if (type === "sensitive") return { kit: "k-sensitive", why: "بشرتك حساسة، فبدأنا بالتهدئة وتقوية الحاجز قبل أي علاج." };
+    if (type === "sensitive") return { kit: "k-sensitive", consult: concern === "hormonal" || concern === "fungal", avoidFungal: concern === "fungal", why: "بشرتك حساسة، فبدأنا بالتهدئة وتقوية الحاجز قبل أي علاج." };
+    if (concern === "hormonal") return { kit: "k-acne", consult: true,
+      why: "الحبوب الهرمونية سببها من الداخل، فكيت صفاء عناية مساندة تهدّي الالتهاب وتمنع الانسداد، والعلاج الأساسي عند الطبيبة." };
+    if (concern === "fungal") return { kit: "k-acne", consult: true, avoidFungal: true,
+      why: "اخترنا كيت صفاء بعد استبعاد المنتجات اللي ممكن تغذي الفطريات، وننصحك تتأكدين من التشخيص مع الطبيبة." };
     if (concern === "acne") return { kit: "k-acne", why: "اخترنا كيت صفاء لأن الحبوب هي مشكلتك الأساسية." };
     if (concern === "pigment") return { kit: "k-bright", why: "اخترنا كيت الإشراقة بفيتامين C لعلاج التصبغات والبهتان." };
     if (concern === "dryness") return (type === "oily" || type === "combo")
@@ -97,15 +103,21 @@
     return { kit: map[type] || "h-normal", why: "اخترنا الكيت حسب نوع شعرك." };
   }
 
+  /* أسباب استبعاد منتج: مكوّن تتحسس منه، أو (للحبوب الفطرية) منتج قد يغذي الفطريات */
+  const badReasons = (p, allergens) => {
+    const r = (p.contains || []).filter(c => allergens.includes(c));
+    if (allergens.includes("fungal") && p.cat === "skin" && p.fungal === false) r.push("fungal");
+    return r;
+  };
   function applyAllergies(productIds, allergens, suitsKey, productMap) {
     const swaps = [], out = [];
     for (const id of productIds) {
       const p = productMap[id];
-      const bad = (p.contains || []).filter(c => allergens.includes(c));
+      const bad = badReasons(p, allergens);
       if (!bad.length) { out.push(id); continue; }
       const candidates = Object.values(productMap).filter(q =>
         q.active !== false && q.cat === p.cat && q.step === p.step && q.id !== p.id &&
-        !(q.contains || []).some(c => allergens.includes(c)) && !out.includes(q.id) && !productIds.includes(q.id));
+        !badReasons(q, allergens).length && !out.includes(q.id) && !productIds.includes(q.id));
       const alt = candidates.find(q => (q.suits || []).includes(suitsKey)) || candidates[0];
       if (alt) { out.push(alt.id); swaps.push({ from: p.id, to: alt.id, reason: bad }); }
       else swaps.push({ from: p.id, to: null, reason: bad });
@@ -121,7 +133,11 @@
     if (answers.skinType === "sensitive" && !allergens.includes("fragrance")) allergens.push("fragrance");
 
     const picks = [];
-    if (answers.focus !== "hair") picks.push({ ...pickSkinKit(answers.skinType, answers.concern), suits: answers.skinType });
+    if (answers.focus !== "hair") {
+      const sk = pickSkinKit(answers.skinType, answers.concern);
+      if (sk.avoidFungal && !allergens.includes("fungal")) allergens.push("fungal");
+      picks.push({ ...sk, suits: answers.skinType });
+    }
     if (answers.focus !== "skin") picks.push({ ...pickHairKit(answers.hairType), suits: answers.hairType });
 
     const budget = answers.budget || "mid";
@@ -146,9 +162,54 @@
     if (total() > max && result.length > 1) {
       notes.push("الكيتين معاً يتجاوزان ميزانيتك قليلاً، تقدرين تبدئين بكيت البشرة وتضيفين الشعر لاحقاً.");
     }
-    if (allergens.length) notes.push("استبعدنا المنتجات اللي فيها: " + allergens.map(a => ({ fragrance: "العطور", alcohol: "الكحول", nuts: "زيوت المكسرات" })[a]).join("، ") + ".");
-    return { kits: result, total: total(), notes, allergens };
+    if (allergens.length) notes.push("استبعدنا المنتجات اللي فيها: " + allergens.map(a => REASON_AR[a]).join("، ") + ".");
+    const consult = picks.some(p => p.consult) || !!answers.seeDoctor;
+    const consultWhy = answers.doctorReason || (answers.concern === "hormonal"
+      ? "الحبوب الهرمونية تحتاج تقييم طبي (أحياناً تحاليل أو علاج بوصفة)، والكيت يساندك بس ما يغني عن العلاج."
+      : answers.concern === "fungal" ? "الحبوب الفطرية تشبه الحبوب العادية، والطبيبة تأكد التشخيص وتصرف العلاج المضاد للفطريات إذا احتجتي." : "");
+    return { kits: result, total: total(), notes, allergens, consult, consultWhy };
   }
 
-  return { QUIZ, TIERS, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
+  const REASON_AR = { fragrance: "العطور", alcohol: "الكحول", nuts: "زيوت المكسرات", fungal: "مكونات قد تغذي الفطريات" };
+
+  /* ---------- تحليل البشرة بالذكاء الاصطناعي ----------
+     نفس التعليمات تُستخدم في الخادم (Anthropic API) وفي نسخة الرابط (قدرة "اسألي Claude"). */
+  const ANALYSIS_PROMPT = `أنتِ مساعدة عناية بالبشرة في متجر "عنايتي". الصورة المرفقة صورة وجه أرسلتها العميلة لتقترحي لها روتين عناية.
+مهمتك: وصف ما يظهر في الصورة من ناحية العناية بالبشرة فقط، بدون تشخيص طبي وبدون أي تعليق على الشكل أو الجمال.
+إذا الصورة ليست لوجه، أو الإضاءة/الوضوح لا يسمح بالتقييم، اجعلي photoQuality = "poor" ووضحي السبب، وخلي بقية الحقول بأقل ثقة.
+اكتبي النصوص بالعربي بلهجة سعودية بيضاء ودودة، بصيغة المؤنث، وبجمل قصيرة.
+أرجعي فقط كائن JSON واحد بهذا الشكل:
+{
+  "photoQuality": "good" | "poor",
+  "qualityNote": "جملة قصيرة عن جودة الصورة",
+  "skinType": "dry" | "oily" | "combo" | "normal" | "sensitive" | "unknown",
+  "primaryConcern": "acne" | "hormonal" | "fungal" | "pigment" | "dryness" | "pores" | "none",
+  "concerns": [ { "key": "acne" | "hormonal" | "fungal" | "pigment" | "marks" | "dryness" | "pores" | "redness" | "oil", "confidence": "low" | "medium" | "high", "note": "ملاحظة قصيرة عن مكانها أو شكلها" } ],
+  "observations": ["2 إلى 4 ملاحظات قصيرة"],
+  "seeDoctor": true | false,
+  "doctorReason": "لماذا ننصح بالطبيبة، أو نص فارغ",
+  "summary": "جملتين تلخصين فيها حالة البشرة والخطوة الجاية"
+}
+قواعد: "hormonal" فقط إذا الحبوب عميقة/ملتهبة ومتركزة حول الذقن والفك. "fungal" فقط إذا حبوب صغيرة متشابهة جداً ومتجمعة (غالباً الجبهة) — ودائماً مع seeDoctor = true لأنها تحتاج تأكيد.
+اجعلي seeDoctor = true أيضاً إذا ظهرت حبوب كيسية أو التهاب شديد أو بقع غير معتادة أو أي شيء يحتاج تقييم طبي.`;
+  const AI_KEYS = { skinType: ["dry", "oily", "combo", "normal", "sensitive"], concern: ["acne", "hormonal", "fungal", "pigment", "dryness", "pores", "none"] };
+  /* يحوّل نتيجة التحليل + اختيارات العميلة (الميزانية والحساسية) إلى إجابات الاختبار */
+  function analysisToAnswers(ai, extra = {}) {
+    return {
+      focus: "skin",
+      skinType: AI_KEYS.skinType.includes(ai.skinType) ? ai.skinType : "normal",
+      concern: AI_KEYS.concern.includes(ai.primaryConcern) ? ai.primaryConcern : "none",
+      allergies: extra.allergies && extra.allergies.length ? extra.allergies : ["none"],
+      budget: extra.budget || "mid",
+      seeDoctor: !!ai.seeDoctor, doctorReason: ai.doctorReason || "", source: "ai"
+    };
+  }
+  function parseJSONLoose(text) {
+    try { return JSON.parse(text); } catch {}
+    const a = text.indexOf("{"), b = text.lastIndexOf("}");
+    if (a !== -1 && b > a) { try { return JSON.parse(text.slice(a, b + 1)); } catch {} }
+    return null;
+  }
+
+  return { QUIZ, TIERS, REASON_AR, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
 });

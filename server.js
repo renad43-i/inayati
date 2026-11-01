@@ -8,9 +8,12 @@ const express = require("express");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
 const { db, getCatalog } = require("./lib/db");
+const seed = require("./public/js/data.js");
 const Engine = require("./public/js/engine.js");
 
 const app = express();
+// صور تحليل البشرة تُرسل مصغّرة من المتصفح، فنسمح بحجم أكبر لهذا المسار فقط
+app.use("/api/analyze", express.json({ limit: "6mb" }));
 app.use(express.json({ limit: "200kb" }));
 app.use(session({
   secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
@@ -46,6 +49,18 @@ function luhn(num) {
   let sum = 0, alt = false;
   for (let i = num.length - 1; i >= 0; i--) { let n = +num[i]; if (alt) { n *= 2; if (n > 9) n -= 9; } sum += n; alt = !alt; }
   return sum % 10 === 0;
+}
+/* بوابة دفع تجريبية: تتحقق من البطاقة وترجع رقم عملية (تُستخدم للطلبات والاستشارات) */
+function chargeCard(payment) {
+  const num = String((payment && payment.cardNumber) || "").replace(/\D/g, "");
+  const [mm, yy] = String((payment && payment.expiry) || "").split("/").map(s => parseInt(s, 10));
+  const exp = new Date(2000 + (yy || 0), mm || 0, 1);
+  if (num.length < 13 || num.length > 19 || !luhn(num)) return { error: "رقم البطاقة غير صحيح" };
+  if (!mm || mm > 12 || exp <= new Date()) return { error: "تاريخ الانتهاء غير صحيح" };
+  if (!/^\d{3,4}$/.test(String((payment && payment.cvv) || ""))) return { error: "رمز CVV غير صحيح" };
+  if (num === "4000000000000002") return { error: "رفض البنك العملية (بطاقة اختبار مرفوضة)", code: 402 };
+  return { method: num.startsWith("4") ? "visa" : num.startsWith("5") ? "mastercard" : "mada",
+    ref: "DEMO-" + crypto.randomBytes(4).toString("hex").toUpperCase() + "-" + num.slice(-4) };
 }
 function orderWithItems(o) {
   if (!o) return null;
@@ -136,15 +151,9 @@ app.post("/api/orders", requireUser, (req, res) => {
     if (hasSub) return bad(res, "الاشتراك الشهري يحتاج دفع بالبطاقة");
     method = "cod"; status = "pending_cod";
   } else {
-    const num = String((payment && payment.cardNumber) || "").replace(/\D/g, "");
-    const [mm, yy] = String((payment && payment.expiry) || "").split("/").map(s => parseInt(s, 10));
-    const exp = new Date(2000 + (yy || 0), mm || 0, 1);
-    if (num.length < 13 || num.length > 19 || !luhn(num)) return bad(res, "رقم البطاقة غير صحيح");
-    if (!mm || mm > 12 || exp <= new Date()) return bad(res, "تاريخ الانتهاء غير صحيح");
-    if (!/^\d{3,4}$/.test(String(payment.cvv || ""))) return bad(res, "رمز CVV غير صحيح");
-    if (num === "4000000000000002") return bad(res, "رفض البنك العملية (بطاقة اختبار مرفوضة)", 402);
-    method = num.startsWith("4") ? "visa" : num.startsWith("5") ? "mastercard" : "mada";
-    ref = "DEMO-" + crypto.randomBytes(4).toString("hex").toUpperCase() + "-" + num.slice(-4);
+    const card = chargeCard(payment);
+    if (card.error) return bad(res, card.error, card.code);
+    ({ method, ref } = card);
     status = "paid";
   }
 
@@ -226,7 +235,111 @@ function runRenewals(force) {
   return created;
 }
 
+/* =================== تحليل البشرة بالذكاء الاصطناعي ===================
+   يستخدم Anthropic API (يحتاج ANTHROPIC_API_KEY في بيئة الخادم).
+   الصورة لا تُحفظ في الخادم؛ نحفظ النتيجة فقط في حساب العميلة. */
+let anthropicClient = null;
+function getAnthropic() {
+  if (anthropicClient) return anthropicClient;
+  try {
+    const mod = require("@anthropic-ai/sdk");
+    const Anthropic = mod.default || mod;
+    anthropicClient = { Anthropic, client: new Anthropic() };
+  } catch { anthropicClient = null; }
+  return anthropicClient;
+}
+const aiConfigured = () => !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+app.get("/api/analyze/status", (req, res) => res.json({ available: aiConfigured() && !!getAnthropic() }));
+app.post("/api/analyze", async (req, res) => {
+  const { image, mediaType, budget, allergies } = req.body || {};
+  if (!image || !/^image\/(jpeg|png|webp)$/.test(mediaType || "")) return bad(res, "أرفقي صورة واضحة للوجه (JPG أو PNG)");
+  if (!aiConfigured()) return bad(res, "التحليل الذكي غير مفعّل في هذا الخادم: أضيفي مفتاح ANTHROPIC_API_KEY ثم أعيدي التشغيل.", 503);
+  const ai = getAnthropic();
+  if (!ai) return bad(res, "مكتبة Anthropic غير مثبتة: شغلي npm install", 503);
+  const { Anthropic, client } = ai;
+  try {
+    const msg = await client.beta.messages.create({
+      model: "claude-opus-5-5",
+      max_tokens: 16000,
+      // نموذج احتياطي تلقائي إذا رفض النموذج الطلب
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: { effort: "medium" },
+      messages: [{ role: "user", content: [
+        { type: "image", source: { type: "base64", media_type: mediaType, data: image } },
+        { type: "text", text: Engine.ANALYSIS_PROMPT }
+      ] }]
+    });
+    if (msg.stop_reason === "refusal") return bad(res, "ما قدرنا نحلل هذي الصورة. جربي صورة ثانية للوجه بإضاءة طبيعية، أو احجزي استشارة.", 422);
+    const text = msg.content.filter(b => b.type === "text").map(b => b.text).join("\n");
+    const result = Engine.parseJSONLoose(text);
+    if (!result || typeof result !== "object") return bad(res, "صار خطأ في قراءة نتيجة التحليل، جربي مرة ثانية.", 502);
+    return res.json(finishAnalysis(req, result, { budget, allergies }));
+  } catch (e) {
+    if (e instanceof Anthropic.AuthenticationError) return bad(res, "مفتاح Anthropic غير صالح.", 503);
+    if (e instanceof Anthropic.RateLimitError) return bad(res, "ضغط على خدمة التحليل، جربي بعد شوي.", 429);
+    if (e instanceof Anthropic.APIError) { console.error("Anthropic API", e.status, e.message); return bad(res, "خدمة التحليل غير متاحة الآن، جربي بعد شوي.", 502); }
+    console.error(e); return bad(res, "تعذر التحليل", 500);
+  }
+});
+/* تحويل نتيجة التحليل لتوصية كيت + حفظها في الحساب */
+function finishAnalysis(req, ai, extra) {
+  const answers = Engine.analysisToAnswers(ai, extra);
+  const recommendation = Engine.recommend(answers, getCatalog());
+  const u = currentUser(req);
+  if (u) db.prepare("INSERT INTO quiz_results (user_id,answers,result) VALUES (?,?,?)").run(u.id, JSON.stringify(answers), JSON.stringify(recommendation));
+  return { analysis: ai, answers, recommendation };
+}
+
+/* =================== الاستشارات مع الطبيبات =================== */
+const consultRow = c => c && ({ ...c, analysis: c.analysis ? JSON.parse(c.analysis) : null,
+  doctor: seed.DOCTORS.find(d => d.id === c.doctor_id) || null, type_ar: (seed.CONSULT_TYPES[c.type] || {}).name });
+app.get("/api/doctors", (req, res) => res.json({ doctors: seed.DOCTORS, types: seed.CONSULT_TYPES, times: seed.CONSULT_TIMES }));
+app.get("/api/consultations/booked", (req, res) => {
+  const { doctor, date } = req.query;
+  res.json(db.prepare("SELECT time FROM consultations WHERE doctor_id=? AND date=? AND type='video' AND status!='cancelled'").all(String(doctor || ""), String(date || "")).map(r => r.time));
+});
+app.post("/api/consultations", requireUser, (req, res) => {
+  const { doctorId, type, date, time, concern, notes, analysis, payment } = req.body || {};
+  const doc = seed.DOCTORS.find(d => d.id === doctorId), t = seed.CONSULT_TYPES[type];
+  if (!doc || !t) return bad(res, "اختاري الطبيبة ونوع الاستشارة");
+  if (!concern || String(concern).trim().length < 5) return bad(res, "اكتبي وش تبين تستشيرين فيه (5 أحرف على الأقل)");
+  if (type === "video") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "") || !seed.CONSULT_TIMES.includes(time)) return bad(res, "اختاري اليوم والوقت");
+    if (new Date(date + "T" + time + ":00") < new Date()) return bad(res, "هذا الموعد فات، اختاري موعد ثاني");
+    if (db.prepare("SELECT 1 FROM consultations WHERE doctor_id=? AND date=? AND time=? AND type='video' AND status!='cancelled'").get(doctorId, date, time))
+      return bad(res, "هذا الموعد انحجز، اختاري وقت ثاني", 409);
+  }
+  const card = chargeCard(payment);
+  if (card.error) return bad(res, card.error, card.code);
+  try {
+    const r = db.prepare("INSERT INTO consultations (user_id,doctor_id,type,date,time,concern,notes,analysis,price,payment_ref) VALUES (?,?,?,?,?,?,?,?,?,?)")
+      .run(req.user.id, doctorId, type, type === "video" ? date : null, type === "video" ? time : null, String(concern).slice(0, 1000), String(notes || "").slice(0, 1000),
+        analysis ? JSON.stringify(analysis).slice(0, 8000) : null, t.price, card.ref);
+    res.json(consultRow(db.prepare("SELECT * FROM consultations WHERE id=?").get(Number(r.lastInsertRowid))));
+  } catch (e) { if (String(e.message).includes("UNIQUE")) return bad(res, "هذا الموعد انحجز، اختاري وقت ثاني", 409); throw e; }
+});
+app.get("/api/consultations", requireUser, (req, res) =>
+  res.json(db.prepare("SELECT * FROM consultations WHERE user_id=? ORDER BY id DESC").all(req.user.id).map(consultRow)));
+app.post("/api/consultations/:id/cancel", requireUser, (req, res) => {
+  const c = db.prepare("SELECT * FROM consultations WHERE id=? AND user_id=?").get(req.params.id, req.user.id);
+  if (!c) return bad(res, "الاستشارة غير موجودة", 404);
+  if (c.status !== "confirmed") return bad(res, "ما يمكن إلغاء هذه الاستشارة");
+  db.prepare("UPDATE consultations SET status='cancelled' WHERE id=?").run(c.id);
+  res.json(consultRow(db.prepare("SELECT * FROM consultations WHERE id=?").get(c.id)));
+});
+
 /* =================== لوحة الإدارة =================== */
+app.get("/api/admin/consultations", requireAdmin, (req, res) =>
+  res.json(db.prepare("SELECT c.*, u.name customer FROM consultations c JOIN users u ON u.id=c.user_id ORDER BY c.id DESC").all().map(consultRow)));
+app.post("/api/admin/consultations/:id", requireAdmin, (req, res) => {
+  const { status, doctorNote, recommendedKit } = req.body || {};
+  if (!["confirmed", "completed", "cancelled"].includes(status)) return bad(res, "حالة غير صحيحة");
+  if (recommendedKit && !getCatalog().kits.some(k => k.id === recommendedKit)) return bad(res, "كيت غير موجود");
+  const r = db.prepare("UPDATE consultations SET status=?, doctor_note=?, recommended_kit=? WHERE id=?").run(status, doctorNote || null, recommendedKit || null, req.params.id);
+  if (!r.changes) return bad(res, "الاستشارة غير موجودة", 404);
+  res.json(consultRow(db.prepare("SELECT * FROM consultations WHERE id=?").get(req.params.id)));
+});
 app.get("/api/admin/stats", requireAdmin, (req, res) => {
   const one = sql => db.prepare(sql).get();
   res.json({
@@ -236,25 +349,28 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
     activeSubs: one("SELECT COUNT(*) v FROM subscriptions WHERE status='active'").v,
     mrr: one("SELECT COALESCE(SUM(price),0) v FROM subscriptions WHERE status='active'").v,
     quizzes: one("SELECT COUNT(*) v FROM quiz_results").v,
+    consultations: one("SELECT COUNT(*) v FROM consultations WHERE status!='cancelled'").v,
+    consultRevenue: one("SELECT COALESCE(SUM(price),0) v FROM consultations WHERE status!='cancelled'").v,
     topKits: db.prepare("SELECT kit_name name, SUM(qty) n FROM order_items GROUP BY kit_id ORDER BY n DESC LIMIT 5").all()
   });
 });
 app.get("/api/admin/catalog", requireAdmin, (req, res) => res.json(getCatalog({ includeInactive: true })));
 
+const tagsJSON = p => JSON.stringify({ fungal: p.fungal === true || p.fungal === false ? p.fungal : null, goodFor: Array.isArray(p.goodFor) ? p.goodFor.filter(k => seed.CONCERN_TAGS[k]) : [] });
 app.post("/api/admin/products", requireAdmin, (req, res) => {
   const p = req.body || {};
   if (!p.id || !p.name || !p.brand || !["skin", "hair"].includes(p.cat) || !p.step || !(p.price >= 0)) return bad(res, "بيانات المنتج ناقصة (الرمز، البراند، الاسم، السعر)");
   if (db.prepare("SELECT id FROM products WHERE id=?").get(p.id)) return bad(res, "رمز المنتج مستخدم");
   const tiktok = p.tiktok || "https://www.tiktok.com/search?q=" + encodeURIComponent(`${p.brand} ${p.nameEn || p.name} review`);
-  db.prepare("INSERT INTO products (id,cat,step,brand,country,name,name_en,size,price,description,suits,contains,pack,tiktok,stock,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+  db.prepare("INSERT INTO products (id,cat,step,brand,country,name,name_en,size,price,description,suits,contains,pack,tiktok,tags,stock,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
     .run(p.id, p.cat, p.step, p.brand, p.country || "", p.name, p.nameEn || "", p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []),
-      JSON.stringify(p.pack || { shape: "bottle", body: "#FFFFFF", cap: "#DDDDDD", accent: "#333333" }), tiktok, +p.stock || 0, p.active === false ? 0 : 1);
+      JSON.stringify(p.pack || { shape: "bottle", body: "#FFFFFF", cap: "#DDDDDD", accent: "#333333" }), tiktok, tagsJSON(p), +p.stock || 0, p.active === false ? 0 : 1);
   res.json({ ok: true });
 });
 app.put("/api/admin/products/:id", requireAdmin, (req, res) => {
   const p = req.body || {};
-  const r = db.prepare("UPDATE products SET brand=COALESCE(?,brand), country=COALESCE(?,country), name=?, name_en=COALESCE(?,name_en), tiktok=COALESCE(?,tiktok), step=?, size=?, price=?, description=?, suits=?, contains=?, stock=?, active=? WHERE id=?")
-    .run(p.brand || null, p.country || null, p.name, p.nameEn || null, p.tiktok || null, p.step, p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []), +p.stock || 0, p.active === false ? 0 : 1, req.params.id);
+  const r = db.prepare("UPDATE products SET tags=?, brand=COALESCE(?,brand), country=COALESCE(?,country), name=?, name_en=COALESCE(?,name_en), tiktok=COALESCE(?,tiktok), step=?, size=?, price=?, description=?, suits=?, contains=?, stock=?, active=? WHERE id=?")
+    .run(tagsJSON(p), p.brand || null, p.country || null, p.name, p.nameEn || null, p.tiktok || null, p.step, p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []), +p.stock || 0, p.active === false ? 0 : 1, req.params.id);
   if (!r.changes) return bad(res, "المنتج غير موجود", 404);
   res.json({ ok: true });
 });

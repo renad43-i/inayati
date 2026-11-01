@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>استشارة طبيبة | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<main class="container" style="max-width:960px;padding:36px 0">
+  <div class="section-head" style="margin-bottom:22px">
+    <span class="eyebrow">استشارة أونلاين</span>
+    <h1>استشيري طبيبة جلدية</h1>
+    <p class="muted">للحبوب الهرمونية والفطرية، البشرة الحساسة، التصبغات، وتساقط الشعر. الطبيبة تشوف حالتك وتكتب لك توصية، وممكن تقترح لك كيت من عنايتي يناسب العلاج.</p>
+  </div>
+
+  <div id="done" class="hidden"></div>
+
+  <form id="form" class="stack">
+    <div class="card stack">
+      <h3>1. اختاري الطبيبة</h3>
+      <div class="stack" id="doctors"></div>
+      <p class="small muted">أسماء الطبيبات توضيحية لأغراض مشروع التخرج.</p>
+    </div>
+
+    <div class="card stack">
+      <h3>2. نوع الاستشارة</h3>
+      <div class="purchase" id="types"></div>
+      <div id="slotBox" class="hidden stack">
+        <div><label>اليوم</label><div class="slots" id="days"></div></div>
+        <div><label>الوقت</label><div class="slots" id="times"></div></div>
+      </div>
+    </div>
+
+    <div class="card stack">
+      <h3>3. وش تبين تستشيرين فيه؟</h3>
+      <div class="field"><label for="concern">وصف الحالة</label>
+        <textarea id="concern" rows="3" placeholder="مثال: حبوب حول الذقن تزيد قبل الدورة من 6 شهور، جربت غسول بالساليسيليك وما فرق" maxlength="1000"></textarea></div>
+      <div class="field"><label for="notes">أدوية أو منتجات تستخدمينها حالياً (اختياري)</label>
+        <input id="notes" maxlength="1000"></div>
+      <label id="attachBox" class="hidden" style="display:flex;gap:10px;font-weight:400"><input type="checkbox" id="attach" checked style="width:auto"> <span class="small">إرفاق نتيجة تحليل البشرة بالذكاء الاصطناعي مع الطلب</span></label>
+    </div>
+
+    <div class="card stack">
+      <h3>4. الدفع</h3>
+      <div id="loginNote" class="alert info hidden">لازم <a href="account.html?next=consult.html">تسجلين دخولك أو تنشئين حساب</a> قبل الحجز.</div>
+      <div id="cardBox"></div>
+      <div class="summary-row total"><span>المبلغ</span><span id="price">—</span></div>
+      <div id="err" class="alert error hidden"></div>
+      <button class="btn block" id="book">احجزي الاستشارة</button>
+      <p class="disclaimer">الاستشارة الأونلاين ما تغني عن زيارة العيادة في الحالات الطارئة أو اللي تحتاج فحص مباشر.</p>
+    </div>
+  </form>
+</main>
+<script>
+App.layout("consult");
+const state = { doctor: null, type: "video", date: null, time: null };
+let cfg, user, analysis = null;
+const DAY_FMT = d => d.toLocaleDateString("ar-SA-u-nu-latn-ca-gregory", { weekday: "long", day: "numeric", month: "short" });
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+function drawDoctors() {
+  App.qs("#doctors").innerHTML = cfg.doctors.map(d => `<button type="button" class="doctor-card ${state.doctor === d.id ? "active" : ""}" data-doc="${d.id}">
+    <span class="doctor-avatar" style="background:${d.color}">${App.esc(d.name.replace("د. ", "").slice(0, 1))}</span>
+    <span style="flex:1;min-width:0"><b>${App.esc(d.name)}</b><br><span class="small">${App.esc(d.title)} · ${d.years} سنة خبرة</span><br><span class="small muted">تركيزها: ${App.esc(d.focus)} · ${App.esc(d.langs)}</span></span></button>`).join("");
+  App.qsa("[data-doc]").forEach(b => b.onclick = () => { state.doctor = b.dataset.doc; state.time = null; drawDoctors(); drawSlots(); });
+}
+function drawTypes() {
+  App.qs("#types").innerHTML = Object.entries(cfg.types).map(([k, t]) => `<label class="${state.type === k ? "active" : ""}"><input type="radio" name="ctype" value="${k}" ${state.type === k ? "checked" : ""}>
+    <span style="flex:1"><b>${App.esc(t.name)} — ${App.fmt(t.price)}</b><br><span class="small muted">${App.esc(t.desc)}</span></span></label>`).join("");
+  App.qsa("input[name=ctype]").forEach(i => i.onchange = () => { state.type = i.value; drawTypes(); drawSlots(); });
+  App.qs("#price").textContent = App.fmt(cfg.types[state.type].price);
+  App.qs("#slotBox").classList.toggle("hidden", state.type !== "video");
+}
+async function drawSlots() {
+  if (state.type !== "video") return;
+  const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() + i + 1); return d; });
+  if (!state.date) state.date = iso(days[0]);
+  App.qs("#days").innerHTML = days.map(d => `<button type="button" class="chip ${iso(d) === state.date ? "active" : ""}" data-day="${iso(d)}">${DAY_FMT(d)}</button>`).join("");
+  App.qsa("[data-day]").forEach(b => b.onclick = () => { state.date = b.dataset.day; state.time = null; drawSlots(); });
+  const booked = state.doctor ? await App.api(`/api/consultations/booked?doctor=${state.doctor}&date=${state.date}`) : [];
+  App.qs("#times").innerHTML = state.doctor ? cfg.times.map(t => `<button type="button" class="chip ${state.time === t ? "active" : ""}" data-time="${t}" ${booked.includes(t) ? "disabled" : ""}>${t}</button>`).join("")
+    : `<span class="small muted">اختاري الطبيبة أول عشان تشوفين المواعيد المتاحة</span>`;
+  App.qsa("[data-time]").forEach(b => b.onclick = () => { state.time = b.dataset.time; drawSlots(); });
+}
+
+(async () => {
+  [cfg, user] = await Promise.all([App.api("/api/doctors"), App.me()]);
+  App.qs("#cardBox").innerHTML = App.cardFieldsHTML("k");
+  const getCard = App.wireCardFields("k");
+  if (!user) App.qs("#loginNote").classList.remove("hidden");
+  if (App.params.get("from") === "analysis") {
+    try { analysis = JSON.parse(sessionStorage.getItem("inayati_last_analysis")); } catch {}
+    if (analysis) {
+      App.qs("#attachBox").classList.remove("hidden");
+      App.qs("#concern").value = (analysis.summary || "") + (analysis.doctorReason ? " — " + analysis.doctorReason : "");
+      const fungalOrHormonal = (analysis.concerns || []).some(c => c.key === "fungal" || c.key === "hormonal");
+      state.doctor = fungalOrHormonal ? "d1" : null;
+    }
+  }
+  drawDoctors(); drawTypes(); drawSlots();
+
+  App.qs("#form").onsubmit = async e => {
+    e.preventDefault();
+    const err = App.qs("#err"); err.classList.add("hidden");
+    if (!user) { App.qs("#loginNote").classList.remove("hidden"); App.qs("#loginNote").scrollIntoView({ behavior: "smooth" }); return; }
+    if (!state.doctor) { err.textContent = "اختاري الطبيبة"; err.classList.remove("hidden"); return; }
+    if (state.type === "video" && !state.time) { err.textContent = "اختاري وقت الموعد"; err.classList.remove("hidden"); return; }
+    const btn = App.qs("#book"); btn.disabled = true; btn.textContent = "جاري الحجز…";
+    try {
+      const c = await App.api("/api/consultations", { body: {
+        doctorId: state.doctor, type: state.type, date: state.date, time: state.time,
+        concern: App.qs("#concern").value, notes: App.qs("#notes").value,
+        analysis: analysis && App.qs("#attach").checked ? analysis : null, payment: getCard() } });
+      App.qs("#form").classList.add("hidden");
+      const done = App.qs("#done"); done.classList.remove("hidden");
+      done.innerHTML = `<div class="card stack"><div class="alert ok"><b>تم حجز استشارتك ✓</b><br>رقم العملية: ${App.esc(c.payment_ref)}</div>
+        <p><b>${App.esc(c.doctor.name)}</b> — ${App.esc(c.type_ar)}${c.type === "video" ? `<br>الموعد: ${App.esc(c.date)} الساعة ${App.esc(c.time)} (يوصلك رابط المكالمة بالجوال قبل الموعد)` : "<br>بترد عليك الطبيبة خلال 24 ساعة"}</p>
+        <p class="small muted">بعد الاستشارة تظهر توصية الطبيبة في حسابك، وإذا اقترحت كيت تقدرين تطلبينه مباشرة.</p>
+        <div class="row"><a class="btn" href="account.html#consults">استشاراتي</a><a class="btn outline" href="kits.html">تصفحي الكيتات</a></div></div>`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (ex) {
+      err.textContent = ex.message; err.classList.remove("hidden");
+      if (ex.status === 409) { state.time = null; drawSlots(); }
+    } finally { btn.disabled = false; btn.textContent = "احجزي الاستشارة"; }
+  };
+})();
+</script>
+</body>
+</html>

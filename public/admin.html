@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
 <body>
 <main class="container">
@@ -17,6 +17,7 @@
       <button data-sec="overview">نظرة عامة</button>
       <button data-sec="orders">الطلبات</button>
       <button data-sec="subs">الاشتراكات</button>
+      <button data-sec="consults">الاستشارات</button>
       <button data-sec="products">المنتجات</button>
       <button data-sec="kits">الكيتات</button>
       <button data-sec="customers">العميلات</button>
@@ -46,7 +47,8 @@ const sections = {
         <div class="card stat"><span class="muted small">العميلات</span><b>${s.customers}</b></div>
         <div class="card stat"><span class="muted small">اشتراكات فعّالة</span><b>${s.activeSubs}</b></div>
         <div class="card stat"><span class="muted small">الإيراد الشهري المتكرر (MRR)</span><b>${App.fmt(s.mrr)}</b></div>
-        <div class="card stat"><span class="muted small">اختبارات مكتملة</span><b>${s.quizzes}</b></div>
+        <div class="card stat"><span class="muted small">اختبارات وتحليلات</span><b>${s.quizzes}</b></div>
+        <div class="card stat"><span class="muted small">الاستشارات (إيرادها)</span><b>${s.consultations} · ${App.fmt(s.consultRevenue)}</b></div>
       </div>
       <div class="card"><h3>الكيتات الأكثر مبيعاً</h3>${s.topKits.length ? `<table><tr><th>الكيت</th><th>الكمية</th></tr>${s.topKits.map(k => `<tr><td>${App.esc(k.name)}</td><td>${k.n}</td></tr>`).join("")}</table>` : `<p class="muted">لا توجد مبيعات بعد</p>`}</div>`;
   },
@@ -73,6 +75,23 @@ const sections = {
       ${subs.map(s => `<tr><td>${s.id}</td><td>${App.esc(s.customer)}</td><td>${App.esc(s.kit_name)} (${App.TIER_AR[s.tier]})</td><td>${App.fmt(s.price)}</td><td><span class="status ${s.status}">${ST[s.status]}</span></td><td>${s.next_renewal}</td></tr>`).join("") || `<tr><td colspan="6" class="muted">لا توجد اشتراكات</td></tr>`}</table></div>`;
     const run = async force => { const r = await App.api("/api/admin/renewals", { body: { force } }); App.toast(`تم إنشاء ${r.created.length} طلب تجديد`); sections.subs(); };
     App.qs("#runDue").onclick = () => run(false); App.qs("#runAll").onclick = () => run(true);
+  },
+  async consults() {
+    const [list, catalog] = await Promise.all([App.api("/api/admin/consultations"), App.api("/api/admin/catalog")]);
+    const ST = { confirmed: "مؤكدة", completed: "تمت", cancelled: "ملغية" };
+    C().innerHTML = `<h1 style="font-size:1.6rem">الاستشارات</h1>` + (list.length ? list.map(c => `<div class="card" style="margin-bottom:14px">
+      <div class="row"><b>#${c.id} ${App.esc(c.customer)}</b><span class="tag">${App.esc(c.type_ar)}</span><span class="small muted">${App.esc(c.doctor ? c.doctor.name : "")}${c.type === "video" ? ` · ${App.esc(c.date)} ${App.esc(c.time)}` : ""}</span><span class="spacer"></span><b>${App.fmt(c.price)}</b></div>
+      <p class="small" style="margin:8px 0">${App.esc(c.concern)}${c.notes ? `<br><span class="muted">يستخدم: ${App.esc(c.notes)}</span>` : ""}</p>
+      ${c.analysis ? `<p class="small alert info" style="margin:0 0 8px"><b>تحليل AI مرفق:</b> ${App.esc(c.analysis.summary || "")}</p>` : ""}
+      <div class="grid-2"><div class="field"><label>توصية الطبيبة</label><textarea rows="2" data-note="${c.id}">${App.esc(c.doctor_note || "")}</textarea></div>
+      <div class="field"><label>كيت مقترح</label><select data-kit="${c.id}"><option value="">بدون</option>${catalog.kits.map(k => `<option value="${k.id}" ${c.recommended_kit === k.id ? "selected" : ""}>${App.esc(k.name)}</option>`).join("")}</select>
+      <label style="margin-top:8px">الحالة</label><select data-st="${c.id}">${Object.entries(ST).map(([v, t]) => `<option value="${v}" ${c.status === v ? "selected" : ""}>${t}</option>`).join("")}</select></div></div>
+      <button class="btn sm" data-save="${c.id}">حفظ</button></div>`).join("") : `<p class="muted">لا توجد استشارات</p>`);
+    App.qsa("[data-save]").forEach(b => b.onclick = async () => {
+      const id = b.dataset.save;
+      try { await App.api(`/api/admin/consultations/${id}`, { body: { status: App.qs(`[data-st="${id}"]`).value, doctorNote: App.qs(`[data-note="${id}"]`).value, recommendedKit: App.qs(`[data-kit="${id}"]`).value } }); App.toast("تم الحفظ"); }
+      catch (e) { App.toast(e.message); }
+    });
   },
   async products() {
     cat = await App.api("/api/admin/catalog");
@@ -125,13 +144,15 @@ function productForm(p) {
     <div class="field"><label>الوصف</label><textarea name="desc" rows="2">${App.esc(p.desc)}</textarea></div>
     <div class="field"><label>يناسب</label>${checks("suits", SUITS, p.suits)}</div>
     <div class="field"><label>يحتوي على (مسببات حساسية)</label>${checks("contains", App.ALLERGEN_AR, p.contains)}</div>
+    <div class="field"><label>مناسب لـ</label>${checks("goodFor", CONCERN_TAGS, p.goodFor || [])}</div>
+    <div class="field"><label>الحبوب الفطرية</label><select name="fungal"><option value="" ${p.fungal == null ? "selected" : ""}>غير مؤكد</option><option value="true" ${p.fungal === true ? "selected" : ""}>مناسب غالباً</option><option value="false" ${p.fungal === false ? "selected" : ""}>غير مناسب (يغذي الفطريات)</option></select></div>
     <label style="display:flex;gap:8px"><input type="checkbox" name="active" style="width:auto" ${p.active ? "checked" : ""}> ظاهر في المتجر</label>
     <div class="row" style="margin-top:16px"><button class="btn" value="save">حفظ</button><button class="btn outline" value="cancel" formnovalidate>إلغاء</button></div>`;
   form.onsubmit = async e => {
     if (e.submitter && e.submitter.value === "cancel") return;
     e.preventDefault();
     const f = new FormData(form);
-    const body = { id: f.get("id") || p.id, cat: f.get("cat") || p.cat, brand: f.get("brand"), country: f.get("country"), nameEn: f.get("nameEn"), tiktok: f.get("tiktok"), name: f.get("name"), step: f.get("step"), size: f.get("size"), price: +f.get("price"), stock: +f.get("stock"), desc: f.get("desc"), suits: vals("suits"), contains: vals("contains"), active: !!f.get("active") };
+    const body = { id: f.get("id") || p.id, cat: f.get("cat") || p.cat, brand: f.get("brand"), country: f.get("country"), nameEn: f.get("nameEn"), tiktok: f.get("tiktok"), name: f.get("name"), step: f.get("step"), size: f.get("size"), price: +f.get("price"), stock: +f.get("stock"), desc: f.get("desc"), suits: vals("suits"), contains: vals("contains"), goodFor: vals("goodFor"), fungal: f.get("fungal") === "" ? null : f.get("fungal") === "true", active: !!f.get("active") };
     try { await App.api(isNew ? "/api/admin/products" : `/api/admin/products/${p.id}`, { method: isNew ? "POST" : "PUT", body }); dlg.close(); App.toast("تم الحفظ"); sections.products(); }
     catch (ex) { const el = App.qs("#fErr"); el.textContent = ex.message; el.classList.remove("hidden"); }
   };

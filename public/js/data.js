@@ -32,6 +32,8 @@ const SKIN_CONCERNS = {
   pigment:  { name: "تصبغات وبهتان",    solution: "فيتامين C صباحاً + تقشير لطيف AHA + واقي شمس يومي." },
   dryness:  { name: "جفاف وخشونة",      solution: "هيالورونيك + سيراميد + تقليل الغسولات القوية." },
   pores:    { name: "مسام واسعة ولمعان", solution: "نياسيناميد 10% + جل مرطب خفيف." },
+  hormonal: { name: "حبوب هرمونية", solution: "حبوب عميقة حول الذقن والفك وتزيد مع الدورة: روتين صفاء كعناية مساندة + استشارة طبيبة للعلاج الأساسي." },
+  fungal:   { name: "حبوب فطرية", solution: "حبوب صغيرة متشابهة تحك (غالباً على الجبهة): منتجات خالية من الزيوت والاسترات اللي تغذي الفطريات + استشارة طبيبة." },
   none:     { name: "لا شيء محدد",       solution: "روتين أساسي متوازن." }
 };
 
@@ -331,6 +333,69 @@ KITS.forEach(k => {
   k.tiktok = PRODUCTS.find(p => p.id === pick).tiktok;
 });
 
+
+/* ---------- مناسب لـ (وصف ملاءمة كل منتج) ----------
+   fungal: الحبوب الفطرية (Malassezia) — true: آمن غالباً (بدون زيوت/استرات تغذي الفطريات)،
+           false: يحتوي مكونات قد تغذي الفطريات، null: غير مؤكد (تُراجع مع الطبيبة)
+   goodFor: المشاكل اللي يساعد فيها المنتج
+   ملاحظة: تصنيف تقريبي للعرض مبني على المكونات المعروفة للمنتج، وليس تشخيصاً طبياً. */
+const CONCERN_TAGS = {
+  acne: "الحبوب العادية", hormonal: "الحبوب الهرمونية (عناية مساندة)", fungal: "الحبوب الفطرية",
+  marks: "آثار الحبوب", pigment: "التصبغات والكلف", dryness: "الجفاف", oil: "الدهون واللمعان",
+  pores: "المسام الواسعة", redness: "الاحمرار والتحسس", barrier: "ضعف حاجز البشرة",
+  shine: "لمعان الشعر", frizz: "الهيشان", curls: "تعريف الكيرلي", damage: "الشعر التالف والمصبوغ",
+  heat: "الحماية من الحرارة", oilyScalp: "الفروة الدهنية", hairfall: "تساقط الشعر", sensitiveScalp: "الفروة الحساسة"
+};
+const PRODUCT_TAGS = {
+  s01: [null,  ["dryness","barrier","redness"]],
+  s03: [false, ["pores","oil"]],
+  s04: [true,  ["acne","fungal","pores","oil"]],
+  s27: [false, ["redness","barrier"]],
+  s05: [true,  ["redness","acne","oil"]],
+  s06: [true,  ["dryness","barrier"]],
+  s07: [null,  ["acne","pores","oil"]],
+  s09: [true,  ["dryness","barrier","marks"]],
+  s10: [true,  ["acne","hormonal","pores","oil","marks"]],
+  s11: [true,  ["dryness"]],
+  s12: [null,  ["pigment","marks"]],
+  s13: [true,  ["redness","barrier","acne"]],
+  s14: [null,  ["pigment","marks"]],
+  s15: [false, ["dryness","barrier"]],
+  s16: [null,  ["redness","barrier","dryness"]],
+  s17: [null,  ["dryness","oil"]],
+  s18: [null,  ["oil","acne"]],
+  s20: [null,  ["pigment","redness"]],
+  s21: [null,  ["oil","pigment"]],
+  s22: [null,  ["pigment"]],
+  s23: [null,  ["acne","hormonal","marks"]],
+  s24: [true,  ["acne","hormonal","fungal"]],
+  s25: [true,  ["acne","hormonal"]],
+  s08: [true,  ["pigment","marks","pores"]],
+  s26: [true,  ["acne","hormonal","pores","oil"]],
+  s19: [false, ["dryness"]],
+  h01: [null, ["dryness","shine"]],        h02: [null, ["oilyScalp"]],
+  h03: [null, ["sensitiveScalp"]],         h04: [null, ["curls","frizz"]],
+  h05: [null, ["dryness","shine"]],        h06: [null, ["sensitiveScalp"]],
+  h07: [null, ["damage","dryness"]],       h08: [null, ["damage"]],
+  h09: [null, ["frizz","shine"]],          h13: [null, ["frizz","shine"]],
+  h14: [null, ["shine","dryness","heat"]], h10: [null, ["hairfall","oilyScalp"]],
+  h11: [null, ["curls","frizz"]],          h12: [null, ["heat","frizz"]]
+};
+PRODUCTS.forEach(p => { const t = PRODUCT_TAGS[p.id] || [null, []]; p.fungal = p.cat === "skin" ? t[0] : null; p.goodFor = t[1]; });
+
+/* ---------- الاستشارات ----------
+   أسماء الطبيبات توضيحية لأغراض المشروع. */
+const DOCTORS = [
+  { id: "d1", name: "د. نورة (اسم توضيحي)", title: "استشارية جلدية وتجميل", focus: "الحبوب بأنواعها، الهرمونية والفطرية، والتصبغات", years: 12, langs: "العربية، الإنجليزية", color: "#E3ECE4" },
+  { id: "d2", name: "د. ريم (اسم توضيحي)", title: "أخصائية أمراض جلدية", focus: "البشرة الحساسة والإكزيما والوردية", years: 8, langs: "العربية", color: "#F2D4D2" },
+  { id: "d3", name: "د. هيا (اسم توضيحي)", title: "أخصائية الشعر وفروة الرأس", focus: "تساقط الشعر، الفروة الدهنية والقشرة، الشعر التالف", years: 10, langs: "العربية، الإنجليزية", color: "#E4E0EF" }
+];
+const CONSULT_TYPES = {
+  chat:  { name: "استشارة كتابية", desc: "محادثة مع الطبيبة خلال 24 ساعة، مع إرفاق صور", price: 79, minutes: 0 },
+  video: { name: "استشارة فيديو", desc: "مكالمة فيديو 20 دقيقة في الموعد اللي تختارينه", price: 149, minutes: 20 }
+};
+const CONSULT_TIMES = ["17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"];
+
 const TIER_LABELS = {
   basic: { name: "أساسي", note: "3 منتجات للبداية" },
   full:  { name: "متكامل", note: "الروتين الكامل" },
@@ -338,4 +403,4 @@ const TIER_LABELS = {
 };
 
 
-if (typeof module !== "undefined") module.exports = { BRAND, SKIN_TYPES, SKIN_CONCERNS, HAIR_TYPES, ALLERGENS, PRODUCTS, KITS, TIER_LABELS };
+if (typeof module !== "undefined") module.exports = { BRAND, SKIN_TYPES, SKIN_CONCERNS, HAIR_TYPES, ALLERGENS, PRODUCTS, KITS, TIER_LABELS, CONCERN_TAGS, DOCTORS, CONSULT_TYPES, CONSULT_TIMES };

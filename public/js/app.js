@@ -77,7 +77,7 @@ const App = (() => {
     menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`
   };
   function layout(active) {
-    const links = [["index.html", "الرئيسية", "home"], ["quiz.html", "حددي روتينك", "quiz"], ["kits.html", "الكيتات", "kits"], ["account.html", "حسابي", "account"]];
+    const links = [["index.html", "الرئيسية", "home"], ["quiz.html", "حددي روتينك", "quiz"], ["analysis.html", "تحليل البشرة", "analysis"], ["consult.html", "استشيري طبيبة", "consult"], ["kits.html", "الكيتات", "kits"], ["account.html", "حسابي", "account"]];
     const header = document.createElement("header");
     header.className = "site-header";
     header.innerHTML = `<div class="container bar">
@@ -94,7 +94,7 @@ const App = (() => {
     footer.className = "site-footer";
     footer.innerHTML = `<div class="container"><div class="cols">
       <div><img src="assets/logo.svg" alt="عنايتي" style="height:44px"><p class="muted small" style="margin-top:10px">كيتات عناية شخصية جاهزة، مبنية على احتياجك ويتجدد روتينك كل شهر.</p></div>
-      <div><h4>تسوقي</h4><a href="quiz.html">حددي روتينك</a><a href="kits.html?cat=skin">كيتات البشرة</a><a href="kits.html?cat=hair">كيتات الشعر</a></div>
+      <div><h4>تسوقي</h4><a href="quiz.html">حددي روتينك</a><a href="analysis.html">تحليل البشرة بالذكاء الاصطناعي</a><a href="consult.html">استشارة طبيبة جلدية</a><a href="kits.html?cat=skin">كيتات البشرة</a><a href="kits.html?cat=hair">كيتات الشعر</a></div>
       <div><h4>حسابي</h4><a href="account.html">طلباتي</a><a href="account.html#subs">اشتراكي</a><a href="cart.html">السلة</a></div>
       <div><h4>تابعينا</h4><a href="https://www.tiktok.com/@inayati.sa" target="_blank" rel="noopener">تيك توك</a><a href="#">انستقرام</a><a href="mailto:hello@inayati.sa">hello@inayati.sa</a></div>
       </div><p class="small muted center" style="margin-top:26px">© ${new Date().getFullYear()} عنايتي — مشروع IT473 أنظمة التجارة الإلكترونية · الدفع في هذا الموقع تجريبي</p></div>`;
@@ -112,5 +112,41 @@ const App = (() => {
   const ALLERGEN_AR = { fragrance: "عطور", alcohol: "كحول", nuts: "زيوت مكسرات" };
   const dateAr = d => new Date(d.replace(" ", "T") + (d.length > 10 ? "Z" : "")).toLocaleDateString("ar-SA-u-nu-latn-ca-gregory", { year: "numeric", month: "long", day: "numeric" });
 
-  return { api, catalog, me, cart, layout, toast, fmt, esc, qs, qsa, params, kitSVG, kitCard, productImg, tiktokIcon, TIER_AR, STEP_AR, ALLERGEN_AR, dateAr };
+  /* "مناسب لـ" لكل منتج */
+  function suitabilityHTML(p) {
+    const tags = (typeof CONCERN_TAGS !== "undefined" ? CONCERN_TAGS : {});
+    const chips = (p.goodFor || []).map(k => tags[k] ? `<span class="tag ${k === "hormonal" || k === "fungal" ? "blush" : "sage"}">${esc(tags[k])}</span>` : "").join(" ");
+    let fungal = "";
+    if (p.cat === "skin") fungal = p.fungal === true ? `<div class="fungal ok">✓ مناسب للحبوب الفطرية غالباً (بدون زيوت واسترات تغذي الفطريات)</div>`
+      : p.fungal === false ? `<div class="fungal no">✗ غير مناسب للحبوب الفطرية: فيه مكونات ممكن تغذي الفطريات</div>`
+      : `<div class="fungal unk">؟ الحبوب الفطرية: غير مؤكد، اسألي الطبيبة قبل الاستخدام</div>`;
+    return (chips ? `<div class="suit"><span class="small muted">مناسب لـ:</span> ${chips}</div>` : "") + fungal;
+  }
+  /* تصغير الصورة في المتصفح قبل إرسالها (أسرع وأخف وما نرسل الصورة الأصلية) */
+  function downscaleImage(file, max = 1024) {
+    return new Promise((resolve, reject) => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        const dataUrl = c.toDataURL("image/jpeg", 0.85);
+        resolve({ dataUrl, base64: dataUrl.split(",")[1], mediaType: "image/jpeg" });
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("ما قدرنا نقرأ الصورة، جربي صورة JPG أو PNG")); };
+      img.src = url;
+    });
+  }
+  const cardFieldsHTML = (prefix = "c") => `
+    <div class="test-cards">🔒 <b>دفع تجريبي</b> — لا يتم خصم أي مبلغ. بطاقة ناجحة: <code>4242 4242 4242 4242</code> · مرفوضة: <code>4000 0000 0000 0002</code></div>
+    <div class="field"><label for="${prefix}Num">رقم البطاقة</label><input id="${prefix}Num" class="ltr" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000"></div>
+    <div class="grid-2"><div class="field"><label for="${prefix}Exp">تاريخ الانتهاء</label><input id="${prefix}Exp" class="ltr" placeholder="MM/YY" autocomplete="cc-exp"></div>
+    <div class="field"><label for="${prefix}Cvv">CVV</label><input id="${prefix}Cvv" class="ltr" inputmode="numeric" maxlength="4" autocomplete="cc-csc"></div></div>`;
+  function wireCardFields(prefix = "c") {
+    qs(`#${prefix}Num`).oninput = e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim(); };
+    qs(`#${prefix}Exp`).oninput = e => { let v = e.target.value.replace(/\D/g, "").slice(0, 4); if (v.length > 2) v = v.slice(0, 2) + "/" + v.slice(2); e.target.value = v; };
+    return () => ({ method: "card", cardNumber: qs(`#${prefix}Num`).value, expiry: qs(`#${prefix}Exp`).value, cvv: qs(`#${prefix}Cvv`).value });
+  }
+
+  return { api, catalog, suitabilityHTML, downscaleImage, cardFieldsHTML, wireCardFields, me, cart, layout, toast, fmt, esc, qs, qsa, params, kitSVG, kitCard, productImg, tiktokIcon, TIER_AR, STEP_AR, ALLERGEN_AR, dateAr };
 })();

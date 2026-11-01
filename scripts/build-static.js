@@ -11,8 +11,7 @@ fs.cpSync(src, out, { recursive: true });
 for (const f of fs.readdirSync(out).filter(f => f.endsWith(".html"))) {
   const p = path.join(out, f);
   let html = fs.readFileSync(p, "utf8");
-  html = html.replace('<script src="js/engine.js"></script>',
-    '<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script>');
+  html = html.replace('<script src="js/engine.js"></script>', '<script src="js/engine.js"></script><script src="js/mock-api.js"></script>');
   html = html.replace("<body>", '<body>\n<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>');
   fs.writeFileSync(p, html);
 }

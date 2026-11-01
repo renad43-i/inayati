@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>تحليل البشرة | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<main class="container" style="max-width:960px;padding:36px 0">
+  <div class="section-head" style="margin-bottom:22px">
+    <span class="eyebrow">تحليل بالذكاء الاصطناعي</span>
+    <h1>صوّري بشرتك، ونقترح روتينك</h1>
+    <p class="muted">ارفعي صورة لوجهك، والذكاء الاصطناعي يوصف نوع بشرتك والمشاكل الظاهرة (حبوب عادية أو هرمونية أو فطرية، تصبغات، جفاف…) ويقترح لك الكيت المناسب. وإذا شاف شي يحتاج طبيبة، ينصحك بالاستشارة.</p>
+  </div>
+
+  <div id="unavailable" class="alert info hidden"></div>
+
+  <form id="form" class="card stack">
+    <div>
+      <h3>1. صورتك</h3>
+      <label class="upload-box" id="drop" for="photo">
+        <img id="preview" alt="" class="hidden">
+        <span id="dropText"><b>اضغطي لاختيار صورة</b> أو اسحبيها هنا<br><span class="small muted">صورة أمامية للوجه، بإضاءة طبيعية، بدون مكياج أو فلتر</span></span>
+      </label>
+      <input type="file" id="photo" accept="image/jpeg,image/png,image/webp" class="hidden">
+    </div>
+    <div class="grid-2">
+      <div class="field"><label for="budget">2. ميزانيتك الشهرية</label>
+        <select id="budget"><option value="low">حتى 250 ر.س</option><option value="mid" selected>من 250 إلى 400 ر.س</option><option value="high">أكثر من 400 ر.س</option></select></div>
+      <div class="field"><label>3. حساسية من (اختياري)</label>
+        <div class="row" id="allergies">
+          <label class="small" style="display:flex;gap:6px;margin:0"><input type="checkbox" value="fragrance" style="width:auto">العطور</label>
+          <label class="small" style="display:flex;gap:6px;margin:0"><input type="checkbox" value="alcohol" style="width:auto">الكحول</label>
+          <label class="small" style="display:flex;gap:6px;margin:0"><input type="checkbox" value="nuts" style="width:auto">زيوت المكسرات</label>
+        </div></div>
+    </div>
+    <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400"><input type="checkbox" id="consent" style="width:auto;margin-top:6px">
+      <span class="small">أوافق على إرسال الصورة للتحليل بالذكاء الاصطناعي. <b>ما نحفظ الصورة</b>؛ نحفظ النتيجة فقط في حسابك إذا كنتِ مسجلة.</span></label>
+    <div id="err" class="alert error hidden"></div>
+    <div class="row"><button class="btn" id="go" disabled>حللي بشرتي</button><span class="small muted" id="status"></span></div>
+    <p class="disclaimer">التحليل يساعدك تختارين روتين عناية، <b>وليس تشخيصاً طبياً</b>. إذا عندك حبوب مؤلمة أو منتشرة، أو تغير مفاجئ في بشرتك، استشيري طبيبة.</p>
+  </form>
+
+  <div id="result" class="hidden stack" style="margin-top:22px"></div>
+</main>
+<script>
+App.layout("analysis");
+const SKIN_AR = { dry: "جافة", oily: "دهنية", combo: "مختلطة", normal: "عادية", sensitive: "حساسة", unknown: "غير واضح من الصورة" };
+const KEY_AR = { acne: "حبوب", hormonal: "حبوب هرمونية", fungal: "حبوب فطرية (محتملة)", pigment: "تصبغات", marks: "آثار حبوب", dryness: "جفاف", pores: "مسام واسعة", redness: "احمرار", oil: "دهون ولمعان", none: "لا شيء واضح" };
+const CONF_AR = { low: "احتمال بسيط", medium: "واضح نوعاً ما", high: "واضح" };
+let image = null;
+
+const photo = App.qs("#photo"), drop = App.qs("#drop");
+async function pick(file) {
+  if (!file) return;
+  App.qs("#err").classList.add("hidden");
+  try {
+    image = await App.downscaleImage(file);
+    App.qs("#preview").src = image.dataUrl; App.qs("#preview").classList.remove("hidden");
+    App.qs("#dropText").innerHTML = `<span class="small muted">اضغطي لتغيير الصورة</span>`;
+  } catch (e) { image = null; showErr(e.message); }
+  refresh();
+}
+photo.onchange = () => pick(photo.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("drag"); };
+drop.ondragleave = () => drop.classList.remove("drag");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("drag"); pick(e.dataTransfer.files[0]); };
+App.qs("#consent").onchange = refresh;
+let available = true;
+function refresh() { App.qs("#go").disabled = !(image && App.qs("#consent").checked && available); }
+function showErr(m) { const e = App.qs("#err"); e.textContent = m; e.classList.remove("hidden"); }
+
+App.api("/api/analyze/status").then(s => {
+  if (s.available) return;
+  available = false; refresh();
+  const u = App.qs("#unavailable");
+  u.innerHTML = `<b>التحليل الذكي غير مفعّل في هذه النسخة.</b> في النسخة الكاملة يشتغل بإضافة مفتاح Anthropic API للخادم. تقدرين الحين <a href="quiz.html">تحددين روتينك بالأسئلة</a> أو <a href="consult.html">تحجزين استشارة مع طبيبة</a>.`;
+  u.classList.remove("hidden");
+}).catch(() => {});
+
+App.qs("#form").onsubmit = async e => {
+  e.preventDefault();
+  if (!image) return;
+  const btn = App.qs("#go"); btn.disabled = true; App.qs("#err").classList.add("hidden");
+  App.qs("#status").textContent = "جاري تحليل الصورة… (ممكن ياخذ نص دقيقة)";
+  try {
+    const allergies = App.qsa("#allergies input:checked").map(i => i.value);
+    const [out, cat] = await Promise.all([
+      App.api("/api/analyze", { body: { image: image.base64, mediaType: image.mediaType, budget: App.qs("#budget").value, allergies } }),
+      App.catalog()
+    ]);
+    try { sessionStorage.setItem("inayati_last_analysis", JSON.stringify(out.analysis)); sessionStorage.setItem("inayati_last_rec", JSON.stringify({ answers: out.answers, res: out.recommendation })); } catch {}
+    render(out, cat);
+  } catch (ex) { showErr(ex.message); }
+  finally { App.qs("#status").textContent = ""; refresh(); }
+};
+
+function render({ analysis: a, recommendation: res }, cat) {
+  const box = App.qs("#result"); box.classList.remove("hidden");
+  const concerns = Array.isArray(a.concerns) ? a.concerns : [];
+  box.innerHTML = `
+    ${a.photoQuality === "poor" ? `<div class="alert info"><b>الصورة مو واضحة كفاية:</b> ${App.esc(a.qualityNote || "")} النتيجة تقريبية، جربي صورة ثانية بإضاءة نهار.</div>` : ""}
+    <div class="card">
+      <h2 style="font-size:1.4rem">نتيجة التحليل</h2>
+      <p>${App.esc(a.summary || "")}</p>
+      <div class="ai-grid">
+        <div><h4>نوع البشرة المتوقع</h4><p class="price">${SKIN_AR[a.skinType] || SKIN_AR.unknown}</p>
+          <h4>ملاحظات</h4><ul class="small">${(a.observations || []).map(o => `<li>${App.esc(o)}</li>`).join("") || "<li>لا يوجد</li>"}</ul></div>
+        <div><h4>اللي ظهر في الصورة</h4>${concerns.length ? `<ul class="small" style="padding-inline-start:18px">${concerns.map(c => `<li><b>${KEY_AR[c.key] || App.esc(c.key)}</b><span class="conf ${App.esc(c.confidence)}">${CONF_AR[c.confidence] || ""}</span><br><span class="muted">${App.esc(c.note || "")}</span></li>`).join("")}</ul>` : `<p class="small muted">ما ظهرت مشاكل واضحة.</p>`}</div>
+      </div>
+    </div>
+    ${a.seeDoctor || res.consult ? `<div class="consult-cta"><div><b>ننصحك باستشارة طبيبة جلدية</b><div class="small">${App.esc(a.doctorReason || res.consultWhy || "")}</div></div>
+      <a class="btn dark" href="consult.html?from=analysis">احجزي استشارة</a></div>` : ""}
+    ${res.kits.map(r => { const k = cat.kMap[r.kitId]; return `<div class="card" style="border-top:6px solid ${k.color}">
+      <span class="tag sage">${App.TIER_AR[r.tier]}</span><h2 style="margin:6px 0">${App.esc(k.name)}</h2><p>${App.esc(r.why)}</p>
+      <div class="mini-products">${r.productIds.map(id => { const p = cat.pMap[id]; return `<div class="mini-product"><span class="prod-img">${App.productImg(p)}</span><span class="brand-name" dir="ltr">${App.esc(p.brand)}</span><span class="small">${App.esc(p.name)}</span></div>`; }).join("")}</div>
+      ${r.swaps.length ? `<p class="small alert info" style="margin:0 0 10px">${r.swaps.map(s => s.to ? `استبدلنا «${App.esc(cat.pMap[s.from].name)}» بـ«${App.esc(cat.pMap[s.to].name)}» (${s.reason.map(x => Engine.REASON_AR[x]).join("، ")}).` : `حذفنا «${App.esc(cat.pMap[s.from].name)}» لعدم وجود بديل مناسب.`).join("<br>")}</p>` : ""}
+      <div class="row"><span class="price">${App.fmt(r.price)}</span><span class="spacer"></span>
+        <a class="btn outline sm" href="kit.html?id=${k.id}&tier=${r.tier}&rec=0">التفاصيل</a>
+        <button class="btn sm" data-add="${k.id}">اشتركي شهرياً</button></div></div>`; }).join("")}
+    <p class="disclaimer">التحليل يساعدك تختارين روتين عناية وليس تشخيصاً طبياً. تقدرين تعدلين النتيجة من <a href="quiz.html">أسئلة الاختبار</a>.</p>`;
+  App.qsa("[data-add]").forEach(b => b.onclick = () => {
+    const r = res.kits.find(x => x.kitId === b.dataset.add);
+    App.cart.add({ kitId: r.kitId, tier: r.tier, productIds: r.productIds, purchaseType: "subscription", qty: 1 });
+    location.href = "cart.html";
+  });
+  box.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>
