@@ -35,13 +35,14 @@
       <option value="">الكل</option><option value="0-50">حتى 50 ر.س</option><option value="50-100">50 – 100</option><option value="100-200">100 – 200</option><option value="200-9999">أكثر من 200</option></select></div>
     <div class="field"><label for="fSort">الترتيب</label><select id="fSort"><option value="match">الأنسب لمشكلتك</option><option value="asc">السعر: الأقل أولاً</option><option value="desc">السعر: الأعلى أولاً</option><option value="brand">البراند (أ-ي)</option></select></div>
     <div class="field"><label for="fSearch">بحث</label><input id="fSearch" placeholder="اسم منتج أو براند"></div>
+    <label class="preg-filter" for="fPreg"><input type="checkbox" id="fPreg"> آمن للحامل والمرضع</label>
   </div>
   <p class="small muted" id="count" style="margin:12px 0"></p>
   <div class="shop-grid" id="grid"></div>
 </main>
 <script>
 App.layout("shop");
-const st = { sec: App.params.get("section") || "skin", problem: App.params.get("problem") || "", cat: App.params.get("category") || "", country: App.params.get("country") || "", brand: App.params.get("brand") || "", active: App.params.get("active") || "", price: "", sort: "match", q: "" };
+const st = { sec: App.params.get("section") || "skin", problem: App.params.get("problem") || "", cat: App.params.get("category") || "", country: App.params.get("country") || "", brand: App.params.get("brand") || "", active: App.params.get("active") || "", preg: App.params.get("preg") === "1", price: "", sort: "match", q: "" };
 let C;
 const flag = c => (c || "").split(" ")[0];
 
@@ -116,6 +117,7 @@ function draw() {
   // القائمة
   let list = sol ? sol.list.slice() : C.products.filter(p => p.cat === st.sec);
   if (st.active) list = list.filter(p => activesOf(p).includes(st.active));
+  if (st.preg) list = list.filter(p => !Engine.pregnancyUnsafe(p));
   if (st.cat) list = list.filter(p => p.category === st.cat);
   if (st.country) list = list.filter(p => p.country === st.country);
   if (st.brand) list = list.filter(p => p.brand === st.brand);
@@ -132,7 +134,7 @@ function draw() {
 }
 function sync() {
   const q = new URLSearchParams();
-  q.set("section", st.sec); if (st.problem) q.set("problem", st.problem); if (st.cat) q.set("category", st.cat); if (st.country) q.set("country", st.country); if (st.brand) q.set("brand", st.brand); if (st.active) q.set("active", st.active);
+  q.set("section", st.sec); if (st.problem) q.set("problem", st.problem); if (st.cat) q.set("category", st.cat); if (st.country) q.set("country", st.country); if (st.brand) q.set("brand", st.brand); if (st.active) q.set("active", st.active); if (st.preg) q.set("preg", "1");
   history.replaceState(null, "", "shop.html?" + q.toString());
   draw();
 }
@@ -142,6 +144,8 @@ App.qs("#fCountry").onchange = e => { st.country = e.target.value; st.brand = ""
 App.qs("#fBrand").onchange = e => { st.brand = e.target.value; sync(); };
 App.qs("#fPrice").onchange = e => { st.price = e.target.value; draw(); };
 App.qs("#fSort").onchange = e => { st.sort = e.target.value; draw(); };
+App.qs("#fPreg").checked = st.preg;
+App.qs("#fPreg").onchange = e => { st.preg = e.target.checked; sync(); };
 let t; App.qs("#fSearch").oninput = e => { clearTimeout(t); t = setTimeout(() => { st.q = e.target.value.trim(); draw(); }, 200); };
 App.catalog().then(c => {
   C = c;

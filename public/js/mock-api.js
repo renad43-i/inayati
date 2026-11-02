@@ -47,15 +47,17 @@
           if ((s.goodFor || []).includes("dandruff") && !(p.goodFor || []).includes("dandruff")) p.goodFor = [...(p.goodFor || []), "dandruff"]; });
         mem.m2026_11 = true;
       }
-      if (!mem.m2026_11c) {
+      if (!mem.m2026_11d) {
         const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
         mem.products.forEach(p => { const s = byId[p.id]; if (!s) return;
           if (s.demo) p.active = false;
+          if (s.category === "eye" && p.category === "treatment") p.category = "eye";
+          ["eyes", "splitEnds"].forEach(g => { if ((s.goodFor || []).includes(g) && !(p.goodFor || []).includes(g)) p.goodFor = [...(p.goodFor || []), g]; });
           if (p.brand === "LION PAIR" && p.nameEn === "Acne Care Cream") Object.assign(p, { nameEn: s.nameEn, name: s.name, size: s.size, price: s.price, goodFor: s.goodFor });
           if ((s.goodFor || []).includes("glow") && !(p.goodFor || []).includes("glow")) p.goodFor = [...(p.goodFor || []), "glow"]; });
         const haveK = new Set(mem.kits.map(k => k.id));
         KITS.forEach(k => { if (!haveK.has(k.id)) mem.kits.push({ ...clone(k), active: true }); });
-        mem.m2026_11c = true;
+        mem.m2026_11d = true;
       }
       if (!mem.m2026_11b) {
         const L = "ء-ي", re = new RegExp(`(?<![${L}])((?:و|ف|ب|ل)?(?:ال|لل)?)كيت(ات|ين|ك)?(?![${L}])`, "g");
