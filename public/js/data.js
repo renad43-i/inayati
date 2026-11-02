@@ -473,7 +473,8 @@ const SHOP_BRANDS = {
   "SKIN1004": ["KR", "#F5EFE3", "#FFFFFF", "#8B6B3E"],
   "SOME BY MI": ["KR", "#E3F1E4", "#7DBE8A", "#2F7A45"],
   "WRD": ["SA", "#F7E6E6", "#B2475A", "#7A2F3D"],
-  "رؤى الطبيعة": ["SA", "#F3EBDD", "#6D8F4E", "#4E6B33"]
+  "رؤى الطبيعة": ["SA", "#F3EBDD", "#6D8F4E", "#4E6B33"],
+  "IUNIK": ["KR", "#DCEBF4", "#C0C6CC", "#2E4A62"], "EQQUALBERRY": ["KR", "#F2F5F2", "#FFFFFF", "#2E7D4F"]
 };
 const SHOP_ROWS = [
   // ---------------- 🇺🇸 أمريكا — شعر ----------------
@@ -746,7 +747,11 @@ const SHOP_ROWS = [
   ["REDKEN", "shampoo", "Acidic Bonding Concentrate Shampoo", "شامبو ريدكن أسيديك بوندنغ", "300 مل", 129, "bottle", ["damage"]],
   ["GIOVANNI", "shampoo", "Tea Tree Triple Treat Invigorating Shampoo", "شامبو جيوفاني بشجرة الشاي", "250 مل", 55, "bottle", ["oilyScalp", "dandruff"]],
   ["AS I AM", "curly", "Curling Jelly", "جل آز آي آم كيرلنغ جيلي", "227 غ", 59, "jar", ["curls", "frizz"]],
-  ["L'ORÉAL PARIS ELVIVE", "curly", "Dream Lengths No Haircut Cream Leave-In", "كريم إلفيف دريم لينثس بدون شطف", "200 مل", 39, "tube", ["damage", "frizz"]]
+  ["L'ORÉAL PARIS ELVIVE", "curly", "Dream Lengths No Haircut Cream Leave-In", "كريم إلفيف دريم لينثس بدون شطف", "200 مل", 39, "tube", ["damage", "frizz"]],
+  ["IUNIK", "serum", "Beta-Glucan Power Moisture Serum", "سيروم آيونيك بيتا جلوكان للترطيب والتهدئة", "50 مل", 79, "dropper", ["dryness", "redness", "glow"]],
+  ["CENTELLIAN24", "moisturizer", "Expert Madeca Cream Active Renew PDRN", "كريم سنتيليان24 إكسبرت ماديكا بالـ PDRN للتجديد", "50 مل", 149, "tube", ["barrier", "glow", "dryness"]],
+  ["NUMBUZIN", "serum", "No.5+ Vitamin Concentrated Serum", "سيروم نمبوزين رقم 5+ بفيتامين سي والنياسيناميد والجلوتاثيون", "30 مل", 99, "dropper", ["pigment", "marks", "glow"]],
+  ["EQQUALBERRY", "treatment", "Swimming Pool Moisture Exfoliating Toner", "تونر إيكوالبيري سويمنق بول المقشر المرطب بالهيالورونيك والبانثينول", "155 مل", 79, "bottle", ["dryness", "glow", "pores"]]
 ];
 const STEP_OF = { shampoo: "shampoo", conditioner: "conditioner", mask: "mask", oil: "oil", hairserum: "oil", treatment: "treatment", styling: "styler", mousse: "styler", heat: "protect", curly: "styler",
   cleanser: "cleanser", moisturizer: "moisturizer", serum: "serum", spf: "spf" };
@@ -761,7 +766,7 @@ let shopSeq = 0;
 for (const r of SHOP_ROWS) {
   const [brand, category, nameEn, name, size, price, shape, goodFor, colors, demo] = r;
   const b = SHOP_BRANDS[brand];
-  const cat = HAIR_CATS.includes(category) && !(category === "treatment" && ["SANA", "MEISHOKU", "ISHIZAWA LAB", "PDC", "LION PAIR", "MEDICUBE", "ABIB", "HARUHARU WONDER", "SUMMER FRIDAYS", "VASELINE", "THE ORDINARY", "CERAVE", "AVÈNE", "CAUDALIE", "NUXE", "EPII", "COSRX", "PAULA'S CHOICE", "ROUND LAB", "SKIN1004", "KLAIRS"].includes(brand)) ? "hair" : "skin";
+  const cat = HAIR_CATS.includes(category) && !(category === "treatment" && ["SANA", "MEISHOKU", "ISHIZAWA LAB", "PDC", "LION PAIR", "MEDICUBE", "ABIB", "HARUHARU WONDER", "SUMMER FRIDAYS", "VASELINE", "THE ORDINARY", "CERAVE", "AVÈNE", "CAUDALIE", "NUXE", "EPII", "COSRX", "PAULA'S CHOICE", "ROUND LAB", "SKIN1004", "KLAIRS", "EQQUALBERRY"].includes(brand)) ? "hair" : "skin";
   const [body, cap, accent] = colors || [b[1], b[2], b[3]];
   const id = "x" + String(++shopSeq).padStart(3, "0");
   PRODUCTS.push({
