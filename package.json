@@ -1,7 +1,7 @@
 {
-  "name": "inayati",
+  "name": "renaura",
   "version": "1.0.0",
-  "description": "عنايتي — منصة كيتات العناية الشخصية (IT473)",
+  "description": "رينورا — منصة كيتات العناية الشخصية (IT473)",
   "main": "server.js",
   "directories": {
     "doc": "docs"
