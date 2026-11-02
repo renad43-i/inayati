@@ -370,6 +370,17 @@ a.card:hover, .kit-card:hover, .shop-card:hover { transform: translateY(-3px); b
 .b-opt .b-img svg { width: 52px; }
 .b-opt .brand-name { text-align: center; font-size: .66rem; }
 .b-opt .b-name { line-height: 1.4; }
+.b-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.b-inc { display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; font-weight: 500; }
+.b-inc input { width: 18px; height: 18px; accent-color: var(--sage); margin: 0; }
+.b-step { padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--white); }
+.b-step.off { background: transparent; }
+.b-step.off .b-opts { opacity: .6; }
+.b-cell { position: relative; min-width: 0; display: flex; }
+.b-cell .b-opt { width: 100%; }
+.b-x { position: absolute; top: -8px; inset-inline-end: -6px; z-index: 2; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--white); color: var(--muted); cursor: pointer; font-size: .8rem; line-height: 1; display: grid; place-items: center; padding: 0; }
+.b-x:hover { color: var(--danger); border-color: var(--danger); }
+.b-x:focus-visible, .b-opt:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
 .b-star { position: absolute; top: -9px; inset-inline-start: 6px; background: var(--sage); color: #fff; border-radius: 99px; font-size: .68rem; padding: 1px 8px; font-weight: 700; }
 
 .hero-art.real { background: none; position: relative; display: block; padding: 0; }

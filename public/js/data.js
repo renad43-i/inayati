@@ -397,7 +397,7 @@ const COUNTRIES = {
   NL: "🇬🇧🇳🇱 بريطانيا وهولندا", DE: "🇩🇪 ألمانيا"
 };
 const CATEGORIES = {
-  hair: { shampoo: "شامبو", conditioner: "بلسم", mask: "ماسكات", oil: "زيوت", treatment: "علاجات", styling: "تصفيف", heat: "حماية من الحرارة", curly: "كيرلي وكِنكي" },
+  hair: { shampoo: "شامبو", conditioner: "بلسم", mask: "ماسكات", hairserum: "سيروم الشعر", oil: "زيوت", treatment: "علاجات", styling: "تصفيف", mousse: "موس", heat: "حماية من الحرارة", curly: "كيرلي وكِنكي" },
   skin: { cleanser: "غسول", moisturizer: "مرطبات", serum: "سيرومات", spf: "واقي شمس", treatment: "علاجات العناية بالوجه" }
 };
 /* البراند: [البلد، لون العبوة، لون الغطاء، لون الكتابة] */
@@ -510,7 +510,7 @@ const SHOP_ROWS = [
   ["UMBERTO GIANNINI", "conditioner", "Banana Butter Nourishing Conditioner", "بلسم أومبرتو جيانيني بزبدة الموز", "250 مل", 59, "bottle", ["dryness"], ["#FBE9A6", "#F2C230", "#5D4037"]],
   ["UMBERTO GIANNINI", "mask", "Banana Butter Nourishing Super Mask", "ماسك أومبرتو جيانيني بزبدة الموز", "230 مل", 69, "jar", ["dryness", "damage"], ["#FBE9A6", "#F2C230", "#5D4037"]],
   ["UMBERTO GIANNINI", "curly", "Curl Jelly Curl Defining Gel", "جل أومبرتو جيانيني كيرل جيلي", "200 مل", 59, "tube", ["curls", "frizz"], ["#E1F5FE", "#0277BD", "#01579B"]],
-  ["UMBERTO GIANNINI", "curly", "Curl Whip Curl Defining Mousse", "موس أومبرتو جيانيني كيرل ويب", "200 مل", 59, "spray", ["curls"], ["#FCE4EC", "#D81B60", "#880E4F"]],
+  ["UMBERTO GIANNINI", "mousse", "Curl Whip Curl Defining Mousse", "موس أومبرتو جيانيني كيرل ويب", "200 مل", 59, "spray", ["curls"], ["#FCE4EC", "#D81B60", "#880E4F"]],
   ["UMBERTO GIANNINI", "curly", "Curl Leave-In Conditioner", "بلسم أومبرتو جيانيني للكيرلي بدون شطف", "200 مل", 59, "bottle", ["curls", "dryness"], ["#EDE7F6", "#5E35B1", "#311B92"]],
   ["UMBERTO GIANNINI", "shampoo", "Glossing Shampoo", "شامبو أومبرتو جيانيني للمعان", "250 مل", 55, "bottle", ["shine"], ["#F5F5F5", "#9E9E9E", "#424242"]],
   ["UMBERTO GIANNINI", "conditioner", "Glossing Conditioner", "بلسم أومبرتو جيانيني للمعان", "250 مل", 55, "bottle", ["shine"], ["#F5F5F5", "#9E9E9E", "#424242"]],
@@ -630,13 +630,22 @@ const SHOP_ROWS = [
   ["SYOSS", "conditioner", "Keratin Conditioner", "بلسم سيوس بالكيراتين", "500 مل", 29, "bottle", ["damage"]],
   ["NIVEA", "moisturizer", "Soft Moisturising Cream", "كريم نيفيا سوفت المرطب", "100 مل", 19, "jar", ["dryness"]],
   ["EUCERIN", "spf", "Sun Oil Control Gel-Cream SPF50+", "واقي يوسيرين أويل كنترول", "50 مل", 99, "tube", ["oil", "acne"]],
-  ["EUCERIN", "serum", "Hyaluron-Filler Serum", "سيروم يوسيرين هيالورون فيلر", "30 مل", 179, "dropper", ["dryness"]]
+  ["EUCERIN", "serum", "Hyaluron-Filler Serum", "سيروم يوسيرين هيالورون فيلر", "30 مل", 179, "dropper", ["dryness"]],
+  // ---------------- موس، حماية من الحرارة، وسيروم الشعر ----------------
+  ["CANTU", "mousse", "Shea Butter Wave Whip Curling Mousse", "موس كانتو ويف ويب للكيرلي", "248 مل", 45, "spray", ["curls", "frizz"]],
+  ["SHEAMOISTURE", "mousse", "Coconut & Hibiscus Frizz-Free Curl Mousse", "موس شيا مويستشر للكيرلي ضد الهيشان", "213 مل", 65, "spray", ["curls", "frizz"]],
+  ["LIVING PROOF", "mousse", "Full Thickening Mousse", "موس ليفينغ بروف لكثافة الشعر الخفيف", "149 غ", 139, "spray", ["shine"]],
+  ["KÉRASTASE", "heat", "Résistance Ciment Thermique", "كريم كيراستاس سيمنت ثيرميك للحماية من الحرارة", "150 مل", 165, "tube", ["heat", "damage"]],
+  ["L'ORÉAL PROFESSIONNEL", "heat", "Absolut Repair 10-in-1 Spray", "بخاخ لوريال بروفيشنال أبسولوت ريبير 10 في 1", "190 مل", 99, "spray", ["heat", "damage"]],
+  ["OLAPLEX", "heat", "No.9 Bond Protector Nourishing Hair Serum", "سيروم أولابلكس رقم 9 للحماية من الحرارة", "90 مل", 129, "pump", ["heat", "frizz", "shine"]],
+  ["THE ORDINARY", "hairserum", "Multi-Peptide Serum for Hair Density", "سيروم ذا أوردينري للكثافة", "60 مل", 79, "dropper", ["hairfall"]],
+  ["KÉRASTASE", "hairserum", "Genesis Sérum Anti-Chute Fortifiant", "سيروم كيراستاس جينيسيس ضد التساقط", "90 مل", 249, "dropper", ["hairfall"]]
 ];
-const STEP_OF = { shampoo: "shampoo", conditioner: "conditioner", mask: "mask", oil: "oil", treatment: "treatment", styling: "styler", heat: "protect", curly: "styler",
+const STEP_OF = { shampoo: "shampoo", conditioner: "conditioner", mask: "mask", oil: "oil", hairserum: "oil", treatment: "treatment", styling: "styler", mousse: "styler", heat: "protect", curly: "styler",
   cleanser: "cleanser", moisturizer: "moisturizer", serum: "serum", spf: "spf" };
 const CATEGORY_DESC = {
   shampoo: "شامبو ينظف الشعر وفروة الرأس.", conditioner: "بلسم يرطب الشعر ويسهل تسريحه.", mask: "ماسك عناية مكثفة مرة أو مرتين بالأسبوع.",
-  oil: "زيت أو سيروم يعطي الشعر لمعة ونعومة.", treatment: "علاج عناية مركّز.", styling: "منتج تصفيف للشعر.", heat: "يحمي الشعر من حرارة الاستشوار والمكواة.",
+  oil: "زيت أو سيروم يعطي الشعر لمعة ونعومة.", treatment: "علاج عناية مركّز.", styling: "منتج تصفيف للشعر.", heat: "يحمي الشعر من حرارة الاستشوار والمكواة.", mousse: "موس خفيف يعرّف التموجات ويعطي الشعر حجم بدون ثقل.", hairserum: "سيروم للشعر أو الفروة يعالج مشكلة محددة.",
   curly: "منتج مخصص للشعر الكيرلي والكِنكي: ترطيب وتعريف للتموجات.", cleanser: "غسول ينظف البشرة.", moisturizer: "مرطب يحافظ على رطوبة البشرة.",
   serum: "سيروم مركّز يعالج مشكلة محددة.", spf: "واقي شمس للحماية اليومية من الأشعة."
 };
