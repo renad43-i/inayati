@@ -44,6 +44,7 @@
         { v: "pigment", t: "تصبغات وكلف وبهتان" },
         { v: "dryness", t: "جفاف وخشونة" },
         { v: "pores", t: "مسام واسعة ولمعان" },
+        { v: "glow", t: "بهتان وأبي نضارة وترطيب", d: "بشرتي باهتة أو عطشانة ومو مشرقة" },
         { v: "none", t: "ولا شي محدد", exclusive: true } ] },
     { id: "marks", title: "آثار الحبوب عندك وش شكلها؟", sub: "ضغطي على الأثر بكوب زجاج شفاف وشوفي", type: "multi", when: a => has(a.focus, "skin") && anyOf(a.concern, ["acne", "hormonal", "fungal", "marks"]),
       options: [
@@ -97,7 +98,7 @@
     const skinType = skinTypes.includes("sensitive") ? "sensitive" : (skinTypes.includes("oily") && skinTypes.includes("dry")) ? "combo"
       : ["combo", "oily", "dry", "normal"].find(t => skinTypes.includes(t)) || "normal";
     const concerns = arr(a.concern).filter(c => c !== "none");
-    const concern = ["hormonal", "fungal", "acne", "marks", "pigment", "dryness", "pores"].find(c => concerns.includes(c)) || "none";
+    const concern = ["hormonal", "fungal", "acne", "marks", "pigment", "dryness", "pores", "glow"].find(c => concerns.includes(c)) || "none";
     const marks = arr(a.marks).filter(x => x !== "none");
     const barrier = arr(a.barrier).filter(x => x !== "no");
     const hairTypes = arr(a.hairType);
@@ -162,6 +163,7 @@
     if (concern === "dryness") return (type === "oily" || type === "combo")
       ? { kit: "k-combo", why: "بشرتك دهنية لكنها تعاني من الجفاف، فتحتاج توازن: ترطيب بدون ثقل." }
       : { kit: "k-dry", why: "الجفاف هو مشكلتك الأساسية، فاخترنا الترطيب العميق." };
+    if (concern === "glow") return { kit: "k-glow", why: "اخترنا روتين النضارة والترطيب: ترطيب على طبقات بالهيالورونيك، وفيتامين C للإشراقة، وواقي يحافظ عليها." };
     if (concern === "pores") return type === "dry"
       ? { kit: "k-combo", why: "المسام واضحة لكن بشرتك تميل للجفاف، فاخترنا التوازن الذكي." }
       : { kit: "k-oily", why: "اخترنا روتين التوازن والنقاء بالنياسيناميد لتقليل المسام واللمعان." };

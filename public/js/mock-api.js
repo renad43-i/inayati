@@ -27,7 +27,7 @@
       seq: { users: 2, orders: 0, items: 0, events: 0, subs: 0, quiz: 0, consults: 0 },
       users: [{ id: 1, name: "إدارة رينورا", email: "admin@renaura.sa", phone: null, city: null, role: "admin", created_at: now(), pass: null },
               { id: 2, name: "إدارة رينورا", email: "admin@inayati.sa", phone: null, city: null, role: "admin", created_at: now(), pass: null }],
-      products: PRODUCTS.map(p => ({ ...clone(p), stock: 100, active: true })),
+      products: PRODUCTS.map(p => ({ ...clone(p), stock: 100, active: p.active !== false })),
       kits: KITS.map(k => ({ ...clone(k), active: true })),
       quiz: [], orders: [], items: [], events: [], subs: [], consults: []
     };
@@ -39,13 +39,22 @@
     else {
       // تحديث بيانات قديمة محفوظة في المتصفح: نضيف المنتجات الجديدة، ونطبق وسوم/أقسام جديدة مرة وحدة
       const have = new Set(mem.products.map(p => p.id));
-      PRODUCTS.forEach(p => { if (!have.has(p.id)) mem.products.push({ ...clone(p), stock: 100, active: true }); });
+      PRODUCTS.forEach(p => { if (!have.has(p.id)) mem.products.push({ ...clone(p), stock: 100, active: p.active !== false }); });
       if (!mem.m2026_11) {
         const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
         mem.products.forEach(p => { const s = byId[p.id]; if (!s) return;
           if (p.category === "curly" && s.category === "mousse") p.category = "mousse";
           if ((s.goodFor || []).includes("dandruff") && !(p.goodFor || []).includes("dandruff")) p.goodFor = [...(p.goodFor || []), "dandruff"]; });
         mem.m2026_11 = true;
+      }
+      if (!mem.m2026_11c) {
+        const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+        mem.products.forEach(p => { const s = byId[p.id]; if (!s) return;
+          if (s.demo) p.active = false;
+          if ((s.goodFor || []).includes("glow") && !(p.goodFor || []).includes("glow")) p.goodFor = [...(p.goodFor || []), "glow"]; });
+        const haveK = new Set(mem.kits.map(k => k.id));
+        KITS.forEach(k => { if (!haveK.has(k.id)) mem.kits.push({ ...clone(k), active: true }); });
+        mem.m2026_11c = true;
       }
       if (!mem.m2026_11b) {
         const L = "ء-ي", re = new RegExp(`(?<![${L}])((?:و|ف|ب|ل)?(?:ال|لل)?)كيت(ات|ين|ك)?(?![${L}])`, "g");
@@ -62,6 +71,7 @@
   const sessSet = s => { try { localStorage.setItem(SESS, JSON.stringify(s)); } catch {} };
 
   /* ---------- أدوات ---------- */
+  const safeImage = u => { u = String(u || "").trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) || /^assets\/[\w\-./]+$/.test(u) ? u.slice(0, 500) : ""; };
   class HttpError extends Error { constructor(msg, code = 400) { super(msg); this.code = code; } }
   const bad = (m, c) => { throw new HttpError(m, c); };
   const pub = u => u && { id: u.id, name: u.name, email: u.email, phone: u.phone, city: u.city, role: u.role, created_at: u.created_at };
@@ -294,12 +304,12 @@
         suits: p.suits || [], contains: p.contains || [], pack: { shape: "bottle", body: "#FFFFFF", cap: "#DDDDDD", accent: "#333333" },
         tiktok: p.tiktok || "https://www.tiktok.com/search?q=" + encodeURIComponent(`${p.brand} ${p.nameEn || p.name} review`), stock: +p.stock || 0, active: p.active !== false,
         fungal: p.cat === "skin" && (p.fungal === true || p.fungal === false) ? p.fungal : null, goodFor: p.goodFor || [],
-        category: CATEGORIES[p.cat] && CATEGORIES[p.cat][p.category] ? p.category : "treatment", kitEligible: false, demo: false });
+        category: CATEGORIES[p.cat] && CATEGORIES[p.cat][p.category] ? p.category : "treatment", kitEligible: false, demo: false, image: safeImage(p.image) });
       save(); return { ok: true };
     }],
     ["PUT", /^\/api\/admin\/products\/([\w-]+)$/, (p, m) => {
       needAdmin(); const x = load().products.find(q => q.id === m[1]) || bad("المنتج غير موجود", 404);
-      Object.assign(x, { category: CATEGORIES[x.cat] && CATEGORIES[x.cat][p.category] ? p.category : x.category, fungal: x.cat === "skin" && (p.fungal === true || p.fungal === false) ? p.fungal : null, goodFor: p.goodFor || [], brand: p.brand || x.brand, country: p.country || x.country, nameEn: p.nameEn || x.nameEn, tiktok: p.tiktok || x.tiktok, name: p.name, step: p.step, size: p.size || "", price: +p.price, desc: p.desc || "", suits: p.suits || [], contains: p.contains || [], stock: +p.stock || 0, active: p.active !== false });
+      Object.assign(x, { category: CATEGORIES[x.cat] && CATEGORIES[x.cat][p.category] ? p.category : x.category, fungal: x.cat === "skin" && (p.fungal === true || p.fungal === false) ? p.fungal : null, goodFor: p.goodFor || [], brand: p.brand || x.brand, country: p.country || x.country, nameEn: p.nameEn || x.nameEn, tiktok: p.tiktok || x.tiktok, name: p.name, step: p.step, size: p.size || "", price: +p.price, desc: p.desc || "", suits: p.suits || [], contains: p.contains || [], stock: +p.stock || 0, active: p.active !== false, image: safeImage(p.image) });
       save(); return { ok: true };
     }],
     ["POST", /^\/api\/admin\/kits$/, (k) => saveKit(k, true, k && k.id)],

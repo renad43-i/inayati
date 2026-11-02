@@ -54,7 +54,10 @@ const App = (() => {
     if (!Array.isArray(ids)) ids = kit.tiers.full;
     return Packshots.kit(ids2products(ids));
   }
-  const productImg = p => Packshots.product(p);
+  // صورة المنتج: الصورة الحقيقية إذا انضافت من الإدارة، وإذا ما تحملت يرجع رسم العبوة
+  const productImg = p => p.image
+    ? `<span class="pimg"><img src="${esc(p.image)}" alt="${esc((p.brand || "") + " " + (p.name || ""))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('fail')">${Packshots.product(p)}</span>`
+    : Packshots.product(p);
   const tiktokIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2-2.8V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>`;
 
   function kitCard(kit, cat, tier = "full") {

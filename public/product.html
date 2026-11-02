@@ -41,6 +41,7 @@ App.layout("shop");
         <p class="small muted">شامل الضريبة · شحن مجاني فوق 200 ر.س</p>
         <p>${App.esc(p.desc)}</p>
         ${App.suitabilityHTML(p)}
+        ${activesOf(p).length ? `<p class="small" style="margin-top:6px"><b>المكوّن الفعال:</b> ${activesOf(p).map(k => `<a class="tag sage" href="shop.html?section=${p.cat}&active=${k}">${App.esc(ACTIVES[k].name)}</a>`).join(" ")}</p>` : ""}
         ${p.contains && p.contains.length ? `<p class="small muted" style="margin-top:6px">يحتوي: ${p.contains.map(a => App.ALLERGEN_AR[a]).join("، ")}</p>` : ""}
         <div class="row" style="margin-top:16px">
           <div class="qty"><button id="plus" aria-label="زيادة">+</button><span>${qty}</span><button id="minus" aria-label="نقص">−</button></div>

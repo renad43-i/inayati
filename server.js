@@ -368,7 +368,9 @@ app.get("/api/admin/catalog", requireAdmin, (req, res) => res.json(getCatalog({ 
 
 const tagsJSON = (p, old = {}) => JSON.stringify({ ...old, fungal: p.fungal === true || p.fungal === false ? p.fungal : null, goodFor: Array.isArray(p.goodFor) ? p.goodFor.filter(k => seed.CONCERN_TAGS[k]) : [],
   category: seed.CATEGORIES[p.cat || old.cat] && seed.CATEGORIES[p.cat || old.cat][p.category] ? p.category : (old.category || "treatment"),
-  kitEligible: old.kitEligible !== undefined ? old.kitEligible : false });
+  kitEligible: old.kitEligible !== undefined ? old.kitEligible : false, image: safeImage(p.image) });
+// رابط صورة المنتج: https أو ملف داخل assets فقط
+function safeImage(u) { u = String(u || "").trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) || /^assets\/[\w\-./]+$/.test(u) ? u.slice(0, 500) : ""; }
 app.post("/api/admin/products", requireAdmin, (req, res) => {
   const p = req.body || {};
   if (!p.id || !p.name || !p.brand || !["skin", "hair"].includes(p.cat) || !p.step || !(p.price >= 0)) return bad(res, "بيانات المنتج ناقصة (الرمز، البراند، الاسم، السعر)");
