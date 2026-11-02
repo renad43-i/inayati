@@ -70,7 +70,7 @@ async function submit() {
   const clean = {}; visible().forEach(q => clean[q.id] = answers[q.id]);
   App.qs("#nextBtn").disabled = true;
   const [res, cat, user] = await Promise.all([App.api("/api/recommend", { body: { answers: clean } }), App.catalog(), App.me()]);
-  try { sessionStorage.setItem("inayati_last_rec", JSON.stringify({ answers: clean, res })); } catch {}
+  try { sessionStorage.setItem("inayati_last_rec_v2", JSON.stringify({ answers: clean, res })); } catch {}
   showResult(res, cat, user, clean);
 }
 

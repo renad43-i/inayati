@@ -50,7 +50,10 @@
 App.layout("cart");
 let cat, user, quote;
 async function refresh() {
-  const items = App.cart.get();
+  // نشيل من السلة أي كيت أو منتج ما عاد موجود (بيانات قديمة)
+  const valid = App.cart.get().filter(it => cat.kMap[it.kitId] && Array.isArray(it.productIds) && it.productIds.every(id => cat.pMap[id] && cat.pMap[id].cat === cat.kMap[it.kitId].cat));
+  if (valid.length !== App.cart.get().length) App.cart.save(valid);
+  const items = valid;
   const box = App.qs("#items");
   if (!items.length) {
     box.innerHTML = `<div class="empty"><p>سلتك فاضية.</p><a class="btn" href="quiz.html">حددي روتينك</a> <a class="btn outline" href="kits.html">تصفحي الكيتات</a></div>`;
