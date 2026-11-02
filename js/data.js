@@ -1,15 +1,15 @@
 /* =========================================================
-   عنايتي — بيانات المحتوى (ريناد)
+   رينورا — بيانات المحتوى (ريناد)
    هذا الملف هو "مصدر الحقيقة" للمحتوى في مرحلة الواجهات.
    ريفال: كل مصفوفة هنا تقابل جدولاً في قاعدة البيانات
    (products, kits, kit_items, kit_steps, skin_types, hair_types).
    ========================================================= */
 
 const BRAND = {
-  name: "عنايتي",
-  nameEn: "Inayati",
+  name: "رينورا",
+  nameEn: "Renaura",
   slogan: "روتينك، مصمَّم لكِ",
-  tiktok: "https://www.tiktok.com/@inayati.sa", // حساب المتجر (فيديوهات الروتين)
+  tiktok: "https://www.tiktok.com/@renaura.sa", // حساب المتجر (فيديوهات الروتين)
   currency: "ر.س",
   freeShippingFrom: 200,
   shippingFee: 25,
@@ -438,6 +438,7 @@ const SHOP_BRANDS = {
   "AXIS-Y": ["KR", "#FFE0B2", "#FFFFFF", "#E65100"], "ABIB": ["KR", "#DDEFD9", "#A5D6A7", "#1B5E20"], "HARUHARU WONDER": ["KR", "#3E3E3E", "#222222", "#FFFFFF"],
   "MIXSOON": ["KR", "#F5E6C8", "#FFFFFF", "#333333"], "NUMBUZIN": ["KR", "#E8D3C0", "#FFFFFF", "#5D4037"], "AESTURA": ["KR", "#FFFFFF", "#FFFFFF", "#1565C0"],
   "GOODAL": ["KR", "#FFE0B2", "#2E7D32", "#E65100"],
+  "EPII": ["KR", "#FDE8EC", "#C8233C", "#8E1630"],
   "AESOP": ["AU", "#5D4037", "#1E1E1E", "#F5E6C8"],
   "LOLANE": ["TH", "#F8BBD0", "#C2185B", "#880E4F"], "CARING": ["TH", "#E1F5FE", "#0288D1", "#01579B"], "SRICHAND": ["TH", "#FFFFFF", "#C9A24B", "#5D4037"],
   "MIZUMI": ["TH", "#B3E5FC", "#0288D1", "#01579B"], "SMOOTH E": ["TH", "#FFFFFF", "#1E88E5", "#1E88E5"],
@@ -590,6 +591,8 @@ const SHOP_ROWS = [
   ["NUMBUZIN", "serum", "No.3 Skin Softening Serum", "سيروم نمبوزين رقم 3", "50 مل", 95, "dropper", ["pores", "dryness"]],
   ["AESTURA", "moisturizer", "Atobarrier 365 Cream", "كريم أستورا أتوباريير 365", "80 مل", 99, "tube", ["barrier", "dryness"]],
   ["GOODAL", "serum", "Green Tangerine Vita C Dark Spot Serum", "سيروم قودال بالتانجرين الأخضر", "40 مل", 99, "dropper", ["pigment", "marks"]],
+  ["EPII", "serum", "Skincare Serum (منتج توضيحي)", "سيروم إيبي الكوري (منتج توضيحي)", "30 مل", 89, "dropper", ["dryness", "marks"], null, true],
+  ["EPII", "moisturizer", "Skincare Cream (منتج توضيحي)", "كريم إيبي الكوري (منتج توضيحي)", "50 مل", 95, "jar", ["dryness", "barrier"], null, true],
   // ---------------- 🇦🇺 أستراليا ----------------
   ["AESOP", "cleanser", "Parsley Seed Facial Cleanser", "غسول إيسوب ببذور البقدونس", "200 مل", 229, "bottle", ["oil"]],
   // ---------------- 🇹🇭 تايلند ----------------
@@ -657,7 +660,7 @@ for (const r of SHOP_ROWS) {
 const STEP_TO_CATEGORY = { cleanser: "cleanser", toner: "treatment", serum: "serum", moisturizer: "moisturizer", spf: "spf", treatment: "treatment", exfoliant: "treatment",
   shampoo: "shampoo", conditioner: "conditioner", oil: "oil", scalp: "treatment", styler: "styling", protect: "heat" };
 PRODUCTS.forEach(p => {
-  if (!p.category) p.category = p.step === "mask" ? (p.cat === "hair" ? "mask" : "treatment") : (p.id === "h04" || p.id === "h11") ? "curly" : STEP_TO_CATEGORY[p.step] || "treatment";
+  if (!p.category) p.category = p.step === "mask" ? (p.cat === "hair" ? "mask" : "treatment") : p.id === "h11" ? "curly" : STEP_TO_CATEGORY[p.step] || "treatment";
 });
 
 /* منتجات المتجر: "مناسب لـ" + رابط ريفيوهات تيك توك */
@@ -682,7 +685,7 @@ const CONSULT_TYPES = {
 const CONSULT_TIMES = ["17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"];
 
 /* ---------- المشاكل وحلولها في المتجر ----------
-   لكل مشكلة: ترشيح عنايتي (الأفضل) مع السبب، والكيت المتكامل اللي يعالجها. */
+   لكل مشكلة: ترشيح رينورا (الأفضل) مع السبب، والكيت المتكامل اللي يعالجها. */
 const PROBLEMS = {
   skin: {
     acne:     { name: "حبوب ورؤوس سوداء", kit: "k-acne" },

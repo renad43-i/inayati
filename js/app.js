@@ -1,5 +1,5 @@
 /* =========================================================
-   عنايتي — منطق مشترك لكل الصفحات
+   رينورا — منطق مشترك لكل الصفحات
    (الهيدر، الفوتر، الاتصال بالخادم، السلة، رسومات الكيت)
    ========================================================= */
 const App = (() => {
@@ -96,23 +96,24 @@ const App = (() => {
     const header = document.createElement("header");
     header.className = "site-header";
     header.innerHTML = `<div class="container bar">
-      <a class="brand" href="home.html"><img src="assets/logo.svg" alt="عنايتي"></a>
+      <a class="brand" href="home.html"><img src="assets/logo.svg" alt="رينورا"></a>
       <nav class="nav" id="nav">${links.map(([h, t, k]) => `<a href="${h}" class="${k === active ? "active" : ""}">${t}</a>`).join("")}<a href="admin.html" id="adminLink" class="hidden ${active === "admin" ? "active" : ""}">لوحة الإدارة</a></nav>
       <div class="spacer"></div>
       <a class="icon-btn" href="account.html" aria-label="حسابي">${ICONS.user}</a>
       <a class="icon-btn" href="cart.html" aria-label="السلة">${ICONS.cart}<span class="badge hidden" id="cartBadge">0</span></a>
       <button class="icon-btn menu-toggle" aria-label="القائمة" id="menuBtn">${ICONS.menu}</button></div>`;
     document.body.prepend(header);
+    const ribbon = document.createElement("div"); ribbon.className = "hair-ribbon"; ribbon.setAttribute("aria-hidden", "true"); header.append(ribbon);
     qs("#menuBtn").onclick = () => qs("#nav").classList.toggle("open");
 
     const footer = document.createElement("footer");
     footer.className = "site-footer";
     footer.innerHTML = `<div class="container"><div class="cols">
-      <div><img src="assets/logo.svg" alt="عنايتي" style="height:44px"><p class="muted small" style="margin-top:10px">كيتات عناية شخصية جاهزة، مبنية على احتياجك ويتجدد روتينك كل شهر.</p></div>
+      <div><img src="assets/logo.svg" alt="رينورا" style="height:44px"><p class="muted small" style="margin-top:10px">كيتات عناية شخصية جاهزة، مبنية على احتياجك ويتجدد روتينك كل شهر.</p></div>
       <div><h4>تسوقي</h4><a href="shop.html">المتجر: حلول لكل مشكلة</a><a href="quiz.html">حددي روتينك</a><a href="analysis.html">تحليل البشرة بالذكاء الاصطناعي</a><a href="consult.html">استشارة طبيبة جلدية</a><a href="kits.html?cat=skin">كيتات البشرة</a><a href="kits.html?cat=hair">كيتات الشعر</a></div>
       <div><h4>حسابي</h4><a href="account.html">طلباتي</a><a href="account.html#subs">اشتراكي</a><a href="cart.html">السلة</a></div>
-      <div><h4>تابعينا</h4><a href="https://www.tiktok.com/@inayati.sa" target="_blank" rel="noopener">تيك توك</a><a href="#">انستقرام</a><a href="mailto:hello@inayati.sa">hello@inayati.sa</a></div>
-      </div><p class="small muted center" style="margin-top:26px">© ${new Date().getFullYear()} عنايتي — مشروع IT473 أنظمة التجارة الإلكترونية · الدفع في هذا الموقع تجريبي</p></div>`;
+      <div><h4>تابعينا</h4><a href="https://www.tiktok.com/@renaura.sa" target="_blank" rel="noopener">تيك توك</a><a href="#">انستقرام</a><a href="mailto:hello@renaura.sa">hello@renaura.sa</a></div>
+      </div><p class="small muted center" style="margin-top:26px">© ${new Date().getFullYear()} رينورا — مشروع IT473 أنظمة التجارة الإلكترونية · الدفع في هذا الموقع تجريبي</p></div>`;
     document.body.append(footer);
     updateBadge();
     me().then(u => { if (u && u.role === "admin") qs("#adminLink").classList.remove("hidden"); }).catch(() => {});

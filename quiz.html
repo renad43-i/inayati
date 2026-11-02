@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<title>حددي روتينك | عنايتي</title>
+<title>حددي روتينك | رينورا</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Playfair+Display:wght@600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
@@ -32,33 +32,29 @@ const visible = () => Engine.QUIZ.filter(q => !q.when || q.when(answers));
 
 function render() {
   steps = visible();
+  if (idx >= steps.length) idx = steps.length - 1;
   const q = steps[idx];
   App.qs("#stepLabel").textContent = `سؤال ${idx + 1} من ${steps.length}`;
   App.qs("#bar").style.width = `${(idx / steps.length) * 100}%`;
   App.qs("#qTitle").textContent = q.title;
-  App.qs("#qSub").textContent = q.sub || "";
+  App.qs("#qSub").textContent = q.sub || "اختاري كل اللي ينطبق";
   App.qs("#backBtn").classList.toggle("hidden", idx === 0);
-  const cur = answers[q.id];
-  App.qs("#options").innerHTML = q.options.map(o => {
-    const on = q.type === "multi" ? (cur || []).includes(o.v) : cur === o.v;
-    return `<button class="option ${q.type === "multi" ? "multi" : ""} ${on ? "active" : ""}" data-v="${o.v}">
-      <span class="mark"></span><span><b>${o.t}</b>${o.d ? `<small>${o.d}</small>` : ""}</span></button>`;
-  }).join("");
-  App.qs("#nextBtn").disabled = !(q.type === "multi" ? (cur || []).length : cur);
-  App.qs("#nextBtn").textContent = idx === steps.length - 1 ? "اعرضي روتيني" : "التالي";
+  const cur = answers[q.id] || [];
+  App.qs("#options").innerHTML = q.options.map(o => `<button class="option multi ${cur.includes(o.v) ? "active" : ""}" data-v="${o.v}" aria-pressed="${cur.includes(o.v)}">
+      <span class="mark"></span><span><b>${o.t}</b>${o.d ? `<small>${o.d}</small>` : ""}</span></button>`).join("");
+  App.qs("#nextBtn").disabled = !cur.length;
+  App.qs("#nextBtn").textContent = idx === steps.length - 1 ? "اعرضي روتيني" : (cur.length ? `التالي (${cur.length})` : "التالي");
   App.qsa(".option").forEach(b => b.onclick = () => {
-    const v = b.dataset.v;
-    if (q.type === "multi") {
-      let arr = answers[q.id] || [];
-      if (v === "none") arr = arr.includes("none") ? [] : ["none"];
-      else { arr = arr.filter(x => x !== "none"); arr = arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]; }
-      answers[q.id] = arr; render();
-    } else { answers[q.id] = v; render(); setTimeout(next, 180); }
+    const v = b.dataset.v, opt = q.options.find(o => o.v === v);
+    let arr = answers[q.id] || [];
+    if (opt.exclusive) arr = arr.includes(v) ? [] : [v];
+    else { arr = arr.filter(x => !(q.options.find(o => o.v === x) || {}).exclusive); arr = arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]; }
+    answers[q.id] = arr; render();
   });
 }
 function next() {
   const q = steps[idx];
-  if (q.type === "multi" ? !(answers[q.id] || []).length : !answers[q.id]) return;
+  if (!(answers[q.id] || []).length) return;
   steps = visible();
   if (idx < steps.length - 1) { idx++; render(); } else submit();
 }
@@ -70,46 +66,70 @@ async function submit() {
   const clean = {}; visible().forEach(q => clean[q.id] = answers[q.id]);
   App.qs("#nextBtn").disabled = true;
   const [res, cat, user] = await Promise.all([App.api("/api/recommend", { body: { answers: clean } }), App.catalog(), App.me()]);
-  try { sessionStorage.setItem("inayati_last_rec_v2", JSON.stringify({ answers: clean, res })); } catch {}
-  showResult(res, cat, user, clean);
+  showResult(res, cat, user);
 }
 
-function showResult(res, cat, user, ans) {
+const SKIN_AR = { dry: "جافة", oily: "دهنية", combo: "مختلطة", normal: "عادية", sensitive: "حساسة" };
+const HAIR_AR = { dry: "جاف", oily: "دهني", curly: "كيرلي", coily: "كِنكي", damaged: "تالف/مصبوغ", hairfall: "يتساقط", dandruff: "فيه قشرة", normal: "عادي" };
+function showResult(res, cat, user) {
   App.qs("#quiz").classList.add("hidden");
   const box = App.qs("#result"); box.classList.remove("hidden");
-  const subId = App.params.get("sub");
-  box.innerHTML = `<div class="center" style="margin-bottom:22px"><span class="eyebrow">نتيجتك جاهزة</span><h1>روتينك المقترح</h1>
-    <p class="muted">${[ans.skinType && "بشرة " + ({dry:"جافة",oily:"دهنية",combo:"مختلطة",normal:"عادية",sensitive:"حساسة"})[ans.skinType], ans.hairType && "شعر " + ({dry:"جاف",oily:"دهني",curly:"مجعد",damaged:"مصبوغ/تالف",normal:"عادي"})[ans.hairType]].filter(Boolean).join(" · ")}</p></div>
-    ${res.kits.map((r, i) => {
-      const k = cat.kMap[r.kitId];
-      return `<div class="card" style="margin-bottom:16px;border-top:6px solid ${k.color}">
-        <div><span class="tag sage">${App.TIER_AR[r.tier]}</span> <h2 style="margin:6px 0">${App.esc(k.name)}</h2>
-        <p>${App.esc(r.why)}</p>
-        <div class="mini-products">${r.productIds.map(id => { const p = cat.pMap[id]; return `<div class="mini-product"><span class="prod-img">${App.productImg(p)}</span><span class="brand-name" dir="ltr">${App.esc(p.brand)}</span><span class="small">${App.esc(p.name)}</span></div>`; }).join("")}</div>
-        ${r.swaps.length ? `<p class="small alert info" style="margin:0 0 10px">${r.swaps.map(s => s.to ? `استبدلنا «${App.esc(cat.pMap[s.from].name)}» بـ«${App.esc(cat.pMap[s.to].name)}» لأنه يحتوي على ${s.reason.map(a => Engine.REASON_AR[a]).join(" و")}.` : `حذفنا «${App.esc(cat.pMap[s.from].name)}» لعدم وجود بديل آمن.`).join("<br>")}</p>` : ""}
-        <div class="row"><span class="price">${App.fmt(r.price)}</span><span class="spacer"></span>
-          <a class="btn outline sm" href="kit.html?id=${k.id}&tier=${r.tier}&rec=${i}">التفاصيل وطريقة الاستخدام</a></div></div></div>`;
-    }).join("")}
-    <div style="margin-bottom:16px">${App.consultCTA(!!res.consult, res.consult ? res.consultWhy : "")}</div>
-    ${res.notes.map(n => `<p class="alert info small">${App.esc(n)}</p>`).join("")}
-    <div class="card"><div class="row"><div><b>المجموع</b><div class="muted small">أو ${App.fmt(res.kits.reduce((s, r) => s + Engine.kitPrice(r.productIds, cat.pMap, "subscription"), 0))} شهرياً مع الاشتراك</div></div>
-      <span class="spacer"></span><span class="price">${App.fmt(res.total)}</span></div>
-      <div class="row" style="margin-top:14px">
-        ${subId ? `<button class="btn" id="applySub">طبّقي على اشتراكي #${App.esc(subId)}</button>` :
-        `<button class="btn" id="addSub">اشتركي شهرياً (وفري 10%)</button><button class="btn outline" id="addOnce">شراء مرة واحدة</button>`}
-        <button class="link-btn" onclick="location.href='quiz.html'">أعيدي الاختبار</button></div>
-      ${user ? `<p class="small muted" style="margin:10px 0 0">حفظنا النتيجة في حسابك.</p>` : `<p class="small muted" style="margin:10px 0 0">سجلي دخولك عشان نحفظ نتيجتك ونقدر نجدد كيتك كل شهر.</p>`}</div>`;
-  const add = type => { res.kits.forEach(r => App.cart.add({ kitId: r.kitId, tier: r.tier, productIds: r.productIds, purchaseType: type, qty: 1 })); location.href = "cart.html"; };
-  if (subId) App.qs("#applySub").onclick = async () => {
-    const r = res.kits.find(x => x.kitId.startsWith(App.params.get("cat") === "hair" ? "h-" : "k-")) || res.kits[0];
-    try { await App.api(`/api/subscriptions/${subId}`, { method: "PATCH", body: { action: "update", kitId: r.kitId, tier: r.tier, productIds: r.productIds } });
-      location.href = "account.html#subs"; } catch (e) { App.toast(e.message); }
+  const subId = App.params.get("sub"), pr = res.profile || {};
+  // الاختيارات: لكل كيت ولكل خطوة، المنتج المختار (افتراضياً ترشيحنا)
+  const builders = res.kits.map(r => {
+    const sec = cat.kMap[r.kitId].cat;
+    const steps = Engine.stepOptions(r, sec, pr, cat.products, r.allergens || res.allergens);
+    return { r, sec, steps, chosen: steps.map(s => s.options[0].id) };
+  });
+  const save = () => { try { sessionStorage.setItem("inayati_last_rec_v2", JSON.stringify({ res: { ...res, kits: builders.map(b => ({ ...b.r, productIds: b.chosen })) } })); } catch {} };
+  const summary = [pr.skinTypes && pr.skinTypes.length ? "بشرة " + pr.skinTypes.map(t => SKIN_AR[t]).join(" و") : "",
+    pr.hairTypes && pr.hairTypes.length ? "شعر " + pr.hairTypes.map(t => HAIR_AR[t]).join(" و") : "",
+    pr.thickness && pr.thickness.length ? ({ fine: "خفيف", medium: "متوسط", thick: "كثيف" })[pr.thickness[0]] : "",
+    pr.frizz && pr.frizz.length ? "يهيش" : "", pr.marks && pr.marks.length ? "آثار " + pr.marks.map(m => m.toUpperCase()).join(" و") : ""].filter(Boolean).join(" · ");
+
+  const draw = () => {
+    const prices = builders.map(b => Engine.kitPrice(b.chosen, cat.pMap));
+    const subPrices = builders.map(b => Engine.kitPrice(b.chosen, cat.pMap, "subscription"));
+    box.innerHTML = `<div class="center" style="margin-bottom:22px"><span class="eyebrow">نتيجتك جاهزة</span><h1>ابني روتينك</h1>
+      <p class="muted">${App.esc(summary)}</p>
+      <p class="small">لكل خطوة اخترنا لك ⭐ الأنسب، ومعه ماركات ثانية تحل نفس الاحتياج. اختاري اللي يعجبك والسعر يتحدث.</p></div>
+      ${builders.map((b, bi) => { const k = cat.kMap[b.r.kitId]; return `<div class="card" style="margin-bottom:16px;border-top:6px solid ${k.color}">
+        <span class="tag sage">${App.TIER_AR[b.r.tier]}</span> <h2 style="margin:6px 0">${App.esc(k.name)}</h2>
+        <p>${App.esc(b.r.why)}</p>
+        ${b.r.swaps.length ? `<p class="small alert info" style="margin:0 0 10px">${b.r.swaps.map(s => s.to ? `استبدلنا «${App.esc(cat.pMap[s.from].name)}» بـ«${App.esc(cat.pMap[s.to].name)}» لأنه يحتوي على ${s.reason.map(a => Engine.REASON_AR[a]).join(" و")}.` : `حذفنا «${App.esc(cat.pMap[s.from].name)}» لعدم وجود بديل آمن.`).join("<br>")}</p>` : ""}
+        <div class="builder">${b.steps.map((st, si) => `<div class="b-step"><div class="b-label">${si + 1}. ${App.esc(CATEGORIES[b.sec][st.category] || "")}${st.options.length > 1 ? ` <span class="small muted">· ${st.options.length} خيارات</span>` : ""}</div>
+          <div class="b-opts">${st.options.map((p, oi) => `<button type="button" class="b-opt ${b.chosen[si] === p.id ? "active" : ""}" data-b="${bi}" data-s="${si}" data-p="${p.id}" aria-pressed="${b.chosen[si] === p.id}">
+            ${oi === 0 ? `<span class="b-star">⭐ ترشيحنا</span>` : ""}
+            <span class="b-img">${App.productImg(p)}</span>
+            <span class="brand-name" dir="ltr">${App.esc(p.brand)} ${(p.country || "").split(" ")[0]}</span>
+            <span class="small b-name">${App.esc(p.name)}</span>
+            <span class="small"><b>${App.fmt(p.price)}</b></span>
+            <a class="small" href="product.html?id=${p.id}" target="_blank" rel="noopener" onclick="event.stopPropagation()">التفاصيل</a></button>`).join("")}</div></div>`).join("")}</div>
+        <div class="row" style="margin-top:12px"><span class="price">${App.fmt(prices[bi])}</span><s class="muted small">${App.fmt(Engine.sumProducts(b.chosen, cat.pMap))}</s><span class="spacer"></span>
+          <a class="btn outline sm" href="kit.html?id=${k.id}&tier=${b.r.tier}&rec=${bi}">طريقة الاستخدام</a></div></div>`; }).join("")}
+      <div style="margin-bottom:16px">${App.consultCTA(!!res.consult, res.consult ? res.consultWhy : "")}</div>
+      ${res.notes.map(n => `<p class="alert info small">${App.esc(n)}</p>`).join("")}
+      <div class="card"><div class="row"><div><b>المجموع</b><div class="muted small">أو ${App.fmt(subPrices.reduce((a, b) => a + b, 0))} شهرياً مع الاشتراك</div></div>
+        <span class="spacer"></span><span class="price">${App.fmt(prices.reduce((a, b) => a + b, 0))}</span></div>
+        <div class="row" style="margin-top:14px">
+          ${subId ? `<button class="btn" id="applySub">طبّقي على اشتراكي #${App.esc(subId)}</button>` :
+          `<button class="btn" id="addSub">اشتركي شهرياً (وفري 10%)</button><button class="btn outline" id="addOnce">شراء مرة واحدة</button>`}
+          <button class="link-btn" onclick="location.href='quiz.html'">أعيدي الاختبار</button></div>
+        ${user ? `<p class="small muted" style="margin:10px 0 0">حفظنا النتيجة في حسابك.</p>` : `<p class="small muted" style="margin:10px 0 0">سجلي دخولك عشان نحفظ نتيجتك ونقدر نجدد كيتك كل شهر.</p>`}</div>`;
+    App.qsa(".b-opt").forEach(el => el.onclick = () => { builders[+el.dataset.b].chosen[+el.dataset.s] = el.dataset.p; save(); draw(); });
+    const add = type => { builders.forEach(b => App.cart.add({ kitId: b.r.kitId, tier: b.r.tier, productIds: b.chosen, purchaseType: type, qty: 1 })); location.href = "cart.html"; };
+    if (subId) App.qs("#applySub").onclick = async () => {
+      const b = builders.find(x => x.sec === (App.params.get("cat") === "hair" ? "hair" : "skin")) || builders[0];
+      try { await App.api(`/api/subscriptions/${subId}`, { method: "PATCH", body: { action: "update", kitId: b.r.kitId, tier: b.r.tier, productIds: b.chosen } });
+        location.href = "account.html#subs"; } catch (e) { App.toast(e.message); }
+    };
+    else { App.qs("#addSub").onclick = () => add("subscription"); App.qs("#addOnce").onclick = () => add("once"); }
   };
-  else { App.qs("#addSub").onclick = () => add("subscription"); App.qs("#addOnce").onclick = () => add("once"); }
+  save(); draw();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 // في حال إعادة الاختبار لتحديث اشتراك
-if (App.params.get("cat")) answers.focus = App.params.get("cat");
+if (App.params.get("cat")) answers.focus = [App.params.get("cat")];
 render();
 </script>
 </body>

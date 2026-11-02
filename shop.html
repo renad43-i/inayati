@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<title>المتجر | عنايتي</title>
+<title>المتجر | رينورا</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Playfair+Display:wght@600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
@@ -87,7 +87,7 @@ function draw() {
     solBox.classList.remove("hidden");
     solBox.innerHTML = `<h2 style="font-size:1.5rem;margin:22px 0 12px">حلول «${App.esc(pr.name)}»</h2>
       <div class="picks">
-        ${sol.best ? `<div class="card pick best"><span class="pick-badge best">⭐ ترشيح عنايتي</span>
+        ${sol.best ? `<div class="card pick best"><span class="pick-badge best">⭐ ترشيح رينورا</span>
           <a href="product.html?id=${sol.best.id}" class="pick-img">${App.productImg(sol.best)}</a>
           <div><div class="brand-name" dir="ltr">${App.esc(sol.best.brand)} ${flag(sol.best.country)}</div>
           <a class="shop-name" href="product.html?id=${sol.best.id}">${App.esc(sol.best.name)}</a>

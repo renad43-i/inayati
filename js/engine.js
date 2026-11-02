@@ -1,5 +1,5 @@
 /* =========================================================
-   عنايتي — محرك الأسعار والتوصية (مشترك بين المتصفح والخادم)
+   رينورا — محرك الأسعار والتوصية (مشترك بين المتصفح والخادم)
    الخادم يستخدم نفس الدوال لإعادة حساب السعر عند الدفع،
    فلا يمكن للعميلة التلاعب بالسعر من المتصفح.
    ========================================================= */
@@ -13,47 +13,94 @@
   const TIERS = ["basic", "full", "plus"];
 
   /* ---------- أسئلة الاختبار ---------- */
+  /* كل الأسئلة اختيار متعدد. خيار exclusive (مثل «لا يوجد») يلغي باقي الاختيارات */
+  const has = (v, x) => Array.isArray(v) ? v.includes(x) : v === x;
+  const anyOf = (v, xs) => xs.some(x => has(v, x));
   const QUIZ = [
-    { id: "focus", title: "وش تبين نهتم فيه؟", sub: "اختاري مجال الروتين", type: "single",
+    { id: "focus", title: "وش تبين نهتم فيه؟", sub: "تقدرين تختارين الاثنين", type: "multi",
       options: [
         { v: "skin", t: "بشرتي", d: "روتين يومي للوجه" },
-        { v: "hair", t: "شعري", d: "روتين للشعر وفروة الرأس" },
-        { v: "both", t: "الاثنين", d: "كيت للبشرة وكيت للشعر" } ] },
-    { id: "skinType", title: "كيف تحسين بشرتك بعد ساعتين من غسلها؟", sub: "بدون أي منتج", type: "single", when: a => a.focus !== "hair",
+        { v: "hair", t: "شعري", d: "روتين للشعر وفروة الرأس" } ] },
+    { id: "skinType", title: "كيف تحسين بشرتك بعد ساعتين من غسلها؟", sub: "بدون أي منتج · اختاري كل اللي ينطبق", type: "multi", when: a => has(a.focus, "skin"),
       options: [
         { v: "dry", t: "مشدودة وجافة", d: "أحياناً فيها قشور" },
         { v: "oily", t: "لامعة بالكامل", d: "خصوصاً الجبهة والخدين" },
         { v: "combo", t: "لامعة في الجبهة والأنف فقط", d: "والخدود طبيعية أو جافة" },
         { v: "normal", t: "مريحة ومتوازنة", d: "ما ألاحظ شي" },
         { v: "sensitive", t: "تحمر أو تحرقني بسهولة", d: "تتهيج من منتجات كثيرة" } ] },
-    { id: "concern", title: "وش أكثر شي يضايقك في بشرتك؟", sub: "اختاري الأهم", type: "single", when: a => a.focus !== "hair",
+    { id: "concern", title: "وش يضايقك في بشرتك؟", sub: "اختاري كل اللي ينطبق", type: "multi", when: a => has(a.focus, "skin"),
       options: [
         { v: "acne", t: "حبوب ورؤوس سوداء" },
         { v: "hormonal", t: "حبوب هرمونية", d: "عميقة حول الذقن والفك، وتزيد مع الدورة" },
         { v: "fungal", t: "حبوب فطرية", d: "حبوب صغيرة متشابهة تحك، غالباً على الجبهة" },
-        { v: "pigment", t: "تصبغات وبهتان" },
+        { v: "marks", t: "آثار حبوب" },
+        { v: "pigment", t: "تصبغات وكلف وبهتان" },
         { v: "dryness", t: "جفاف وخشونة" },
         { v: "pores", t: "مسام واسعة ولمعان" },
-        { v: "none", t: "ولا شي محدد" } ] },
-    { id: "hairType", title: "كيف تصفين شعرك؟", type: "single", when: a => a.focus !== "skin",
+        { v: "none", t: "ولا شي محدد", exclusive: true } ] },
+    { id: "marks", title: "آثار الحبوب عندك وش شكلها؟", sub: "ضغطي على الأثر بكوب زجاج شفاف وشوفي", type: "multi", when: a => has(a.focus, "skin") && anyOf(a.concern, ["acne", "hormonal", "fungal", "marks"]),
+      options: [
+        { v: "pie", t: "حمراء أو وردية (PIE)", d: "تبيض أو تخف لما تضغطين عليها: احمرار بعد الالتهاب" },
+        { v: "pih", t: "بنية أو غامقة (PIH)", d: "ما تتغير بالضغط: تصبغ بعد الالتهاب، أشيع في البشرة الحنطية والسمراء" },
+        { v: "none", t: "ما عندي آثار", exclusive: true } ] },
+    { id: "hairType", title: "كيف تصفين شعرك؟", sub: "اختاري كل اللي ينطبق", type: "multi", when: a => has(a.focus, "hair"),
       options: [
         { v: "dry", t: "جاف وخشن" },
         { v: "oily", t: "دهني من الجذور" },
-        { v: "curly", t: "مجعد / كيرلي" },
+        { v: "curly", t: "مموج أو كيرلي", d: "تموجات أو حلقات واضحة" },
+        { v: "coily", t: "كِنكي / مجعد جداً", d: "حلقات صغيرة جداً أو زقزاق" },
         { v: "damaged", t: "مصبوغ أو تالف من الحرارة" },
-        { v: "normal", t: "عادي" } ] },
-    { id: "allergies", title: "عندك حساسية من أي مكون؟", sub: "تقدرين تختارين أكثر من خيار", type: "multi",
+        { v: "hairfall", t: "يتساقط" },
+        { v: "dandruff", t: "قشرة أو حكة في الفروة" },
+        { v: "normal", t: "عادي", exclusive: true } ] },
+    { id: "hairThickness", title: "شعرك خفيف ولا ثقيل؟", sub: "الشعرة نفسها وكثافة الشعر", type: "multi", when: a => has(a.focus, "hair"),
+      options: [
+        { v: "fine", t: "خفيف وناعم", d: "الشعرة رفيعة، ويثقل بسرعة من المنتجات" },
+        { v: "medium", t: "متوسط" },
+        { v: "thick", t: "كثيف وثقيل", d: "الشعرة سميكة ويحتاج ترطيب أكثر" } ] },
+    { id: "frizz", title: "هل شعرك يهيش؟", type: "multi", when: a => has(a.focus, "hair"),
+      options: [
+        { v: "lot", t: "إيه، يهيش كثير" },
+        { v: "humid", t: "يهيش بالرطوبة أو بعد الغسيل" },
+        { v: "no", t: "لا، ما يهيش", exclusive: true } ] },
+    { id: "allergies", title: "عندك حساسية من أي مكون؟", sub: "اختاري كل اللي ينطبق", type: "multi",
       options: [
         { v: "fragrance", t: "العطور" },
         { v: "alcohol", t: "الكحول" },
         { v: "nuts", t: "زيوت المكسرات" },
-        { v: "none", t: "لا يوجد" } ] },
-    { id: "budget", title: "كم ميزانيتك الشهرية للعناية؟", type: "single",
+        { v: "none", t: "لا يوجد", exclusive: true } ] },
+    { id: "budget", title: "كم ميزانيتك الشهرية للعناية؟", sub: "لو اخترتي أكثر من وحدة نعتمد الأعلى", type: "multi",
       options: [
         { v: "low", t: "حتى 250 ر.س" },
         { v: "mid", t: "من 250 إلى 400 ر.س" },
         { v: "high", t: "أكثر من 400 ر.س" } ] }
   ];
+
+  /* تحويل الإجابات (اختيار متعدد) لإجابة أساسية لكل سؤال + قائمة كل الاحتياجات */
+  function normalize(a) {
+    const arr = v => Array.isArray(v) ? v.filter(Boolean) : v ? [v] : [];
+    const focusL = arr(a.focus);
+    const focus = focusL.includes("both") || (focusL.includes("skin") && focusL.includes("hair")) ? "both" : focusL[0] || "skin";
+    const skinTypes = arr(a.skinType);
+    const skinType = skinTypes.includes("sensitive") ? "sensitive" : (skinTypes.includes("oily") && skinTypes.includes("dry")) ? "combo"
+      : ["combo", "oily", "dry", "normal"].find(t => skinTypes.includes(t)) || "normal";
+    const concerns = arr(a.concern).filter(c => c !== "none");
+    const concern = ["hormonal", "fungal", "acne", "marks", "pigment", "dryness", "pores"].find(c => concerns.includes(c)) || "none";
+    const marks = arr(a.marks).filter(x => x !== "none");
+    const hairTypes = arr(a.hairType);
+    const hairType = ["damaged", "coily", "curly", "oily", "dry", "normal"].find(t => hairTypes.includes(t)) || (anyOf(hairTypes, ["hairfall", "dandruff"]) ? "oily" : "normal");
+    const thickness = arr(a.hairThickness), frizz = arr(a.frizz).filter(x => x !== "no");
+    const budgets = arr(a.budget);
+    const budget = ["high", "mid", "low"].find(b => budgets.includes(b)) || "mid";
+    const skinConcerns = [...new Set([
+      ...concerns, ...(marks.includes("pie") ? ["redness", "marks"] : []), ...(marks.includes("pih") ? ["pigment", "marks"] : []),
+      ...(skinTypes.includes("dry") ? ["dryness"] : []), ...(skinTypes.includes("oily") || skinTypes.includes("combo") ? ["oil"] : []), ...(skinTypes.includes("sensitive") ? ["redness", "barrier"] : [])
+    ])];
+    const HMAP = { dry: ["dryness"], oily: ["oilyScalp"], curly: ["curls"], coily: ["curls", "dryness"], damaged: ["damage"], hairfall: ["hairfall"], dandruff: ["sensitiveScalp", "oilyScalp"] };
+    const hairConcerns = [...new Set([...hairTypes.flatMap(t => HMAP[t] || []), ...(frizz.length ? ["frizz"] : []), ...(thickness.includes("thick") ? ["dryness"] : [])])];
+    return { ...a, focus, skinType, concern, hairType: hairType === "coily" ? "curly" : hairType, budget, allergies: arr(a.allergies),
+      profile: { skinTypes, concerns, marks, hairTypes, thickness, frizz, skinConcerns, hairConcerns } };
+  }
 
   const BUDGET_MAX = { low: 250, mid: 400, high: Infinity };
   const BUDGET_TIER = { low: "basic", mid: "full", high: "plus" };
@@ -68,7 +115,14 @@
     if (purchaseType === "subscription") p = roundNine(p * (1 - SUB_DISCOUNT));
     return p;
   }
-  function shippingFor(subtotal) { return subtotal === 0 || subtotal >= 200 ? 0 : 25; }
+  /* التوصيل: عادي (1–3 أيام، مجاني فوق 200) أو سريع نفس اليوم في الرياض وجدة والدمام (35 ر.س) */
+  const EXPRESS_CITIES = ["الرياض", "جدة", "الدمام"];
+  const DELIVERY = { standard: { name: "توصيل عادي", days: "1–3 أيام عمل", fee: 25, freeFrom: 200 }, express: { name: "توصيل سريع نفس اليوم", days: "اطلبي قبل 2 الظهر يوصلك اليوم", fee: 35 } };
+  function shippingFor(subtotal, method, city) {
+    if (!subtotal) return 0;
+    if (method === "express" && (!city || EXPRESS_CITIES.includes(city))) return DELIVERY.express.fee;
+    return subtotal >= DELIVERY.standard.freeFrom ? 0 : DELIVERY.standard.fee;
+  }
 
   /* ---------- قواعد التوصية ----------
      القاعدة 1: البشرة الحساسة لها الأولوية دائماً ← كيت التهدئة (ونتجنب العطور تلقائياً)
@@ -87,6 +141,7 @@
       why: "الحبوب الهرمونية سببها من الداخل، فكيت صفاء عناية مساندة تهدّي الالتهاب وتمنع الانسداد، والعلاج الأساسي عند الطبيبة." };
     if (concern === "fungal") return { kit: "k-acne", consult: true, avoidFungal: true,
       why: "اخترنا كيت صفاء بعد استبعاد المنتجات اللي ممكن تغذي الفطريات، وننصحك تتأكدين من التشخيص مع الطبيبة." };
+    if (concern === "marks") return { kit: "k-bright", why: "اخترنا كيت الإشراقة لأنه يخفف آثار الحبوب ويوحّد لون البشرة، مع واقي شمس يمنعها تغمق." };
     if (concern === "acne") return { kit: "k-acne", why: "اخترنا كيت صفاء لأن الحبوب هي مشكلتك الأساسية." };
     if (concern === "pigment") return { kit: "k-bright", why: "اخترنا كيت الإشراقة بفيتامين C لعلاج التصبغات والبهتان." };
     if (concern === "dryness") return (type === "oily" || type === "combo")
@@ -126,27 +181,39 @@
   }
 
   /* catalog = { products: [...], kits: [...] } */
-  function recommend(answers, catalog) {
+  function recommend(rawAnswers, catalog) {
+    const answers = normalize(rawAnswers);
     const productMap = Object.fromEntries(catalog.products.map(p => [p.id, p]));
     const kitMap = Object.fromEntries(catalog.kits.map(k => [k.id, k]));
-    const allergens = (answers.allergies || []).filter(a => a !== "none");
-    if (answers.skinType === "sensitive" && !allergens.includes("fragrance")) allergens.push("fragrance");
+    // حساسية العميلة تنطبق على كل الكيتات؛ أما استبعاد العطور للبشرة الحساسة والمنتجات اللي تغذي الفطريات فيخص كيت البشرة بس
+    const userAllergens = (answers.allergies || []).filter(a => a !== "none");
+    const allergens = [...userAllergens];
+    const skinAllergens = [...userAllergens];
+    if (answers.skinType === "sensitive" && !skinAllergens.includes("fragrance")) skinAllergens.push("fragrance");
 
     const picks = [];
     if (answers.focus !== "hair") {
       const sk = pickSkinKit(answers.skinType, answers.concern);
-      if (sk.avoidFungal && !allergens.includes("fungal")) allergens.push("fungal");
-      picks.push({ ...sk, suits: answers.skinType });
+      if (sk.avoidFungal && !skinAllergens.includes("fungal")) skinAllergens.push("fungal");
+      skinAllergens.forEach(x => { if (!allergens.includes(x)) allergens.push(x); });
+      const mk = answers.profile.marks;
+      if (mk.length) sk.why += mk.includes("pih") && mk.includes("pie") ? " آثارك نوعين: الحمراء (PIE) تهديها السنتيلا والنياسيناميد، والبنية (PIH) يفتحها فيتامين C والأحماض، والواقي أهم شي للاثنين."
+        : mk.includes("pih") ? " آثارك بنية (PIH)، وهذي يفتحها فيتامين C والأحماض، والواقي يمنعها تغمق." : " آثارك حمراء (PIE)، وهذي تهديها السنتيلا والنياسيناميد وتخف مع الوقت والواقي.";
+      picks.push({ ...sk, suits: answers.skinType, al: skinAllergens });
     }
-    if (answers.focus !== "skin") picks.push({ ...pickHairKit(answers.hairType), suits: answers.hairType });
+    if (answers.focus !== "skin") {
+      const hk = pickHairKit(answers.hairType), pr = answers.profile;
+      const extra = [pr.frizz.length ? "يقلل الهيشان" : "", pr.thickness.includes("fine") ? "بمنتجات خفيفة ما تثقل الشعر الناعم" : "", pr.thickness.includes("thick") ? "بترطيب أعمق للشعر الكثيف" : "", pr.hairTypes.includes("coily") ? "ومناسب للشعر الكِنكي" : ""].filter(Boolean);
+      picks.push({ ...hk, why: hk.why + (extra.length ? " " + extra.join("، ") + "." : ""), suits: answers.hairType, al: userAllergens });
+    }
 
     const budget = answers.budget || "mid";
     const max = BUDGET_MAX[budget];
     const tiers = picks.map(() => BUDGET_TIER[budget]);
     const build = () => picks.map((pk, i) => {
       const kit = kitMap[pk.kit];
-      const { productIds, swaps } = applyAllergies(kit.tiers[tiers[i]], allergens, pk.suits, productMap);
-      return { kitId: kit.id, tier: tiers[i], productIds, swaps, why: pk.why, price: kitPrice(productIds, productMap) };
+      const { productIds, swaps } = applyAllergies(kit.tiers[tiers[i]], pk.al, pk.suits, productMap);
+      return { kitId: kit.id, tier: tiers[i], productIds, swaps, why: pk.why, price: kitPrice(productIds, productMap), allergens: pk.al };
     });
     let result = build();
     const total = () => result.reduce((s, r) => s + r.price, 0);
@@ -167,14 +234,14 @@
     const consultWhy = answers.doctorReason || (answers.concern === "hormonal"
       ? "الحبوب الهرمونية تحتاج تقييم طبي (أحياناً تحاليل أو علاج بوصفة)، والكيت يساندك بس ما يغني عن العلاج."
       : answers.concern === "fungal" ? "الحبوب الفطرية تشبه الحبوب العادية، والطبيبة تأكد التشخيص وتصرف العلاج المضاد للفطريات إذا احتجتي." : "");
-    return { kits: result, total: total(), notes, allergens, consult, consultWhy };
+    return { kits: result, total: total(), notes, allergens, consult, consultWhy, profile: answers.profile };
   }
 
   const REASON_AR = { fragrance: "العطور", alcohol: "الكحول", nuts: "زيوت المكسرات", fungal: "مكونات قد تغذي الفطريات" };
 
   /* ---------- تحليل البشرة بالذكاء الاصطناعي ----------
      نفس التعليمات تُستخدم في الخادم (Anthropic API) وفي نسخة الرابط (قدرة "اسألي Claude"). */
-  const ANALYSIS_PROMPT = `أنتِ مساعدة عناية بالبشرة في متجر "عنايتي". الصورة المرفقة صورة وجه أرسلتها العميلة لتقترحي لها روتين عناية.
+  const ANALYSIS_PROMPT = `أنتِ مساعدة عناية بالبشرة في متجر "رينورا". الصورة المرفقة صورة وجه أرسلتها العميلة لتقترحي لها روتين عناية.
 مهمتك: وصف ما يظهر في الصورة من ناحية العناية بالبشرة فقط، بدون تشخيص طبي وبدون أي تعليق على الشكل أو الجمال.
 إذا الصورة ليست لوجه، أو الإضاءة/الوضوح لا يسمح بالتقييم، اجعلي photoQuality = "poor" ووضحي السبب، وخلي بقية الحقول بأقل ثقة.
 اكتبي النصوص بالعربي بلهجة سعودية بيضاء ودودة، بصيغة المؤنث، وبجمل قصيرة.
@@ -212,7 +279,7 @@
   }
 
   /* ---------- حلول المشكلة في المتجر ----------
-     نرتب المنتجات حسب ملاءمتها للمشكلة، ونطلع: ترشيح عنايتي، الأوفر، الفاخر. */
+     نرتب المنتجات حسب ملاءمتها للمشكلة، ونطلع: ترشيح رينورا، الأوفر، الفاخر. */
   function solutionsFor(section, concern, products, bestPicks) {
     let list = products.filter(p => p.active !== false && p.cat === section);
     if (concern === "fungal") list = list.filter(p => p.fungal !== false && ((p.goodFor || []).includes("fungal") || p.fungal === true));
@@ -232,5 +299,26 @@
     return { best, bestWhy: pick && best && best.brand.toUpperCase() === pick[0].toUpperCase() ? pick[2] : "", value, luxury: luxury && value && luxury.price > value.price ? luxury : null, list };
   }
 
-  return { QUIZ, TIERS, REASON_AR, solutionsFor, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
+  /* «ابني روتينك»: لكل خطوة في الكيت نطلع ترشيحنا + بدائل من ماركات ثانية تحل نفس الاحتياج */
+  function stepOptions(kitRes, section, profile, products, allergens) {
+    const pMap = Object.fromEntries(products.map(p => [p.id, p]));
+    const concerns = (profile && (section === "skin" ? profile.skinConcerns : profile.hairConcerns)) || [];
+    const fine = profile && profile.thickness && profile.thickness.includes("fine");
+    const al = allergens || [];
+    const used = new Set(kitRes.productIds);
+    return kitRes.productIds.map(id => {
+      const def = pMap[id]; if (!def) return null;
+      let c = products.filter(p => p.active !== false && p.cat === section && p.category === def.category && p.id !== id && !p.demo && p.brand !== def.brand);
+      if (al.filter(x => x !== "fungal").length) c = c.filter(p => p.kitEligible !== false && !badReasons(p, al).length);
+      if (al.includes("fungal")) c = c.filter(p => p.fungal !== false);
+      if (fine && section === "hair") c = c.filter(p => !["tub", "jar"].includes((p.pack || {}).shape) || p.category === "mask");
+      const overlap = p => (p.goodFor || []).filter(g => concerns.includes(g)).length;
+      if (concerns.length) c = c.filter(p => overlap(p) > 0);
+      c.sort((a, b) => (overlap(b) * 2 + (b.kitEligible !== false)) - (overlap(a) * 2 + (a.kitEligible !== false)) || a.price - b.price);
+      const alts = []; for (const p of c) { if (alts.length >= 2) break; if (!used.has(p.id) && !alts.some(x => x.brand === p.brand)) { alts.push(p); used.add(p.id); } }
+      return { category: def.category, step: def.step, options: [def, ...alts] };
+    }).filter(Boolean);
+  }
+
+  return { DELIVERY, EXPRESS_CITIES, QUIZ, TIERS, REASON_AR, solutionsFor, normalize, stepOptions, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
 });
