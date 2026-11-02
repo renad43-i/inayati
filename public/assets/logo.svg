@@ -1,10 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 72" role="img" aria-label="عنايتي Inayati">
-  <g transform="translate(192 4)">
-    <circle cx="32" cy="32" r="30" fill="#F2D4D2"/>
-    <path d="M32 12 C40 24 46 31 46 39 a14 14 0 0 1-28 0 C18 31 24 24 32 12Z" fill="#6F9277"/>
-    <path d="M32 50 C32 40 36 33 42 29 C40 37 37 44 32 50Z" fill="#FBF7F1" opacity=".9"/>
-    <circle cx="26" cy="36" r="3" fill="#FBF7F1" opacity=".9"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 72" role="img" aria-label="Renaura رينورا">
+  <defs>
+    <linearGradient id="skin2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F6D3BE"/><stop offset=".5" stop-color="#D9A27E"/><stop offset="1" stop-color="#8D5A3B"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(232 4)">
+    <circle cx="32" cy="32" r="30" fill="url(#skin2)"/>
+    <circle cx="32" cy="32" r="30" fill="#C8233C" opacity=".12"/>
+    <path d="M15 12 C15 26 15 40 17 54" stroke="#1E1414" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M25 9 C21 17 29 21 25 29 C21 37 29 41 25 49 C23 53 25 56 26 57" stroke="#6B3E26" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M37 9 c6 3 -6 6 0 9 c6 3 -6 6 0 9 c6 3 -6 6 0 9 c6 3 -6 6 0 9 c4 2 -2 4 0 6" stroke="#D9A441" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M48 12 l4 3 -4 3 4 3 -4 3 4 3 -4 3 4 3 -4 3 4 3 -4 3 3 2" stroke="#C8233C" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="182" y="40" text-anchor="end" font-family="El Messiri, Tajawal, sans-serif" font-size="34" font-weight="700" fill="#2F3B30">عنايتي</text>
-  <text x="182" y="62" text-anchor="end" font-family="Poppins, Arial, sans-serif" font-size="13" letter-spacing="4" fill="#6F9277">INAYATI</text>
+  <text x="222" y="40" text-anchor="end" font-family="'Playfair Display', Georgia, serif" font-size="38" font-weight="700" fill="#C8233C" letter-spacing=".5">Renaura</text>
+  <text x="222" y="63" text-anchor="end" font-family="'El Messiri', Tajawal, sans-serif" font-size="17" font-weight="700" fill="#2B1A1E">رينورا · لشعرك وبشرتك</text>
 </svg>

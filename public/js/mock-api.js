@@ -1,11 +1,11 @@
 /* =========================================================
-   عنايتي — نسخة العرض بدون خادم
+   رينورا — نسخة العرض بدون خادم
    يعترض كل طلبات /api/* وينفذها داخل المتصفح بنفس منطق server.js،
    والبيانات تنحفظ في localStorage. تُستخدم فقط في النسخة المنشورة كرابط
    (scripts/build-static.js)، أما المشروع الأصلي فيستخدم الخادم الحقيقي.
    ========================================================= */
 (function () {
-  const KEY = "inayati_demo_db_v4", SESS = "inayati_demo_session_v1";
+  const KEY = "inayati_demo_db_v5", SESS = "inayati_demo_session_v1";
   const now = () => new Date().toISOString().slice(0, 19).replace("T", " ");
   const addMonth = (d = new Date()) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString().slice(0, 10); };
   const today = () => new Date().toISOString().slice(0, 10);
@@ -24,8 +24,9 @@
   let mem = null;
   function seed() {
     return {
-      seq: { users: 1, orders: 0, items: 0, events: 0, subs: 0, quiz: 0, consults: 0 },
-      users: [{ id: 1, name: "إدارة عنايتي", email: "admin@inayati.sa", phone: null, city: null, role: "admin", created_at: now(), pass: null }],
+      seq: { users: 2, orders: 0, items: 0, events: 0, subs: 0, quiz: 0, consults: 0 },
+      users: [{ id: 1, name: "إدارة رينورا", email: "admin@renaura.sa", phone: null, city: null, role: "admin", created_at: now(), pass: null },
+              { id: 2, name: "إدارة رينورا", email: "admin@inayati.sa", phone: null, city: null, role: "admin", created_at: now(), pass: null }],
       products: PRODUCTS.map(p => ({ ...clone(p), stock: 100, active: true })),
       kits: KITS.map(k => ({ ...clone(k), active: true })),
       quiz: [], orders: [], items: [], events: [], subs: [], consults: []
@@ -91,7 +92,7 @@
     sessSet({ userId }); save();
     return { user: pub(d.users.find(u => u.id === userId)) };
   }
-  function priceCart(items) {
+  function priceCart(items, delivery, city) {
     const { products, kits } = catalog();
     const pMap = Object.fromEntries(products.map(p => [p.id, p])), kMap = Object.fromEntries(kits.map(k => [k.id, k]));
     const lines = items.map(it => {
@@ -107,7 +108,7 @@
       if (productIds.some(id => !pMap[id] || pMap[id].cat !== kit.cat)) bad("منتجات غير صحيحة في الكيت");
       return { kit, tier: it.tier, productIds, qty, purchaseType, unitPrice: Engine.kitPrice(productIds, pMap, purchaseType) };
     });
-    const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0), shipping = Engine.shippingFor(subtotal);
+    const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0), shipping = Engine.shippingFor(subtotal, delivery, city);
     return { lines, subtotal, shipping, total: subtotal + shipping };
   }
   function runRenewals(force) {
@@ -155,12 +156,15 @@
       return result;
     }],
     ["GET", /^\/api\/quiz-results$/, () => { const u = needUser(); return clone(load().quiz.filter(q => q.user_id === u.id).reverse().slice(0, 10)); }],
-    ["POST", /^\/api\/cart\/quote$/, (b) => { const q = priceCart((b && b.items) || []); return { subtotal: q.subtotal, shipping: q.shipping, total: q.total, lines: q.lines.map(l => ({ kitId: l.kit ? l.kit.id : null, productId: l.product ? l.product.id : null, unitPrice: l.unitPrice })) }; }],
+    ["POST", /^\/api\/cart\/quote$/, (b) => { const q = priceCart((b && b.items) || [], b && b.delivery, b && b.city); return { subtotal: q.subtotal, shipping: q.shipping, total: q.total, lines: q.lines.map(l => ({ kitId: l.kit ? l.kit.id : null, productId: l.product ? l.product.id : null, unitPrice: l.unitPrice })) }; }],
     ["POST", /^\/api\/orders$/, (b) => {
       const u = needUser(), { items, address, payment } = b || {}, d = load();
       if (!Array.isArray(items) || !items.length) bad("السلة فاضية");
       if (!address || !address.name || !address.phone || !address.city || !address.street) bad("أكملي بيانات التوصيل");
-      const q = priceCart(items), hasSub = q.lines.some(l => l.purchaseType === "subscription");
+      const delivery = (b || {}).delivery === "express" ? "express" : "standard";
+      if (delivery === "express" && !Engine.EXPRESS_CITIES.includes(address.city)) bad("التوصيل السريع متاح في الرياض وجدة والدمام بس");
+      address.delivery = delivery;
+      const q = priceCart(items, delivery, address.city), hasSub = q.lines.some(l => l.purchaseType === "subscription");
       let method, ref = null, status;
       if (payment && payment.method === "cod") { if (hasSub) bad("الاشتراك الشهري يحتاج دفع بالبطاقة"); method = "cod"; status = "pending_cod"; }
       else {

@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<title>تفاصيل الكيت | عنايتي</title>
+<title>تفاصيل الكيت | رينورا</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Playfair+Display:wght@600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
@@ -21,7 +21,7 @@ App.layout("kits");
   const cat = await App.catalog();
   const kit = cat.kMap[App.params.get("id")];
   if (!kit) { App.qs("#product").innerHTML = `<p class="empty">الكيت غير موجود. <a href="kits.html">ارجعي للكيتات</a></p>`; return; }
-  document.title = `${kit.name} | عنايتي`;
+  document.title = `${kit.name} | رينورا`;
   App.qs("#crumb").textContent = kit.name;
 
   // لو جاية من نتيجة الاختبار نستخدم المنتجات المخصصة (بعد استبدال مسببات الحساسية)
@@ -69,7 +69,7 @@ App.layout("kits");
         <div class="tiktok-box">
           <svg width="34" viewBox="0 0 24 24" fill="#111" aria-hidden="true"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2-2.8V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>
           <div style="flex:1"><b>ريفيوهات حقيقية على تيك توك</b><div class="small muted">شوفي تجارب الناس مع منتجات هذا الكيت، ولكل منتج زر ريفيو خاص تحت</div></div>
-          <a class="btn tiktok sm" href="${App.esc(App.ttHref(kit.tiktok || "https://www.tiktok.com/@inayati.sa"))}" target="_blank" rel="noopener">${App.tiktokIcon} شاهدي الريفيوهات</a>
+          <a class="btn tiktok sm" href="${App.esc(App.ttHref(kit.tiktok || "https://www.tiktok.com/@renaura.sa"))}" target="_blank" rel="noopener">${App.tiktokIcon} شاهدي الريفيوهات</a>
         </div>
 
         <div style="margin-top:14px">${App.consultCTA(false, "")}</div>

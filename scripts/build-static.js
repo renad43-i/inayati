@@ -23,7 +23,7 @@ for (const f of fs.readdirSync(out).filter(f => f.endsWith(".html")).map(f => pa
 }
 
 // صفحة الدخول للرابط المنشور: تنقل مباشرة للرئيسية
-fs.writeFileSync(path.join(out, "launch.html"), `<title>عنايتي</title>
+fs.writeFileSync(path.join(out, "launch.html"), `<title>رينورا</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
   :root { --bg: #FBF7F1; --fg: #2F3B30; --accent: #6F9277 }
@@ -32,15 +32,15 @@ fs.writeFileSync(path.join(out, "launch.html"), `<title>عنايتي</title>
   body { background: var(--bg); color: var(--fg); font-family: Tajawal, system-ui, sans-serif; display: grid; place-items: center; min-height: 80vh; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
   a { color: var(--accent); font-weight: 700; font-size: 18px }
 </style>
-<div dir="rtl" style="text-align:center"><p>جاري فتح موقع عنايتي…</p><a href="home.html">افتحي الموقع</a></div>
+<div dir="rtl" style="text-align:center"><p>جاري فتح موقع رينورا…</p><a href="home.html">افتحي الموقع</a></div>
 <script>location.replace("home.html");</script>
 `);
 // لنشر GitHub Pages: صفحة البداية index.html تنقل للرئيسية، و.nojekyll لنشر الملفات كما هي
 fs.writeFileSync(path.join(out, "index.html"), `<!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>عنايتي</title><meta http-equiv="refresh" content="0; url=home.html"><link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<title>رينورا</title><meta http-equiv="refresh" content="0; url=home.html"><link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <style>body{background:#FBF7F1;color:#2F3B30;font-family:Tajawal,system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0}a{color:#6F9277;font-weight:700}</style>
-</head><body><p>جاري فتح عنايتي… <a href="home.html">اضغطي هنا</a></p><script>location.replace("home.html")</script></body></html>
+</head><body><p>جاري فتح رينورا… <a href="home.html">اضغطي هنا</a></p><script>location.replace("home.html")</script></body></html>
 `);
 fs.writeFileSync(path.join(out, ".nojekyll"), "");
 console.log("static/ جاهزة (رابط Claude: launch.html — GitHub Pages: index.html)");

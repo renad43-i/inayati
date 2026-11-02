@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<title>السلة | عنايتي</title>
+<title>السلة | رينورا</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Playfair+Display:wght@600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
@@ -23,6 +23,11 @@
             <div class="field"><label for="aPhone">رقم الجوال</label><input id="aPhone" class="ltr" required placeholder="05xxxxxxxx" pattern="05\d{8}" title="رقم سعودي يبدأ بـ 05"></div>
             <div class="field"><label for="aCity">المدينة</label><select id="aCity" required><option value="">اختاري</option><option>الرياض</option><option>جدة</option><option>مكة المكرمة</option><option>المدينة المنورة</option><option>الدمام</option><option>الخبر</option><option>أبها</option><option>تبوك</option><option>القصيم</option><option>حائل</option></select></div>
             <div class="field"><label for="aStreet">الحي والشارع</label><input id="aStreet" required></div>
+          </div>
+          <h2 style="font-size:1.4rem;margin-top:10px">التوصيل</h2>
+          <div class="purchase" id="delivBox">
+            <label class="active"><input type="radio" name="dv" value="standard" checked><span style="flex:1"><b>🚚 توصيل عادي</b> · 1–3 أيام عمل لكل مدن المملكة<br><span class="small muted">مجاني للطلبات فوق 200 ر.س، وإلا 25 ر.س</span></span></label>
+            <label id="expressLbl"><input type="radio" name="dv" value="express"><span style="flex:1"><b>⚡ توصيل سريع نفس اليوم</b> · 35 ر.س<br><span class="small muted">الرياض وجدة والدمام · اطلبي قبل 2 الظهر يوصلك اليوم</span></span></label>
           </div>
           <h2 style="font-size:1.4rem;margin-top:10px">الدفع</h2>
           <div class="purchase pay-methods">
@@ -47,7 +52,7 @@
 </main>
 <script>
 App.layout("cart");
-let cat, user, quote;
+let cat, user, quote, deliv = "standard";
 async function refresh() {
   // نشيل من السلة أي كيت أو منتج ما عاد موجود (بيانات قديمة)
   const valid = App.cart.get().filter(it => it.productId ? !!cat.pMap[it.productId]
@@ -59,7 +64,10 @@ async function refresh() {
     box.innerHTML = `<div class="empty"><p>سلتك فاضية.</p><a class="btn" href="quiz.html">حددي روتينك</a> <a class="btn outline" href="kits.html">تصفحي الكيتات</a></div>`;
     App.qs("#summary").classList.add("hidden"); App.qs("#checkout").classList.add("hidden"); return;
   }
-  quote = await App.api("/api/cart/quote", { body: { items } });
+  const city = App.qs("#aCity").value;
+  if (deliv === "express" && city && !Engine.EXPRESS_CITIES.includes(city)) { deliv = "standard"; App.qs('input[name=dv][value=standard]').checked = true; App.toast("التوصيل السريع متاح في الرياض وجدة والدمام"); }
+  App.qsa("#delivBox label").forEach(l => l.classList.toggle("active", l.querySelector("input").checked));
+  quote = await App.api("/api/cart/quote", { body: { items, delivery: deliv, city } });
   box.innerHTML = items.map((it, i) => {
     const unit = quote.lines[i].unitPrice;
     if (it.productId) { const p = cat.pMap[it.productId]; return `<div class="cart-item">
@@ -83,8 +91,8 @@ async function refresh() {
   App.qs("#summary").classList.remove("hidden");
   App.qs("#summary").innerHTML = `<h2 style="font-size:1.3rem">ملخص الطلب</h2>
     <div class="summary-row"><span>المجموع</span><span>${App.fmt(quote.subtotal)}</span></div>
-    <div class="summary-row"><span>الشحن</span><span>${quote.shipping ? App.fmt(quote.shipping) : "مجاني"}</span></div>
-    ${quote.shipping ? `<p class="small muted" style="margin:0">أضيفي ${App.fmt(200 - quote.subtotal)} للشحن المجاني</p>` : ""}
+    <div class="summary-row"><span>${deliv === "express" ? "⚡ توصيل سريع" : "🚚 التوصيل"}</span><span>${quote.shipping ? App.fmt(quote.shipping) : "مجاني"}</span></div>
+    ${quote.shipping && deliv === "standard" ? `<p class="small muted" style="margin:0">أضيفي ${App.fmt(200 - quote.subtotal)} للتوصيل المجاني</p>` : ""}
     <div class="summary-row total"><span>الإجمالي</span><span>${App.fmt(quote.total)}</span></div>
     <p class="small muted">الأسعار شاملة ضريبة القيمة المضافة.</p>
     ${hasSub ? `<p class="alert info small">الاشتراك يتجدد تلقائياً كل شهر بنفس السعر، وتقدرين توقفينه من حسابك.</p>` : ""}
@@ -112,7 +120,7 @@ App.qs("#form").onsubmit = async e => {
   try {
     const { order } = await App.api("/api/orders", { body: {
       items: App.cart.get(),
-      address: { name: App.qs("#aName").value, phone: App.qs("#aPhone").value, city: App.qs("#aCity").value, street: App.qs("#aStreet").value },
+      address: { name: App.qs("#aName").value, phone: App.qs("#aPhone").value, city: App.qs("#aCity").value, street: App.qs("#aStreet").value }, delivery: deliv,
       payment: method === "cod" ? { method: "cod" } : { method: "card", cardNumber: App.qs("#cNum").value, expiry: App.qs("#cExp").value, cvv: App.qs("#cCvv").value }
     } });
     App.cart.clear();
@@ -125,6 +133,8 @@ App.qs("#form").onsubmit = async e => {
 
 (async () => {
   [cat, user] = await Promise.all([App.catalog(), App.me()]);
+  App.qsa("input[name=dv]").forEach(r => r.onchange = () => { deliv = r.value; refresh(); });
+  App.qs("#aCity").addEventListener("change", () => refresh());
   if (user) { App.qs("#aName").value = user.name || ""; App.qs("#aPhone").value = user.phone || ""; if (user.city) App.qs("#aCity").value = user.city; }
   else App.qs("#loginNote").classList.remove("hidden");
   refresh();

@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<title>تتبع الطلب | عنايتي</title>
+<title>تتبع الطلب | رينورا</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Playfair+Display:wght@600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
@@ -39,7 +39,7 @@ App.layout("account");
         <div class="summary-row total"><span>الإجمالي</span><span>${App.fmt(o.total)}</span></div></div>
       <h3>سجل الحالة</h3>
       <ul class="timeline">${o.events.map(e => `<li><b>${App.esc(e.note)}</b><div class="small muted">${App.dateAr(e.created_at)}</div></li>`).join("")}</ul>
-      <h3>عنوان التوصيل</h3><p class="small">${App.esc(o.address.name)} · <span dir="ltr">${App.esc(o.address.phone)}</span><br>${App.esc(o.address.city)} — ${App.esc(o.address.street)}</p>
+      <h3>التوصيل ${o.address.delivery === "express" ? "⚡ سريع نفس اليوم" : "🚚 عادي (1–3 أيام)"}</h3><p class="small">${App.esc(o.address.name)} · <span dir="ltr">${App.esc(o.address.phone)}</span><br>${App.esc(o.address.city)} — ${App.esc(o.address.street)}</p>
       <div class="row"><a class="btn outline" href="account.html">طلباتي</a>${["paid", "pending_cod"].includes(o.status) && o.source !== "renewal" ? `<button class="btn danger" id="cancel">إلغاء الطلب</button>` : ""}</div>`;
     const c = App.qs("#cancel");
     if (c) c.onclick = async () => { if (!confirm("متأكدة تبين تلغين الطلب؟")) return; try { await App.api(`/api/orders/${o.id}/cancel`, { method: "POST" }); location.reload(); } catch (e) { App.toast(e.message); } };

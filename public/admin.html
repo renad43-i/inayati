@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<title>لوحة الإدارة | عنايتي</title>
+<title>لوحة الإدارة | رينورا</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Playfair+Display:wght@600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
@@ -160,7 +160,7 @@ function productForm(p) {
   dlg.showModal();
 }
 function kitForm(k) {
-  const isNew = !k; k = k || { id: "", cat: "skin", name: "", for: "", tagline: "", color: "#E3ECE4", tiktok: "https://www.tiktok.com/@inayati.sa", active: true, tiers: { basic: [], full: [], plus: [] }, routine: { morning: [], evening: [], weekly: [] } };
+  const isNew = !k; k = k || { id: "", cat: "skin", name: "", for: "", tagline: "", color: "#E3ECE4", tiktok: "https://www.tiktok.com/@renaura.sa", active: true, tiers: { basic: [], full: [], plus: [] }, routine: { morning: [], evening: [], weekly: [] } };
   const prods = c => Object.fromEntries(cat.products.filter(p => p.cat === c).map(p => [p.id, p.name]));
   const r = k.routine || {};
   form.innerHTML = `<h2>${isNew ? "كيت جديد" : "تعديل " + App.esc(k.name)}</h2><div id="fErr" class="alert error hidden"></div>

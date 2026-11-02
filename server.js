@@ -1,5 +1,5 @@
 /* =========================================================
-   عنايتي — خادم المتجر (Express + SQLite)
+   رينورا — خادم المتجر (Express + SQLite)
    تشغيل: npm start  ثم افتحي http://localhost:3000
    ========================================================= */
 const path = require("path");
@@ -113,7 +113,7 @@ app.get("/api/quiz-results", requireUser, (req, res) => {
 });
 
 /* =================== الطلبات والدفع التجريبي =================== */
-function priceCart(items) {
+function priceCart(items, delivery, city) {
   const { products, kits } = getCatalog();
   const pMap = Object.fromEntries(products.map(p => [p.id, p]));
   const kMap = Object.fromEntries(kits.map(k => [k.id, k]));
@@ -137,11 +137,11 @@ function priceCart(items) {
     lines.push({ kit, tier: it.tier, productIds, qty, purchaseType, unitPrice: Engine.kitPrice(productIds, pMap, purchaseType) });
   }
   const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0);
-  const shipping = Engine.shippingFor(subtotal);
+  const shipping = Engine.shippingFor(subtotal, delivery, city);
   return { lines, subtotal, shipping, total: subtotal + shipping };
 }
 app.post("/api/cart/quote", (req, res) => {
-  try { const q = priceCart((req.body && req.body.items) || []); res.json({ subtotal: q.subtotal, shipping: q.shipping, total: q.total, lines: q.lines.map(l => ({ kitId: l.kit ? l.kit.id : null, productId: l.product ? l.product.id : null, unitPrice: l.unitPrice })) }); }
+  try { const b = req.body || {}; const q = priceCart(b.items || [], b.delivery, b.city); res.json({ subtotal: q.subtotal, shipping: q.shipping, total: q.total, lines: q.lines.map(l => ({ kitId: l.kit ? l.kit.id : null, productId: l.product ? l.product.id : null, unitPrice: l.unitPrice })) }); }
   catch (e) { bad(res, e.message); }
 });
 
@@ -149,7 +149,10 @@ app.post("/api/orders", requireUser, (req, res) => {
   const { items, address, payment } = req.body || {};
   if (!Array.isArray(items) || !items.length) return bad(res, "السلة فاضية");
   if (!address || !address.name || !address.phone || !address.city || !address.street) return bad(res, "أكملي بيانات التوصيل");
-  let q; try { q = priceCart(items); } catch (e) { return bad(res, e.message); }
+  const delivery = (req.body || {}).delivery === "express" ? "express" : "standard";
+  if (delivery === "express" && !Engine.EXPRESS_CITIES.includes(address.city)) return bad(res, "التوصيل السريع متاح في الرياض وجدة والدمام بس");
+  address.delivery = delivery;
+  let q; try { q = priceCart(items, delivery, address.city); } catch (e) { return bad(res, e.message); }
   const hasSub = q.lines.some(l => l.purchaseType === "subscription");
 
   // ----- بوابة دفع تجريبية -----
@@ -427,5 +430,5 @@ app.post("/api/admin/renewals", requireAdmin, (req, res) => res.json({ created: 
 setInterval(() => { try { runRenewals(false); } catch (e) { console.error(e); } }, 1000 * 60 * 60 * 6).unref();
 
 const PORT = process.env.PORT || 3000;
-if (require.main === module) app.listen(PORT, () => console.log(`عنايتي تعمل على http://localhost:${PORT}`));
+if (require.main === module) app.listen(PORT, () => console.log(`رينورا تعمل على http://localhost:${PORT}`));
 module.exports = app;
