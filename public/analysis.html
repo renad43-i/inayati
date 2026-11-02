@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/skinscan.js"></script><script src="js/app.js"></script>
 </head>
 <body>
 <main class="container" style="max-width:960px;padding:36px 0">
@@ -39,7 +39,7 @@
         </div></div>
     </div>
     <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400"><input type="checkbox" id="consent" style="width:auto;margin-top:6px">
-      <span class="small">أوافق على إرسال الصورة للتحليل بالذكاء الاصطناعي. <b>ما نحفظ الصورة</b>؛ نحفظ النتيجة فقط في حسابك إذا كنتِ مسجلة.</span></label>
+      <span class="small" id="consentText">أوافق على إرسال الصورة للتحليل بالذكاء الاصطناعي. <b>ما نحفظ الصورة</b>؛ نحفظ النتيجة فقط في حسابك إذا كنتِ مسجلة.</span></label>
     <div id="err" class="alert error hidden"></div>
     <div class="row"><button class="btn" id="go" disabled>حللي بشرتي</button><span class="small muted" id="status"></span></div>
     <p class="disclaimer">التحليل يساعدك تختارين روتين عناية، <b>وليس تشخيصاً طبياً</b>. إذا عندك حبوب مؤلمة أو منتشرة، أو تغير مفاجئ في بشرتك، استشيري طبيبة.</p>
@@ -70,29 +70,39 @@ drop.ondragover = e => { e.preventDefault(); drop.classList.add("drag"); };
 drop.ondragleave = () => drop.classList.remove("drag");
 drop.ondrop = e => { e.preventDefault(); drop.classList.remove("drag"); pick(e.dataTransfer.files[0]); };
 App.qs("#consent").onchange = refresh;
-let available = true;
-function refresh() { App.qs("#go").disabled = !(image && App.qs("#consent").checked && available); }
+let mode = "ai"; // ai: Claude | local: على جهاز العميلة
+function refresh() { App.qs("#go").disabled = !(image && App.qs("#consent").checked); }
+function useLocal() {
+  mode = "local";
+  const u = App.qs("#unavailable");
+  u.innerHTML = `<b>التحليل هنا يتم على جهازك.</b> الصورة ما تطلع من جوالك أو جهازك أبداً، والتحليل يقيس اللمعان والاحمرار والحبوب ومكانها والبقع الداكنة. نتيجته تقريبية، وتقدرين تعدلينها من <a href="quiz.html">أسئلة الاختبار</a>.`;
+  u.classList.remove("hidden");
+  App.qs("#consentText").innerHTML = `أوافق على تحليل الصورة على جهازي. <b>الصورة ما تُرسل لأي مكان</b>؛ نحفظ النتيجة فقط في حسابك إذا كنتِ مسجلة.`;
+}
 function showErr(m) { const e = App.qs("#err"); e.textContent = m; e.classList.remove("hidden"); }
 
-App.api("/api/analyze/status").then(s => {
-  if (s.available) return;
-  available = false; refresh();
-  const u = App.qs("#unavailable");
-  u.innerHTML = `<b>التحليل الذكي غير مفعّل في هذه النسخة.</b> في النسخة الكاملة يشتغل بإضافة مفتاح Anthropic API للخادم. تقدرين الحين <a href="quiz.html">تحددين روتينك بالأسئلة</a> أو <a href="consult.html">تحجزين استشارة مع طبيبة</a>.`;
-  u.classList.remove("hidden");
-}).catch(() => {});
+App.api("/api/analyze/status").then(s => { if (!s.available) useLocal(); }).catch(useLocal);
+async function analyzeLocal(budget, allergies) {
+  const ai = await SkinScan.analyze(image.dataUrl);
+  const answers = Engine.analysisToAnswers(ai, { budget, allergies });
+  const recommendation = await App.api("/api/recommend", { body: { answers } });
+  return { analysis: ai, answers, recommendation };
+}
 
 App.qs("#form").onsubmit = async e => {
   e.preventDefault();
   if (!image) return;
   const btn = App.qs("#go"); btn.disabled = true; App.qs("#err").classList.add("hidden");
-  App.qs("#status").textContent = "جاري تحليل الصورة… (ممكن ياخذ نص دقيقة)";
+  App.qs("#status").textContent = mode === "local" ? "جاري تحليل الصورة على جهازك…" : "جاري تحليل الصورة… (ممكن ياخذ نص دقيقة)";
   try {
-    const allergies = App.qsa("#allergies input:checked").map(i => i.value);
-    const [out, cat] = await Promise.all([
-      App.api("/api/analyze", { body: { image: image.base64, mediaType: image.mediaType, budget: App.qs("#budget").value, allergies } }),
-      App.catalog()
-    ]);
+    const allergies = App.qsa("#allergies input:checked").map(i => i.value), budget = App.qs("#budget").value;
+    let out;
+    if (mode === "local") out = await analyzeLocal(budget, allergies);
+    else {
+      try { out = await App.api("/api/analyze", { body: { image: image.base64, mediaType: image.mediaType, budget, allergies } }); }
+      catch (ex) { if (ex.status === 503 || ex.status === 403) { useLocal(); out = await analyzeLocal(budget, allergies); } else throw ex; }
+    }
+    const cat = await App.catalog();
     try { sessionStorage.setItem("inayati_last_analysis", JSON.stringify(out.analysis)); sessionStorage.setItem("inayati_last_rec", JSON.stringify({ answers: out.answers, res: out.recommendation })); } catch {}
     render(out, cat);
   } catch (ex) { showErr(ex.message); }
@@ -105,7 +115,8 @@ function render({ analysis: a, recommendation: res }, cat) {
   box.innerHTML = `
     ${a.photoQuality === "poor" ? `<div class="alert info"><b>الصورة مو واضحة كفاية:</b> ${App.esc(a.qualityNote || "")} النتيجة تقريبية، جربي صورة ثانية بإضاءة نهار.</div>` : ""}
     <div class="card">
-      <h2 style="font-size:1.4rem">نتيجة التحليل</h2>
+      <div class="row"><h2 style="font-size:1.4rem;margin:0">نتيجة التحليل</h2><span class="spacer"></span>
+        <span class="tag ${a.method === "local" ? "" : "sage"}">${a.method === "local" ? "تحليل تقريبي على جهازك" : "تحليل بالذكاء الاصطناعي (Claude)"}</span></div>
       <p>${App.esc(a.summary || "")}</p>
       <div class="ai-grid">
         <div><h4>نوع البشرة المتوقع</h4><p class="price">${SKIN_AR[a.skinType] || SKIN_AR.unknown}</p>

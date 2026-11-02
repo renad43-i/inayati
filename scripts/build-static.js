@@ -35,4 +35,12 @@ fs.writeFileSync(path.join(out, "launch.html"), `<title>عنايتي</title>
 <div dir="rtl" style="text-align:center"><p>جاري فتح موقع عنايتي…</p><a href="home.html">افتحي الموقع</a></div>
 <script>location.replace("home.html");</script>
 `);
-console.log("static/ جاهزة");
+// لنشر GitHub Pages: صفحة البداية index.html تنقل للرئيسية، و.nojekyll لنشر الملفات كما هي
+fs.writeFileSync(path.join(out, "index.html"), `<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>عنايتي</title><meta http-equiv="refresh" content="0; url=home.html"><link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<style>body{background:#FBF7F1;color:#2F3B30;font-family:Tajawal,system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0}a{color:#6F9277;font-weight:700}</style>
+</head><body><p>جاري فتح عنايتي… <a href="home.html">اضغطي هنا</a></p><script>location.replace("home.html")</script></body></html>
+`);
+fs.writeFileSync(path.join(out, ".nojekyll"), "");
+console.log("static/ جاهزة (رابط Claude: launch.html — GitHub Pages: index.html)");
