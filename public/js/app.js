@@ -109,7 +109,7 @@ const App = (() => {
     const footer = document.createElement("footer");
     footer.className = "site-footer";
     footer.innerHTML = `<div class="container"><div class="cols">
-      <div><img src="assets/logo.svg" alt="رينورا" style="height:44px"><p class="muted small" style="margin-top:10px">كيتات عناية شخصية جاهزة، مبنية على احتياجك ويتجدد روتينك كل شهر.</p></div>
+      <div><img src="assets/logo-light.svg" alt="رينورا" style="height:52px"><p class="muted small" style="margin-top:10px">كيتات عناية شخصية جاهزة، مبنية على احتياجك ويتجدد روتينك كل شهر.</p></div>
       <div><h4>تسوقي</h4><a href="shop.html">المتجر: حلول لكل مشكلة</a><a href="quiz.html">حددي روتينك</a><a href="analysis.html">تحليل البشرة بالذكاء الاصطناعي</a><a href="consult.html">استشارة طبيبة جلدية</a><a href="kits.html?cat=skin">كيتات البشرة</a><a href="kits.html?cat=hair">كيتات الشعر</a></div>
       <div><h4>حسابي</h4><a href="account.html">طلباتي</a><a href="account.html#subs">اشتراكي</a><a href="cart.html">السلة</a></div>
       <div><h4>تابعينا</h4><a href="https://www.tiktok.com/@renaura.sa" target="_blank" rel="noopener">تيك توك</a><a href="#">انستقرام</a><a href="mailto:hello@renaura.sa">hello@renaura.sa</a></div>

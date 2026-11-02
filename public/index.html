@@ -5,8 +5,9 @@
 <meta name="description" content="رينورا: كيتات عناية بالبشرة والشعر جاهزة ومخصصة لاحتياجك، تتجدد كل شهر.">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Playfair+Display:wght@600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Noto+Naskh+Arabic:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
 </head>
@@ -120,18 +121,18 @@ App.catalog().then(cat => {
   const ids = ["k-acne", "k-dry", "k-bright", "h-curly"];
   App.qs("#featured").innerHTML = ids.map(id => cat.kMap[id]).filter(Boolean).map(k => App.kitCard(k, cat)).join("");
   const strands = `<svg class="hero-strands" viewBox="0 0 400 400" aria-hidden="true">
-    <defs><radialGradient id="hs" cx=".5" cy=".45" r=".55"><stop offset="0" stop-color="#FFE3D6"/><stop offset=".7" stop-color="#F6C6AE"/><stop offset="1" stop-color="#E9A98C"/></radialGradient></defs>
+    <defs><radialGradient id="hs" cx=".5" cy=".45" r=".55"><stop offset="0" stop-color="#FBF7F2"/><stop offset=".7" stop-color="#EDE4D8"/><stop offset="1" stop-color="#E0D2C1"/></radialGradient></defs>
     <circle cx="200" cy="200" r="185" fill="url(#hs)"/>
-    <path d="M70 40 C60 140 75 260 95 380" stroke="#1E1414" stroke-width="16" fill="none" stroke-linecap="round" opacity=".9"/>
-    <path d="M150 20 C110 70 190 110 150 170 C110 230 190 270 150 330 C135 355 145 375 155 392" stroke="#6B3E26" stroke-width="16" fill="none" stroke-linecap="round" opacity=".9"/>
-    <path d="M255 20 c40 18 -40 36 0 54 c40 18 -40 36 0 54 c40 18 -40 36 0 54 c40 18 -40 36 0 54 c40 18 -40 36 0 54 c30 14 -10 28 0 40" stroke="#D9A441" stroke-width="15" fill="none" stroke-linecap="round" opacity=".9"/>
-    <path d="M330 40 l26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -18 12" stroke="#C8233C" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+    <path d="M70 40 C60 140 75 260 95 380" stroke="#D4A27C" stroke-width="16" fill="none" stroke-linecap="round" opacity=".9"/>
+    <path d="M150 20 C110 70 190 110 150 170 C110 230 190 270 150 330 C135 355 145 375 155 392" stroke="#B57D55" stroke-width="16" fill="none" stroke-linecap="round" opacity=".9"/>
+    <path d="M255 20 c40 18 -40 36 0 54 c40 18 -40 36 0 54 c40 18 -40 36 0 54 c40 18 -40 36 0 54 c40 18 -40 36 0 54 c30 14 -10 28 0 40" stroke="#8A5536" stroke-width="15" fill="none" stroke-linecap="round" opacity=".9"/>
+    <path d="M330 40 l26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -26 16 26 16 -18 12" stroke="#5C3722" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
   </svg>`;
   App.qs("#heroArt").innerHTML = strands + `<div class="hero-prod">` + Packshots.kit(["s05", "s09", "s20", "s19", "s10"].map(id => cat.pMap[id]).filter(Boolean)) + `</div>`;
   const brands = new Set(cat.products.map(p => p.brand.toUpperCase())), countries = {};
   cat.products.forEach(p => { (countries[p.country] = countries[p.country] || new Set()).add(p.brand.toUpperCase()); });
-  const HT = [["ناعم", "M20 6 C20 40 20 70 22 104", "#1E1414", "straight"], ["مموج", "M20 6 C10 20 30 30 20 46 C10 62 30 72 20 88 C16 96 20 102 22 104", "#6B3E26", "wavy"],
-    ["كيرلي", "M22 6 c14 6 -14 12 0 18 c14 6 -14 12 0 18 c14 6 -14 12 0 18 c14 6 -14 12 0 18 c10 4 -4 8 0 12", "#D9A441", "curly"], ["كِنكي", "M14 8 l14 6 -14 6 14 6 -14 6 14 6 -14 6 14 6 -14 6 14 6 -14 6 14 6 -8 4", "#C8233C", "coily"]];
+  const HT = [["ناعم", "M20 6 C20 40 20 70 22 104", "#D4A27C", "straight"], ["مموج", "M20 6 C10 20 30 30 20 46 C10 62 30 72 20 88 C16 96 20 102 22 104", "#B57D55", "wavy"],
+    ["كيرلي", "M22 6 c14 6 -14 12 0 18 c14 6 -14 12 0 18 c14 6 -14 12 0 18 c14 6 -14 12 0 18 c10 4 -4 8 0 12", "#8A5536", "curly"], ["كِنكي", "M14 8 l14 6 -14 6 14 6 -14 6 14 6 -14 6 14 6 -14 6 14 6 -14 6 14 6 -8 4", "#5C3722", "coily"]];
   App.qs("#hairTypes").innerHTML = HT.map(([n, d, c]) => `<a class="card hair-type" href="shop.html?section=hair&problem=${n === "ناعم" ? "shine" : n === "مموج" ? "frizz" : "curls"}">
     <svg viewBox="0 0 44 110" aria-hidden="true"><path d="${d}" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none" transform="translate(-2 0)"/></svg>
     <h3 style="margin:6px 0 0">${n}</h3><span class="small muted">تسوقي لشعرك ←</span></a>`).join("");

@@ -1,32 +1,33 @@
 /* =========================================================
    Renaura (رينورا) — نظام التصميم
    الهوية: أنواع الشعر (ناعم، مموج، كيرلي، كِنكي) بألوان شعر مختلفة + درجات البشرة
-   الألوان: أحمر حيوي (الثقة والجرأة) + خوخي ووردي دافئ (العناية) + كريمي (النظافة)
+   الألوان (باقة A): أحمر مخملي #8E1B22 + زيتوني غامق #3E4130 + كريمي فاتح #F4EFEA
    أسماء المتغيرات قديمة (sage = اللون الأساسي) عشان ما ينكسر شي.
-   الخطوط: Playfair Display للاسم اللاتيني، El Messiri للعناوين، Tajawal للنصوص
+   الخطوط: Cormorant Garamond للاسم اللاتيني، Noto Naskh Arabic للعناوين، IBM Plex Sans Arabic للنصوص
+   أنواع الشعر في الرسومات صارت بدرجات البشرة (مثل الشعار)
    ========================================================= */
 :root {
-  --sage: #C8233C;
-  --sage-dark: #8E1630;
-  --sage-soft: #FCE4E6;
-  --blush: #FFD9C7;
-  --blush-dark: #F08A6B;
-  --cream: #FFF8F4;
-  --sand: #F9ECE6;
-  --ink: #2B1A1E;
-  --muted: #7A6468;
-  --line: #F0DDD6;
+  --sage: #8E1B22;
+  --sage-dark: #721519;
+  --sage-soft: #F3E1DF;
+  --blush: #E9E2D4;
+  --blush-dark: #3E4130;
+  --cream: #F4EFEA;
+  --sand: #ECE5DC;
+  --ink: #3E4130;
+  --muted: #6E705F;
+  --line: #E2DAD1;
   --white: #FFFFFF;
   --danger: #B42318;
   --ok: #2E7D52;
-  --gold: #D9A441;
-  --hair-black: #1E1414; --hair-brown: #6B3E26; --hair-blonde: #D9A441; --hair-red: #C8233C;
+  --gold: #B8925A;
+  --hair-black: #D4A27C; --hair-brown: #B57D55; --hair-blonde: #8A5536; --hair-red: #5C3722;
   --radius: 18px;
   --radius-sm: 10px;
-  --shadow: 0 8px 28px rgba(140, 22, 48, .08);
-  --font-head: "El Messiri", "Tajawal", system-ui, sans-serif;
-  --font-body: "Tajawal", system-ui, sans-serif;
-  --font-latin: "Playfair Display", Georgia, serif;
+  --shadow: 0 8px 28px rgba(62, 65, 48, .08);
+  --font-head: "Noto Naskh Arabic", "IBM Plex Sans Arabic", system-ui, serif;
+  --font-body: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-latin: "Cormorant Garamond", Georgia, serif;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -48,9 +49,9 @@ p { margin: 0 0 1em; }
 .spacer { flex: 1; }
 
 /* ---------- الهيدر ---------- */
-.site-header { position: sticky; top: 0; z-index: 50; background: rgba(251, 247, 241, .92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.site-header { position: sticky; top: 0; z-index: 50; background: rgba(244, 239, 234, .92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
 .site-header .bar { display: flex; align-items: center; gap: 20px; height: 72px; }
-.brand img { height: 46px; display: block; }
+.brand img { height: 40px; display: block; }
 .nav { display: flex; gap: 22px; }
 .nav a { color: var(--ink); font-weight: 500; padding: 6px 2px; border-bottom: 2px solid transparent; }
 .nav a.active, .nav a:hover { border-color: var(--sage); color: var(--sage-dark); }
@@ -232,10 +233,13 @@ dialog::backdrop { background: rgba(47,59,48,.4); }
 .check-grid input { width: auto; }
 
 /* ---------- الفوتر و التنبيه ---------- */
-.site-footer { background: var(--white); border-top: 1px solid var(--line); padding: 40px 0 24px; margin-top: 40px; }
+.site-footer { background: var(--ink); color: var(--cream); border-top: 1px solid var(--line); padding: 40px 0 24px; margin-top: 40px; }
 .site-footer .cols { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 26px; }
 .site-footer h4 { font-size: 1rem; }
-.site-footer a { display: block; color: var(--muted); padding: 2px 0; }
+.site-footer a { display: block; color: #D8D3C4; padding: 2px 0; }
+.site-footer a:hover { color: #fff; }
+.site-footer h4 { color: #fff; }
+.site-footer .muted { color: #C9C6B6; }
 @media (max-width: 720px) { .site-footer .cols { grid-template-columns: 1fr 1fr; } }
 .toast { position: fixed; bottom: 22px; inset-inline-start: 50%; transform: translateX(50%); background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 99px; z-index: 100; box-shadow: var(--shadow); opacity: 0; transition: opacity .25s; pointer-events: none; }
 .toast.show { opacity: 1; }
@@ -331,15 +335,15 @@ dialog::backdrop { background: rgba(47,59,48,.4); }
 .cflag { font-size: 1.6rem; line-height: 1.2; }
 
 /* ---------- لمسات حيوية (Renaura) ---------- */
-body { background: radial-gradient(1200px 500px at 100% -10%, #FFE3D8 0, transparent 60%), var(--cream); background-attachment: fixed; }
-.site-header { background: rgba(255, 248, 244, .9); }
+body { background: radial-gradient(1200px 500px at 100% -10%, #FBF8F4 0, transparent 60%), var(--cream); background-attachment: fixed; }
+.site-header { background: rgba(244, 239, 234, .92); }
 .hair-ribbon { height: 6px; background: linear-gradient(90deg, var(--hair-black) 0 25%, var(--hair-brown) 25% 50%, var(--hair-blonde) 50% 75%, var(--hair-red) 75%); }
-.btn { box-shadow: 0 6px 18px rgba(200, 35, 60, .18); }
+.btn { box-shadow: 0 6px 18px rgba(142, 27, 34, .16); }
 .btn.outline, .btn.link-btn, .btn.dark, .btn.tiktok { box-shadow: none; }
-.eyebrow { background: linear-gradient(90deg, var(--sage-soft), #FFE9DD); }
+.eyebrow { background: var(--sage-soft); }
 .card { transition: transform .2s, box-shadow .2s; }
-a.card:hover, .kit-card:hover, .shop-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(140, 22, 48, .12); }
-.cta-band { background: linear-gradient(120deg, #8E1630, #C8233C 55%, #F08A6B); }
+a.card:hover, .kit-card:hover, .shop-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(62, 65, 48, .12); }
+.cta-band { background: linear-gradient(120deg, #721519, #8E1B22 60%, #A8343A); }
 .hair-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 @media (max-width: 700px) { .hair-types { grid-template-columns: 1fr 1fr; } }
 .hair-type { text-align: center; padding: 16px 10px; }
@@ -371,4 +375,4 @@ a.card:hover, .kit-card:hover, .shop-card:hover { transform: translateY(-3px); b
 .hero-art.real { background: none; position: relative; display: block; padding: 0; }
 .hero-art.real .hero-strands { position: absolute; inset: 0; width: 100%; height: 100%; }
 .hero-art.real .hero-prod { position: absolute; inset: auto 6% 12% 6%; }
-.hero-art.real .hero-prod svg { width: 100%; filter: drop-shadow(0 12px 18px rgba(140, 22, 48, .18)); }
+.hero-art.real .hero-prod svg { width: 100%; filter: drop-shadow(0 12px 18px rgba(62, 65, 48, .18)); }
