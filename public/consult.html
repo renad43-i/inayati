@@ -15,7 +15,7 @@
   <div class="section-head" style="margin-bottom:22px">
     <span class="eyebrow">استشارة أونلاين</span>
     <h1>استشيري طبيبة جلدية</h1>
-    <p class="muted">للحبوب الهرمونية والفطرية، البشرة الحساسة، التصبغات، وتساقط الشعر. الطبيبة تشوف حالتك وتكتب لك توصية، وممكن تقترح لك كيت من رينورا يناسب العلاج.</p>
+    <p class="muted">للحبوب الهرمونية والفطرية، البشرة الحساسة، التصبغات، وتساقط الشعر. الطبيبة تشوف حالتك وتكتب لك توصية، وممكن تقترح لك روتين من رينورا يناسب العلاج.</p>
   </div>
 
   <div id="done" class="hidden"></div>
@@ -120,8 +120,8 @@ async function drawSlots() {
       const done = App.qs("#done"); done.classList.remove("hidden");
       done.innerHTML = `<div class="card stack"><div class="alert ok"><b>تم حجز استشارتك ✓</b><br>رقم العملية: ${App.esc(c.payment_ref)}</div>
         <p><b>${App.esc(c.doctor.name)}</b> — ${App.esc(c.type_ar)}${c.type === "video" ? `<br>الموعد: ${App.esc(c.date)} الساعة ${App.esc(c.time)} (يوصلك رابط المكالمة بالجوال قبل الموعد)` : "<br>بترد عليك الطبيبة خلال 24 ساعة"}</p>
-        <p class="small muted">بعد الاستشارة تظهر توصية الطبيبة في حسابك، وإذا اقترحت كيت تقدرين تطلبينه مباشرة.</p>
-        <div class="row"><a class="btn" href="account.html#consults">استشاراتي</a><a class="btn outline" href="kits.html">تصفحي الكيتات</a></div></div>`;
+        <p class="small muted">بعد الاستشارة تظهر توصية الطبيبة في حسابك، وإذا اقترحت روتين تقدرين تطلبينه مباشرة.</p>
+        <div class="row"><a class="btn" href="account.html#consults">استشاراتي</a><a class="btn outline" href="kits.html">تصفحي الروتينات</a></div></div>`;
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (ex) {
       err.textContent = ex.message; err.classList.remove("hidden");

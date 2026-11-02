@@ -20,7 +20,7 @@
       <button data-sec="subs">الاشتراكات</button>
       <button data-sec="consults">الاستشارات</button>
       <button data-sec="products">المنتجات</button>
-      <button data-sec="kits">الكيتات</button>
+      <button data-sec="kits">الروتينات</button>
       <button data-sec="customers">العميلات</button>
     </aside>
     <section id="content"></section>
@@ -51,12 +51,12 @@ const sections = {
         <div class="card stat"><span class="muted small">اختبارات وتحليلات</span><b>${s.quizzes}</b></div>
         <div class="card stat"><span class="muted small">الاستشارات (إيرادها)</span><b>${s.consultations} · ${App.fmt(s.consultRevenue)}</b></div>
       </div>
-      <div class="card"><h3>الكيتات الأكثر مبيعاً</h3>${s.topKits.length ? `<table><tr><th>الكيت</th><th>الكمية</th></tr>${s.topKits.map(k => `<tr><td>${App.esc(k.name)}</td><td>${k.n}</td></tr>`).join("")}</table>` : `<p class="muted">لا توجد مبيعات بعد</p>`}</div>`;
+      <div class="card"><h3>الروتينات الأكثر مبيعاً</h3>${s.topKits.length ? `<table><tr><th>الروتين</th><th>الكمية</th></tr>${s.topKits.map(k => `<tr><td>${App.esc(k.name)}</td><td>${k.n}</td></tr>`).join("")}</table>` : `<p class="muted">لا توجد مبيعات بعد</p>`}</div>`;
   },
   async orders() {
     const orders = await App.api("/api/admin/orders");
     C().innerHTML = `<h1 style="font-size:1.6rem">الطلبات</h1><div class="card table-wrap"><table>
-      <tr><th>#</th><th>العميلة</th><th>الكيتات</th><th>الإجمالي</th><th>الدفع</th><th>الحالة</th><th></th></tr>
+      <tr><th>#</th><th>العميلة</th><th>الروتينات</th><th>الإجمالي</th><th>الدفع</th><th>الحالة</th><th></th></tr>
       ${orders.map(o => `<tr><td><a href="order.html?id=${o.id}">${o.id}</a>${o.source === "renewal" ? ` <span class="tag sage">تجديد</span>` : ""}</td>
         <td>${App.esc(o.customer)}<div class="small muted">${App.esc(o.address.city || "")}</div></td>
         <td class="small">${o.items.map(i => `${App.esc(i.kit_name)} (${App.TIER_AR[i.tier]}) ×${i.qty}`).join("<br>")}</td>
@@ -72,7 +72,7 @@ const sections = {
     const ST = { active: "فعّال", paused: "موقوف", cancelled: "ملغي" };
     C().innerHTML = `<div class="row"><h1 style="font-size:1.6rem;margin:0">الاشتراكات</h1><span class="spacer"></span>
       <button class="btn outline sm" id="runDue">تشغيل التجديدات المستحقة</button><button class="btn sm" id="runAll">محاكاة مرور شهر (تجديد الكل)</button></div><br>
-      <div class="card table-wrap"><table><tr><th>#</th><th>العميلة</th><th>الكيت</th><th>السعر/شهر</th><th>الحالة</th><th>التجديد القادم</th></tr>
+      <div class="card table-wrap"><table><tr><th>#</th><th>العميلة</th><th>الروتين</th><th>السعر/شهر</th><th>الحالة</th><th>التجديد القادم</th></tr>
       ${subs.map(s => `<tr><td>${s.id}</td><td>${App.esc(s.customer)}</td><td>${App.esc(s.kit_name)} (${App.TIER_AR[s.tier]})</td><td>${App.fmt(s.price)}</td><td><span class="status ${s.status}">${ST[s.status]}</span></td><td>${s.next_renewal}</td></tr>`).join("") || `<tr><td colspan="6" class="muted">لا توجد اشتراكات</td></tr>`}</table></div>`;
     const run = async force => { const r = await App.api("/api/admin/renewals", { body: { force } }); App.toast(`تم إنشاء ${r.created.length} طلب تجديد`); sections.subs(); };
     App.qs("#runDue").onclick = () => run(false); App.qs("#runAll").onclick = () => run(true);
@@ -85,7 +85,7 @@ const sections = {
       <p class="small" style="margin:8px 0">${App.esc(c.concern)}${c.notes ? `<br><span class="muted">يستخدم: ${App.esc(c.notes)}</span>` : ""}</p>
       ${c.analysis ? `<p class="small alert info" style="margin:0 0 8px"><b>تحليل AI مرفق:</b> ${App.esc(c.analysis.summary || "")}</p>` : ""}
       <div class="grid-2"><div class="field"><label>توصية الطبيبة</label><textarea rows="2" data-note="${c.id}">${App.esc(c.doctor_note || "")}</textarea></div>
-      <div class="field"><label>كيت مقترح</label><select data-kit="${c.id}"><option value="">بدون</option>${catalog.kits.map(k => `<option value="${k.id}" ${c.recommended_kit === k.id ? "selected" : ""}>${App.esc(k.name)}</option>`).join("")}</select>
+      <div class="field"><label>روتين مقترح</label><select data-kit="${c.id}"><option value="">بدون</option>${catalog.kits.map(k => `<option value="${k.id}" ${c.recommended_kit === k.id ? "selected" : ""}>${App.esc(k.name)}</option>`).join("")}</select>
       <label style="margin-top:8px">الحالة</label><select data-st="${c.id}">${Object.entries(ST).map(([v, t]) => `<option value="${v}" ${c.status === v ? "selected" : ""}>${t}</option>`).join("")}</select></div></div>
       <button class="btn sm" data-save="${c.id}">حفظ</button></div>`).join("") : `<p class="muted">لا توجد استشارات</p>`);
     App.qsa("[data-save]").forEach(b => b.onclick = async () => {
@@ -107,8 +107,8 @@ const sections = {
   async kits() {
     cat = await App.api("/api/admin/catalog");
     const pMap = Object.fromEntries(cat.products.map(p => [p.id, p]));
-    C().innerHTML = `<div class="row"><h1 style="font-size:1.6rem;margin:0">الكيتات</h1><span class="spacer"></span><button class="btn sm" id="newK">+ كيت جديد</button></div><br>
-      <div class="card table-wrap"><table><tr><th>الكيت</th><th>أساسي</th><th>متكامل</th><th>فاخر</th><th>الحالة</th><th></th></tr>
+    C().innerHTML = `<div class="row"><h1 style="font-size:1.6rem;margin:0">الروتينات</h1><span class="spacer"></span><button class="btn sm" id="newK">+ روتين جديد</button></div><br>
+      <div class="card table-wrap"><table><tr><th>الروتين</th><th>أساسي</th><th>متكامل</th><th>فاخر</th><th>الحالة</th><th></th></tr>
       ${cat.kits.map(k => `<tr><td><b>${App.esc(k.name)}</b><div class="small muted">${App.esc(k.for)}</div></td>
         ${Engine.TIERS.map(t => `<td class="small">${App.fmt(Engine.kitPrice(k.tiers[t], pMap))}<div class="muted">${k.tiers[t].length} منتجات</div></td>`).join("")}
         <td>${k.active ? `<span class="status active">ظاهر</span>` : `<span class="status paused">مخفي</span>`}</td><td><button class="btn outline sm" data-k="${k.id}">تعديل</button></td></tr>`).join("")}</table>
@@ -164,7 +164,7 @@ function kitForm(k) {
   const isNew = !k; k = k || { id: "", cat: "skin", name: "", for: "", tagline: "", color: "#E3ECE4", tiktok: "https://www.tiktok.com/@renaura.sa", active: true, tiers: { basic: [], full: [], plus: [] }, routine: { morning: [], evening: [], weekly: [] } };
   const prods = c => Object.fromEntries(cat.products.filter(p => p.cat === c).map(p => [p.id, p.name]));
   const r = k.routine || {};
-  form.innerHTML = `<h2>${isNew ? "كيت جديد" : "تعديل " + App.esc(k.name)}</h2><div id="fErr" class="alert error hidden"></div>
+  form.innerHTML = `<h2>${isNew ? "روتين جديد" : "تعديل " + App.esc(k.name)}</h2><div id="fErr" class="alert error hidden"></div>
     <div class="grid-2"><div class="field"><label>الرمز</label><input name="id" value="${App.esc(k.id)}" ${isNew ? "" : "disabled"} required class="ltr" placeholder="k-new"></div>
     <div class="field"><label>الفئة</label><select name="cat" id="kCat" ${isNew ? "" : "disabled"}><option value="skin" ${k.cat === "skin" ? "selected" : ""}>بشرة</option><option value="hair" ${k.cat === "hair" ? "selected" : ""}>شعر</option></select></div>
     <div class="field"><label>الاسم</label><input name="name" value="${App.esc(k.name)}" required></div>

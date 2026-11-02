@@ -139,7 +139,7 @@ async function loadConsults() {
     const k = c.recommended_kit && cat.kMap[c.recommended_kit];
     return `<div class="order-card"><div class="row"><b>${App.esc(c.doctor ? c.doctor.name : "")}</b><span class="tag">${App.esc(c.type_ar)}</span><span class="status ${ST[c.status][1]}">${ST[c.status][0]}</span><span class="spacer"></span><b>${App.fmt(c.price)}</b></div>
       <div class="small muted">${c.type === "video" ? `الموعد: ${App.esc(c.date)} الساعة ${App.esc(c.time)}` : "استشارة كتابية"} · ${App.esc(c.concern)}</div>
-      ${c.doctor_note ? `<div class="alert ok small" style="margin:10px 0 0"><b>توصية الطبيبة:</b> ${App.esc(c.doctor_note)}${k ? `<br><a href="kit.html?id=${k.id}">الكيت المقترح: ${App.esc(k.name)} ←</a>` : ""}</div>` : ""}
+      ${c.doctor_note ? `<div class="alert ok small" style="margin:10px 0 0"><b>توصية الطبيبة:</b> ${App.esc(c.doctor_note)}${k ? `<br><a href="kit.html?id=${k.id}">الروتين المقترح: ${App.esc(k.name)} ←</a>` : ""}</div>` : ""}
       ${c.status === "confirmed" ? `<button class="link-btn small" style="color:var(--danger);margin-top:8px" data-cc="${c.id}">إلغاء الاستشارة</button>` : ""}</div>`;
   }).join("") : `<div class="empty card"><p>ما عندك استشارات. إذا عندك حبوب هرمونية أو فطرية أو تساقط شعر، الطبيبة تساعدك.</p><a class="btn" href="consult.html">احجزي استشارة</a></div>`);
   App.qsa("[data-cc]").forEach(b => b.onclick = async () => { if (!confirm("متأكدة تبين تلغين الاستشارة؟")) return; try { await App.api(`/api/consultations/${b.dataset.cc}/cancel`, { method: "POST" }); App.toast("تم الإلغاء"); loadConsults(); } catch (e) { App.toast(e.message); } });

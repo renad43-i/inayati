@@ -127,13 +127,13 @@ function priceCart(items, delivery, city) {
       continue;
     }
     const kit = kMap[it.kitId];
-    if (!kit) throw new Error("كيت غير متوفر");
+    if (!kit) throw new Error("روتين غير متوفر");
     if (!Engine.TIERS.includes(it.tier)) throw new Error("مستوى غير صحيح");
     const qty = Math.min(10, Math.max(1, parseInt(it.qty, 10) || 1));
     const purchaseType = it.purchaseType === "subscription" ? "subscription" : "once";
-    // المنتجات المخصصة (بعد استبدال مسببات الحساسية) يجب أن تكون منتجات فعّالة من نفس فئة الكيت
+    // المنتجات المخصصة (بعد استبدال مسببات الحساسية) يجب أن تكون منتجات فعّالة من نفس فئة الروتين
     let productIds = Array.isArray(it.productIds) && it.productIds.length ? it.productIds : kit.tiers[it.tier];
-    if (productIds.length > 12 || productIds.some(id => !pMap[id] || pMap[id].cat !== kit.cat)) throw new Error("منتجات غير صحيحة في الكيت");
+    if (productIds.length > 12 || productIds.some(id => !pMap[id] || pMap[id].cat !== kit.cat)) throw new Error("منتجات غير صحيحة في الروتين");
     lines.push({ kit, tier: it.tier, productIds, qty, purchaseType, unitPrice: Engine.kitPrice(productIds, pMap, purchaseType) });
   }
   const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0);
@@ -216,7 +216,7 @@ app.patch("/api/subscriptions/:id", requireUser, (req, res) => {
   else if (action === "cancel") db.prepare("UPDATE subscriptions SET status='cancelled' WHERE id=?").run(s.id);
   else if (action === "skip") db.prepare("UPDATE subscriptions SET next_renewal=? WHERE id=?").run(addMonth(new Date(s.next_renewal)), s.id);
   else if (action === "update") {
-    // تحديث الكيت حسب احتياج هذا الشهر (بعد إعادة الاختبار)
+    // تحديث الروتين حسب احتياج هذا الشهر (بعد إعادة الاختبار)
     let q; try { q = priceCart([{ kitId: kitId || s.kit_id, tier: tier || s.tier, productIds, qty: 1, purchaseType: "subscription" }]); } catch (e) { return bad(res, e.message); }
     const l = q.lines[0];
     db.prepare("UPDATE subscriptions SET kit_id=?, tier=?, product_ids=?, price=? WHERE id=?").run(l.kit.id, l.tier, JSON.stringify(l.productIds), l.unitPrice, s.id);
@@ -292,7 +292,7 @@ app.post("/api/analyze", async (req, res) => {
     console.error(e); return bad(res, "تعذر التحليل", 500);
   }
 });
-/* تحويل نتيجة التحليل لتوصية كيت + حفظها في الحساب */
+/* تحويل نتيجة التحليل لتوصية روتين + حفظها في الحساب */
 function finishAnalysis(req, ai, extra) {
   const answers = Engine.analysisToAnswers(ai, extra);
   const recommendation = Engine.recommend(answers, getCatalog());
@@ -345,7 +345,7 @@ app.get("/api/admin/consultations", requireAdmin, (req, res) =>
 app.post("/api/admin/consultations/:id", requireAdmin, (req, res) => {
   const { status, doctorNote, recommendedKit } = req.body || {};
   if (!["confirmed", "completed", "cancelled"].includes(status)) return bad(res, "حالة غير صحيحة");
-  if (recommendedKit && !getCatalog().kits.some(k => k.id === recommendedKit)) return bad(res, "كيت غير موجود");
+  if (recommendedKit && !getCatalog().kits.some(k => k.id === recommendedKit)) return bad(res, "روتين غير موجود");
   const r = db.prepare("UPDATE consultations SET status=?, doctor_note=?, recommended_kit=? WHERE id=?").run(status, doctorNote || null, recommendedKit || null, req.params.id);
   if (!r.changes) return bad(res, "الاستشارة غير موجودة", 404);
   res.json(consultRow(db.prepare("SELECT * FROM consultations WHERE id=?").get(req.params.id)));
@@ -390,7 +390,7 @@ app.post("/api/admin/kits", requireAdmin, (req, res) => saveKit(req, res, true))
 app.put("/api/admin/kits/:id", requireAdmin, (req, res) => saveKit(req, res, false));
 function saveKit(req, res, isNew) {
   const k = req.body || {}; const id = isNew ? k.id : req.params.id;
-  if (!id || !k.name || !["skin", "hair"].includes(k.cat)) return bad(res, "بيانات الكيت ناقصة");
+  if (!id || !k.name || !["skin", "hair"].includes(k.cat)) return bad(res, "بيانات الروتين ناقصة");
   const tiers = k.tiers || {};
   for (const t of Engine.TIERS) if (!Array.isArray(tiers[t]) || !tiers[t].length) return bad(res, "كل مستوى يحتاج منتجاً واحداً على الأقل");
   db.exec("BEGIN");
@@ -403,7 +403,7 @@ function saveKit(req, res, isNew) {
     const ins = db.prepare("INSERT INTO kit_items (kit_id,tier,product_id,position) VALUES (?,?,?,?)");
     for (const t of Engine.TIERS) tiers[t].forEach((pid, i) => ins.run(id, t, pid, i));
     db.exec("COMMIT"); res.json({ ok: true });
-  } catch (e) { db.exec("ROLLBACK"); bad(res, "تعذر حفظ الكيت: " + e.message); }
+  } catch (e) { db.exec("ROLLBACK"); bad(res, "تعذر حفظ الروتين: " + e.message); }
 }
 app.get("/api/admin/orders", requireAdmin, (req, res) =>
   res.json(db.prepare("SELECT o.*, u.name customer, u.email FROM orders o JOIN users u ON u.id=o.user_id ORDER BY o.id DESC").all().map(orderWithItems)));

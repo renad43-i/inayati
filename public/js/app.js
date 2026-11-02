@@ -1,6 +1,6 @@
 /* =========================================================
    رينورا — منطق مشترك لكل الصفحات
-   (الهيدر، الفوتر، الاتصال بالخادم، السلة، رسومات الكيت)
+   (الهيدر، الفوتر، الاتصال بالخادم، السلة، رسومات الروتين)
    ========================================================= */
 const App = (() => {
   const CUR = "ر.س";
@@ -47,7 +47,7 @@ const App = (() => {
   };
   function updateBadge() { const b = qs("#cartBadge"); if (b) { const n = cart.count(); b.textContent = n; b.classList.toggle("hidden", !n); } }
 
-  /* ---------- صور المنتجات والكيتات (packshots.js) ---------- */
+  /* ---------- صور المنتجات والروتينات (packshots.js) ---------- */
   let pMapCache = {};
   const ids2products = ids => ids.map(id => pMapCache[id]).filter(Boolean);
   function kitSVG(kit, ids) {
@@ -92,7 +92,7 @@ const App = (() => {
   window.addEventListener("unhandledrejection", e => { const m = e.reason && (e.reason.message || String(e.reason)); if (!(e.reason && e.reason.status)) showFatal(m || "error"); });
 
   function layout(active) {
-    const links = [["index.html", "الرئيسية", "home"], ["shop.html", "المتجر", "shop"], ["quiz.html", "حددي روتينك", "quiz"], ["kits.html", "الكيتات", "kits"], ["analysis.html", "تحليل البشرة", "analysis"], ["consult.html", "استشارة طبيبة", "consult"], ["account.html", "حسابي", "account"]];
+    const links = [["index.html", "الرئيسية", "home"], ["shop.html", "المتجر", "shop"], ["quiz.html", "حددي روتينك", "quiz"], ["kits.html", "الروتينات", "kits"], ["analysis.html", "تحليل البشرة", "analysis"], ["consult.html", "استشارة طبيبة", "consult"], ["account.html", "حسابي", "account"]];
     const header = document.createElement("header");
     header.className = "site-header";
     header.innerHTML = `<div class="container bar">
@@ -109,8 +109,8 @@ const App = (() => {
     const footer = document.createElement("footer");
     footer.className = "site-footer";
     footer.innerHTML = `<div class="container"><div class="cols">
-      <div><img src="assets/logo-light.svg" alt="رينورا" style="height:52px"><p class="muted small" style="margin-top:10px">كيتات عناية شخصية جاهزة، مبنية على احتياجك ويتجدد روتينك كل شهر.</p></div>
-      <div><h4>تسوقي</h4><a href="shop.html">المتجر: حلول لكل مشكلة</a><a href="quiz.html">حددي روتينك</a><a href="analysis.html">تحليل البشرة بالذكاء الاصطناعي</a><a href="consult.html">استشارة طبيبة جلدية</a><a href="kits.html?cat=skin">كيتات البشرة</a><a href="kits.html?cat=hair">كيتات الشعر</a></div>
+      <div><img src="assets/logo-light.svg" alt="رينورا" style="height:52px"><p class="muted small" style="margin-top:10px">روتينات عناية شخصية جاهزة، مبنية على احتياجك ويتجدد روتينك كل شهر.</p></div>
+      <div><h4>تسوقي</h4><a href="shop.html">المتجر: حلول لكل مشكلة</a><a href="quiz.html">حددي روتينك</a><a href="analysis.html">تحليل البشرة بالذكاء الاصطناعي</a><a href="consult.html">استشارة طبيبة جلدية</a><a href="kits.html?cat=skin">روتينات البشرة</a><a href="kits.html?cat=hair">روتينات الشعر</a></div>
       <div><h4>حسابي</h4><a href="account.html">طلباتي</a><a href="account.html#subs">اشتراكي</a><a href="cart.html">السلة</a></div>
       <div><h4>تابعينا</h4><a href="https://www.tiktok.com/@renaura.sa" target="_blank" rel="noopener">تيك توك</a><a href="#">انستقرام</a><a href="mailto:hello@renaura.sa">hello@renaura.sa</a></div>
       </div><p class="small muted center" style="margin-top:26px">© ${new Date().getFullYear()} رينورا — مشروع IT473 أنظمة التجارة الإلكترونية · الدفع في هذا الموقع تجريبي</p></div>`;
