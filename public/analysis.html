@@ -125,7 +125,7 @@ function render({ analysis: a, recommendation: res }, cat) {
       </div>
     </div>
     ${a.seeDoctor || res.consult ? `<div class="consult-cta"><div><b>ننصحك باستشارة طبيبة جلدية</b><div class="small">${App.esc(a.doctorReason || res.consultWhy || "")}</div></div>
-      <a class="btn dark" href="consult.html?from=analysis">احجزي استشارة</a></div>` : ""}
+      <a class="btn dark" href="consult.html?from=analysis">احجزي استشارة</a></div>` : App.consultCTA(false, "").replace('href="consult.html"', 'href="consult.html?from=analysis"')}
     ${res.kits.map(r => { const k = cat.kMap[r.kitId]; return `<div class="card" style="border-top:6px solid ${k.color}">
       <span class="tag sage">${App.TIER_AR[r.tier]}</span><h2 style="margin:6px 0">${App.esc(k.name)}</h2><p>${App.esc(r.why)}</p>
       <div class="mini-products">${r.productIds.map(id => { const p = cat.pMap[id]; return `<div class="mini-product"><span class="prod-img">${App.productImg(p)}</span><span class="brand-name" dir="ltr">${App.esc(p.brand)}</span><span class="small">${App.esc(p.name)}</span></div>`; }).join("")}</div>

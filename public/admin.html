@@ -97,7 +97,7 @@ const sections = {
     cat = await App.api("/api/admin/catalog");
     C().innerHTML = `<div class="row"><h1 style="font-size:1.6rem;margin:0">المنتجات</h1><span class="spacer"></span><button class="btn sm" id="newP">+ منتج جديد</button></div><br>
       <div class="card table-wrap"><table><tr><th></th><th>المنتج</th><th>الفئة/الخطوة</th><th>السعر</th><th>المخزون</th><th>يحتوي</th><th>الحالة</th><th></th></tr>
-      ${cat.products.map(p => `<tr><td><span class="prod-img" style="width:46px;height:60px">${App.productImg(p)}</span></td><td><div class="brand-name" dir="ltr">${App.esc(p.brand)}</div>${App.esc(p.name)}<div class="small muted">${p.id} · ${App.esc(p.size)} · ${App.esc(p.country || "")}</div></td><td class="small">${p.cat === "skin" ? "بشرة" : "شعر"} · ${App.STEP_AR[p.step] || p.step}</td>
+      ${cat.products.map(p => `<tr><td><span class="prod-img" style="width:46px;height:60px">${App.productImg(p)}</span></td><td><div class="brand-name" dir="ltr">${App.esc(p.brand)}</div>${App.esc(p.name)}<div class="small muted">${p.id} · ${App.esc((CATEGORIES[p.cat] || {})[p.category] || "")} · ${App.esc(p.size)} · ${App.esc(p.country || "")}${p.demo ? " · توضيحي" : ""}</div></td><td class="small">${p.cat === "skin" ? "بشرة" : "شعر"} · ${App.STEP_AR[p.step] || p.step}</td>
         <td>${App.fmt(p.price)}</td><td>${p.stock}</td><td class="small">${p.contains.map(a => App.ALLERGEN_AR[a]).join("، ") || "—"}</td>
         <td>${p.active ? `<span class="status active">ظاهر</span>` : `<span class="status paused">مخفي</span>`}</td><td><button class="btn outline sm" data-p="${p.id}">تعديل</button></td></tr>`).join("")}</table></div>`;
     App.qs("#newP").onclick = () => productForm(null);
@@ -137,6 +137,7 @@ function productForm(p) {
     <div class="field"><label>الاسم بالعربي</label><input name="name" value="${App.esc(p.name)}" required></div>
     <div class="field"><label>الاسم الإنجليزي (يُستخدم في الصورة وبحث تيك توك)</label><input name="nameEn" value="${App.esc(p.nameEn)}" class="ltr"></div>
     <div class="field"><label>رابط ريفيو تيك توك (اختياري — يُنشأ تلقائياً)</label><input name="tiktok" value="${App.esc(p.tiktok)}" class="ltr"></div>
+    <div class="field"><label>القسم في المتجر</label><select name="category">${Object.entries({ ...CATEGORIES.skin, ...CATEGORIES.hair }).map(([k, v]) => `<option value="${k}" ${p.category === k ? "selected" : ""}>${v}</option>`).join("")}</select></div>
     <div class="grid-2"><div class="field"><label>الخطوة</label><select name="step">${STEPS.map(s => `<option value="${s}" ${s === p.step ? "selected" : ""}>${App.STEP_AR[s]}</option>`).join("")}</select></div>
     <div class="field"><label>الحجم</label><input name="size" value="${App.esc(p.size)}"></div>
     <div class="field"><label>السعر (ر.س)</label><input name="price" type="number" min="0" step="1" value="${p.price}" required></div>
@@ -152,7 +153,7 @@ function productForm(p) {
     if (e.submitter && e.submitter.value === "cancel") return;
     e.preventDefault();
     const f = new FormData(form);
-    const body = { id: f.get("id") || p.id, cat: f.get("cat") || p.cat, brand: f.get("brand"), country: f.get("country"), nameEn: f.get("nameEn"), tiktok: f.get("tiktok"), name: f.get("name"), step: f.get("step"), size: f.get("size"), price: +f.get("price"), stock: +f.get("stock"), desc: f.get("desc"), suits: vals("suits"), contains: vals("contains"), goodFor: vals("goodFor"), fungal: f.get("fungal") === "" ? null : f.get("fungal") === "true", active: !!f.get("active") };
+    const body = { id: f.get("id") || p.id, cat: f.get("cat") || p.cat, brand: f.get("brand"), country: f.get("country"), nameEn: f.get("nameEn"), tiktok: f.get("tiktok"), name: f.get("name"), step: f.get("step"), size: f.get("size"), price: +f.get("price"), stock: +f.get("stock"), desc: f.get("desc"), suits: vals("suits"), contains: vals("contains"), goodFor: vals("goodFor"), category: f.get("category"), fungal: f.get("fungal") === "" ? null : f.get("fungal") === "true", active: !!f.get("active") };
     try { await App.api(isNew ? "/api/admin/products" : `/api/admin/products/${p.id}`, { method: isNew ? "POST" : "PUT", body }); dlg.close(); App.toast("تم الحفظ"); sections.products(); }
     catch (ex) { const el = App.qs("#fErr"); el.textContent = ex.message; el.classList.remove("hidden"); }
   };

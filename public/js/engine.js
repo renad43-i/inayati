@@ -116,7 +116,7 @@
       const bad = badReasons(p, allergens);
       if (!bad.length) { out.push(id); continue; }
       const candidates = Object.values(productMap).filter(q =>
-        q.active !== false && q.cat === p.cat && q.step === p.step && q.id !== p.id &&
+        q.active !== false && q.kitEligible !== false && q.cat === p.cat && q.step === p.step && q.id !== p.id &&
         !badReasons(q, allergens).length && !out.includes(q.id) && !productIds.includes(q.id));
       const alt = candidates.find(q => (q.suits || []).includes(suitsKey)) || candidates[0];
       if (alt) { out.push(alt.id); swaps.push({ from: p.id, to: alt.id, reason: bad }); }
@@ -211,5 +211,26 @@
     return null;
   }
 
-  return { QUIZ, TIERS, REASON_AR, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
+  /* ---------- حلول المشكلة في المتجر ----------
+     نرتب المنتجات حسب ملاءمتها للمشكلة، ونطلع: ترشيح عنايتي، الأوفر، الفاخر. */
+  function solutionsFor(section, concern, products, bestPicks) {
+    let list = products.filter(p => p.active !== false && p.cat === section);
+    if (concern === "fungal") list = list.filter(p => p.fungal !== false && ((p.goodFor || []).includes("fungal") || p.fungal === true));
+    else list = list.filter(p => (p.goodFor || []).includes(concern));
+    const score = p => {
+      const i = (p.goodFor || []).indexOf(concern);
+      return (i === 0 ? 3 : i === 1 ? 2 : i > 1 ? 1 : 0.5) + (p.kitEligible !== false ? 1 : 0) - (p.demo ? 1.5 : 0) + (concern === "fungal" && p.fungal === true ? 1 : 0);
+    };
+    list.sort((a, b) => score(b) - score(a) || a.price - b.price);
+    const pick = bestPicks && bestPicks[section + ":" + concern];
+    let best = pick ? list.find(p => p.brand.toUpperCase() === pick[0].toUpperCase() && (p.nameEn || "").toLowerCase().includes(pick[1].toLowerCase())) : null;
+    if (!best) best = list.find(p => !p.demo) || list[0] || null;
+    const others = list.filter(p => p !== best && !p.demo);
+    const value = others.length ? others.reduce((m, p) => p.price < m.price ? p : m) : null;
+    const lux = others.filter(p => p !== value);
+    const luxury = lux.length ? lux.reduce((m, p) => p.price > m.price ? p : m) : null;
+    return { best, bestWhy: pick && best && best.brand.toUpperCase() === pick[0].toUpperCase() ? pick[2] : "", value, luxury: luxury && value && luxury.price > value.price ? luxury : null, list };
+  }
+
+  return { QUIZ, TIERS, REASON_AR, solutionsFor, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
 });

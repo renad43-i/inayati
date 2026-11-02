@@ -5,7 +5,7 @@
    (scripts/build-static.js)، أما المشروع الأصلي فيستخدم الخادم الحقيقي.
    ========================================================= */
 (function () {
-  const KEY = "inayati_demo_db_v3", SESS = "inayati_demo_session_v1";
+  const KEY = "inayati_demo_db_v4", SESS = "inayati_demo_session_v1";
   const now = () => new Date().toISOString().slice(0, 19).replace("T", " ");
   const addMonth = (d = new Date()) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString().slice(0, 10); };
   const today = () => new Date().toISOString().slice(0, 10);
@@ -95,6 +95,10 @@
     const { products, kits } = catalog();
     const pMap = Object.fromEntries(products.map(p => [p.id, p])), kMap = Object.fromEntries(kits.map(k => [k.id, k]));
     const lines = items.map(it => {
+      if (it.productId) {
+        const p = pMap[it.productId] || bad("منتج غير متوفر");
+        return { product: p, kit: null, tier: "single", productIds: [p.id], qty: Math.min(10, Math.max(1, parseInt(it.qty, 10) || 1)), purchaseType: "once", unitPrice: p.price };
+      }
       const kit = kMap[it.kitId] || bad("كيت غير متوفر");
       if (!Engine.TIERS.includes(it.tier)) bad("مستوى غير صحيح");
       const qty = Math.min(10, Math.max(1, parseInt(it.qty, 10) || 1));
@@ -151,7 +155,7 @@
       return result;
     }],
     ["GET", /^\/api\/quiz-results$/, () => { const u = needUser(); return clone(load().quiz.filter(q => q.user_id === u.id).reverse().slice(0, 10)); }],
-    ["POST", /^\/api\/cart\/quote$/, (b) => { const q = priceCart((b && b.items) || []); return { subtotal: q.subtotal, shipping: q.shipping, total: q.total, lines: q.lines.map(l => ({ kitId: l.kit.id, unitPrice: l.unitPrice })) }; }],
+    ["POST", /^\/api\/cart\/quote$/, (b) => { const q = priceCart((b && b.items) || []); return { subtotal: q.subtotal, shipping: q.shipping, total: q.total, lines: q.lines.map(l => ({ kitId: l.kit ? l.kit.id : null, productId: l.product ? l.product.id : null, unitPrice: l.unitPrice })) }; }],
     ["POST", /^\/api\/orders$/, (b) => {
       const u = needUser(), { items, address, payment } = b || {}, d = load();
       if (!Array.isArray(items) || !items.length) bad("السلة فاضية");
@@ -172,7 +176,7 @@
       const o = { id: ++d.seq.orders, user_id: u.id, status, subtotal: q.subtotal, shipping: q.shipping, total: q.total, payment_method: method, payment_ref: ref, address, source: "checkout", subscription_id: null, created_at: now() };
       d.orders.push(o);
       for (const l of q.lines) {
-        d.items.push({ id: ++d.seq.items, order_id: o.id, kit_id: l.kit.id, kit_name: l.kit.name, tier: l.tier, product_ids: l.productIds, purchase_type: l.purchaseType, qty: l.qty, unit_price: l.unitPrice });
+        d.items.push({ id: ++d.seq.items, order_id: o.id, kit_id: l.kit ? l.kit.id : null, kit_name: l.kit ? l.kit.name : `${l.product.brand} — ${l.product.name}`, tier: l.tier, product_ids: l.productIds, purchase_type: l.purchaseType, qty: l.qty, unit_price: l.unitPrice });
         if (l.purchaseType === "subscription") for (let i = 0; i < l.qty; i++)
           d.subs.push({ id: ++d.seq.subs, user_id: u.id, kit_id: l.kit.id, tier: l.tier, product_ids: l.productIds, price: l.unitPrice, status: "active", next_renewal: addMonth(), address, origin_order_id: o.id, created_at: now() });
       }
@@ -266,12 +270,13 @@
       d.products.push({ id: p.id, cat: p.cat, step: p.step, brand: p.brand, country: p.country || "", name: p.name, nameEn: p.nameEn || "", size: p.size || "", price: +p.price, desc: p.desc || "",
         suits: p.suits || [], contains: p.contains || [], pack: { shape: "bottle", body: "#FFFFFF", cap: "#DDDDDD", accent: "#333333" },
         tiktok: p.tiktok || "https://www.tiktok.com/search?q=" + encodeURIComponent(`${p.brand} ${p.nameEn || p.name} review`), stock: +p.stock || 0, active: p.active !== false,
-        fungal: p.cat === "skin" && (p.fungal === true || p.fungal === false) ? p.fungal : null, goodFor: p.goodFor || [] });
+        fungal: p.cat === "skin" && (p.fungal === true || p.fungal === false) ? p.fungal : null, goodFor: p.goodFor || [],
+        category: CATEGORIES[p.cat] && CATEGORIES[p.cat][p.category] ? p.category : "treatment", kitEligible: false, demo: false });
       save(); return { ok: true };
     }],
     ["PUT", /^\/api\/admin\/products\/([\w-]+)$/, (p, m) => {
       needAdmin(); const x = load().products.find(q => q.id === m[1]) || bad("المنتج غير موجود", 404);
-      Object.assign(x, { fungal: x.cat === "skin" && (p.fungal === true || p.fungal === false) ? p.fungal : null, goodFor: p.goodFor || [], brand: p.brand || x.brand, country: p.country || x.country, nameEn: p.nameEn || x.nameEn, tiktok: p.tiktok || x.tiktok, name: p.name, step: p.step, size: p.size || "", price: +p.price, desc: p.desc || "", suits: p.suits || [], contains: p.contains || [], stock: +p.stock || 0, active: p.active !== false });
+      Object.assign(x, { category: CATEGORIES[x.cat] && CATEGORIES[x.cat][p.category] ? p.category : x.category, fungal: x.cat === "skin" && (p.fungal === true || p.fungal === false) ? p.fungal : null, goodFor: p.goodFor || [], brand: p.brand || x.brand, country: p.country || x.country, nameEn: p.nameEn || x.nameEn, tiktok: p.tiktok || x.tiktok, name: p.name, step: p.step, size: p.size || "", price: +p.price, desc: p.desc || "", suits: p.suits || [], contains: p.contains || [], stock: +p.stock || 0, active: p.active !== false });
       save(); return { ok: true };
     }],
     ["POST", /^\/api\/admin\/kits$/, (k) => saveKit(k, true, k && k.id)],

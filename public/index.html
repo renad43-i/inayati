@@ -23,7 +23,7 @@
           <a class="btn outline" href="kits.html">تصفحي الكيتات</a>
         </div>
         <div class="hero-stats">
-          <div><b>29</b><span class="muted small">براند عالمي أصلي</span></div>
+          <div><b id="statBrands">140+</b><span class="muted small">براند من <span id="statCountries">14</span> دولة</span></div>
           <div><b>12</b><span class="muted small">كيت للبشرة والشعر</span></div>
           <div><b>15%</b><span class="muted small">أوفر من الشراء منفرد</span></div>
           <div><b>+10%</b><span class="muted small">خصم إضافي للاشتراك</span></div>
@@ -34,7 +34,13 @@
   </section>
 
   <section class="section" style="padding:34px 0">
-    <div class="container"><p class="center small muted" style="margin-bottom:14px">براندات أصلية في كيتاتنا 🇰🇷 🇫🇷 🇯🇵 🇺🇸 🇨🇦</p><div class="brand-strip" id="brandStrip" dir="ltr"></div></div>
+    <div class="container">
+      <div class="section-head" style="margin-bottom:16px"><span class="eyebrow">تسوقي حسب مشكلتك</span><h2>وش يضايقك؟ عندنا له حل</h2>
+        <p class="muted">لكل مشكلة نرشح لك الأفضل، ومعه الأوفر والفاخر، وبدائل من براندات كل الدول.</p></div>
+      <div class="problem-chips" id="homeProblems" style="margin:0 0 26px"></div>
+      <p class="center small muted" style="margin-bottom:10px">براندات أصلية من كل الدول</p>
+      <div class="country-strip" id="countryStrip"></div>
+    </div>
   </section>
 
   <section class="section alt">
@@ -94,7 +100,15 @@ App.catalog().then(cat => {
   const ids = ["k-acne", "k-dry", "k-bright", "h-curly"];
   App.qs("#featured").innerHTML = ids.map(id => cat.kMap[id]).filter(Boolean).map(k => App.kitCard(k, cat)).join("");
   App.qs("#heroArt").innerHTML = Packshots.kit(["s05", "s09", "s20", "s19", "s10"].map(id => cat.pMap[id]).filter(Boolean));
-  App.qs("#brandStrip").innerHTML = [...new Set(cat.products.map(p => p.brand))].map(b => `<span>${App.esc(b)}</span>`).join("");
+  const brands = new Set(cat.products.map(p => p.brand.toUpperCase())), countries = {};
+  cat.products.forEach(p => { (countries[p.country] = countries[p.country] || new Set()).add(p.brand.toUpperCase()); });
+  App.qs("#statBrands").textContent = brands.size; App.qs("#statCountries").textContent = Object.keys(countries).length;
+  App.qs("#homeProblems").innerHTML = ["skin", "hair"].map(sec => Object.entries(PROBLEMS[sec]).map(([k, v]) =>
+    `<a class="chip" href="shop.html?section=${sec}&problem=${k}">${sec === "hair" ? "💇‍♀️ " : ""}${App.esc(v.name)}</a>`).join("")).join("");
+  App.qs("#countryStrip").innerHTML = Object.entries(countries).sort((a, b) => b[1].size - a[1].size).map(([c, set]) => {
+    const [flag, ...name] = c.split(" ");
+    return `<a class="country-tile" href="shop.html?section=${cat.products.some(p => p.country === c && p.cat === "skin") ? "skin" : "hair"}&country=${encodeURIComponent(c)}"><span class="cflag">${flag}</span><b>${App.esc(name.join(" "))}</b><span class="small muted">${set.size} براند</span></a>`;
+  }).join("");
 });
 </script>
 </body>

@@ -50,7 +50,8 @@ App.layout("cart");
 let cat, user, quote;
 async function refresh() {
   // نشيل من السلة أي كيت أو منتج ما عاد موجود (بيانات قديمة)
-  const valid = App.cart.get().filter(it => cat.kMap[it.kitId] && Array.isArray(it.productIds) && it.productIds.every(id => cat.pMap[id] && cat.pMap[id].cat === cat.kMap[it.kitId].cat));
+  const valid = App.cart.get().filter(it => it.productId ? !!cat.pMap[it.productId]
+    : cat.kMap[it.kitId] && Array.isArray(it.productIds) && it.productIds.every(id => cat.pMap[id] && cat.pMap[id].cat === cat.kMap[it.kitId].cat));
   if (valid.length !== App.cart.get().length) App.cart.save(valid);
   const items = valid;
   const box = App.qs("#items");
@@ -60,8 +61,15 @@ async function refresh() {
   }
   quote = await App.api("/api/cart/quote", { body: { items } });
   box.innerHTML = items.map((it, i) => {
-    const k = cat.kMap[it.kitId]; if (!k) return "";
     const unit = quote.lines[i].unitPrice;
+    if (it.productId) { const p = cat.pMap[it.productId]; return `<div class="cart-item">
+      <a class="kit-visual" href="product.html?id=${p.id}" style="background:var(--sand)"><span style="width:62%">${App.productImg(p)}</span></a>
+      <div><div class="brand-name" dir="ltr">${App.esc(p.brand)}</div><b>${App.esc(p.name)}</b>
+        <div class="small muted">منتج منفرد · ${App.esc(p.size)} · ${App.fmt(p.price)} للحبة</div>
+        <div class="row" style="margin-top:8px"><div class="qty"><button data-i="${i}" data-d="1">+</button><span>${it.qty}</span><button data-i="${i}" data-d="-1">−</button></div>
+        <button class="link-btn small" data-rm="${i}">حذف</button></div></div>
+      <div class="price">${App.fmt(unit * it.qty)}</div></div>`; }
+    const k = cat.kMap[it.kitId]; if (!k) return "";
     return `<div class="cart-item">
       <div class="kit-visual" style="background:${k.color}">${App.kitSVG(k, it.productIds)}</div>
       <div><b>${App.esc(k.name)}</b> <span class="tag">${App.TIER_AR[it.tier]}</span>

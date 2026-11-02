@@ -92,7 +92,7 @@ const App = (() => {
   window.addEventListener("unhandledrejection", e => { const m = e.reason && (e.reason.message || String(e.reason)); if (!(e.reason && e.reason.status)) showFatal(m || "error"); });
 
   function layout(active) {
-    const links = [["index.html", "الرئيسية", "home"], ["quiz.html", "حددي روتينك", "quiz"], ["analysis.html", "تحليل البشرة", "analysis"], ["consult.html", "استشيري طبيبة", "consult"], ["kits.html", "الكيتات", "kits"], ["account.html", "حسابي", "account"]];
+    const links = [["index.html", "الرئيسية", "home"], ["shop.html", "المتجر", "shop"], ["quiz.html", "حددي روتينك", "quiz"], ["kits.html", "الكيتات", "kits"], ["analysis.html", "تحليل البشرة", "analysis"], ["consult.html", "استشارة طبيبة", "consult"], ["account.html", "حسابي", "account"]];
     const header = document.createElement("header");
     header.className = "site-header";
     header.innerHTML = `<div class="container bar">
@@ -109,7 +109,7 @@ const App = (() => {
     footer.className = "site-footer";
     footer.innerHTML = `<div class="container"><div class="cols">
       <div><img src="assets/logo.svg" alt="عنايتي" style="height:44px"><p class="muted small" style="margin-top:10px">كيتات عناية شخصية جاهزة، مبنية على احتياجك ويتجدد روتينك كل شهر.</p></div>
-      <div><h4>تسوقي</h4><a href="quiz.html">حددي روتينك</a><a href="analysis.html">تحليل البشرة بالذكاء الاصطناعي</a><a href="consult.html">استشارة طبيبة جلدية</a><a href="kits.html?cat=skin">كيتات البشرة</a><a href="kits.html?cat=hair">كيتات الشعر</a></div>
+      <div><h4>تسوقي</h4><a href="shop.html">المتجر: حلول لكل مشكلة</a><a href="quiz.html">حددي روتينك</a><a href="analysis.html">تحليل البشرة بالذكاء الاصطناعي</a><a href="consult.html">استشارة طبيبة جلدية</a><a href="kits.html?cat=skin">كيتات البشرة</a><a href="kits.html?cat=hair">كيتات الشعر</a></div>
       <div><h4>حسابي</h4><a href="account.html">طلباتي</a><a href="account.html#subs">اشتراكي</a><a href="cart.html">السلة</a></div>
       <div><h4>تابعينا</h4><a href="https://www.tiktok.com/@inayati.sa" target="_blank" rel="noopener">تيك توك</a><a href="#">انستقرام</a><a href="mailto:hello@inayati.sa">hello@inayati.sa</a></div>
       </div><p class="small muted center" style="margin-top:26px">© ${new Date().getFullYear()} عنايتي — مشروع IT473 أنظمة التجارة الإلكترونية · الدفع في هذا الموقع تجريبي</p></div>`;
@@ -122,7 +122,7 @@ const App = (() => {
     let t = qs(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; document.body.append(t); }
     t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600);
   }
-  const TIER_AR = { basic: "أساسي", full: "متكامل", plus: "فاخر" };
+  const TIER_AR = { basic: "أساسي", full: "متكامل", plus: "فاخر", single: "منتج منفرد" };
   const STEP_AR = { cleanser: "غسول", toner: "تونر", serum: "سيروم", moisturizer: "مرطب", spf: "واقي شمس", treatment: "علاج موضعي", exfoliant: "مقشر", shampoo: "شامبو", conditioner: "بلسم", mask: "ماسك", oil: "زيت/سيروم أطراف", styler: "تصفيف", scalp: "فروة الرأس", protect: "حماية حرارية" };
   const ALLERGEN_AR = { fragrance: "عطور", alcohol: "كحول", nuts: "زيوت مكسرات" };
   const dateAr = d => new Date(d.replace(" ", "T") + (d.length > 10 ? "Z" : "")).toLocaleDateString("ar-SA-u-nu-latn-ca-gregory", { year: "numeric", month: "long", day: "numeric" });
@@ -176,5 +176,14 @@ const App = (() => {
     } catch { return url; }
   }
 
-  return { api, catalog, ttHref, suitabilityHTML, downscaleImage, cardFieldsHTML, wireCardFields, me, cart, layout, toast, fmt, esc, qs, qsa, params, kitSVG, kitCard, productImg, tiktokIcon, TIER_AR, STEP_AR, ALLERGEN_AR, dateAr };
+  /* بطاقة الاستشارة: متاحة لكل مشكلة. strong = حالات تحتاج طبيبة أكثر */
+  function consultCTA(strong, why, problemName) {
+    const title = strong ? "ننصحك باستشارة طبيبة جلدية" : "تبين رأي طبيبة؟";
+    const text = why || (problemName
+      ? `إذا ${problemName} مستمر أو زاد رغم الروتين، أو صار تقشير أو احمرار أو حكة، الطبيبة تعرف السبب وتختار لك العلاج المناسب.`
+      : "إذا المشكلة مستمرة أو زادت، أو صار تقشير أو احمرار أو حكة من أي منتج، الطبيبة تعرف السبب وتختار لك العلاج المناسب.");
+    return `<div class="consult-cta ${strong ? "" : "soft"}"><div><b>${title}</b><div class="small">${esc(text)}</div></div><a class="btn ${strong ? "dark" : "outline"}" href="consult.html">احجزي استشارة</a></div>`;
+  }
+
+  return { api, catalog, ttHref, consultCTA, suitabilityHTML, downscaleImage, cardFieldsHTML, wireCardFields, me, cart, layout, toast, fmt, esc, qs, qsa, params, kitSVG, kitCard, productImg, tiktokIcon, TIER_AR, STEP_AR, ALLERGEN_AR, dateAr };
 })();

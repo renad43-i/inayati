@@ -96,7 +96,7 @@ const PRODUCTS = [
   { id: "s11", cat: "skin", step: "serum", brand: "THE ORDINARY", country: "🇨🇦 كندا", nameEn: "Hyaluronic Acid 2% + B5", name: "سيروم ذا أوردينري هيالورونيك", size: "30 مل", price: 45,
     suits: ["dry","normal","combo","sensitive"], contains: [], desc: "سيروم ترطيب بحمض الهيالورونيك وفيتامين B5 يمنح البشرة امتلاء ونعومة.",
     pack: { shape: "dropper", body: "#E9ECEE", cap: "#111111", accent: "#111111", frosted: true } },
-  { id: "s12", cat: "skin", step: "serum", brand: "MELANO CC", country: "🇯🇵 اليابان", nameEn: "Vitamin C Brightening Essence", name: "إسنس ميلانو سي سي بفيتامين C", size: "20 مل", price: 65,
+  { id: "s12", cat: "skin", step: "serum", brand: "MELANO CC", country: "🇯🇵 اليابان", nameEn: "Intensive Anti-Spot Essence", name: "إسنس ميلانو سي سي المركّز للبقع", size: "20 مل", price: 65,
     suits: ["normal","combo","oily","dry"], contains: ["alcohol"], desc: "إسنس ياباني بفيتامين C النقي لتفتيح التصبغات وآثار الحبوب.",
     pack: { shape: "slim", body: "#FFFFFF", cap: "#F2A33A", accent: "#E8742B" } },
   { id: "s13", cat: "skin", step: "serum", brand: "SKIN1004", country: "🇰🇷 كوريا", nameEn: "Madagascar Centella Ampoule", name: "أمبول سكن1004 سنتيلا", size: "55 مل", price: 79,
@@ -383,6 +383,291 @@ const PRODUCT_TAGS = {
 };
 PRODUCTS.forEach(p => { const t = PRODUCT_TAGS[p.id] || [null, []]; p.fungal = p.cat === "skin" ? t[0] : null; p.goodFor = t[1]; });
 
+/* =========================================================
+   المتجر: منتجات منفردة من براندات كل الدول (مثل سيفورا)
+   كل سطر: [البراند، القسم، الاسم الإنجليزي، الاسم العربي، الحجم، السعر، شكل العبوة، "مناسب لـ"، ألوان خاصة؟]
+   - منتجات المتجر تُباع منفردة، ولا تدخل في استبدالات الكيتات (kitEligible: false)
+     لأن معلومات مكوناتها الحساسة غير مراجعة بعد.
+   - demo: منتج بإسم عام لبراند محلي (ما نعرف اسم المنتج الدقيق) — يُعدَّل من لوحة الإدارة.
+   - الأسعار تقريبية بالريال لأغراض المشروع.
+   ========================================================= */
+const COUNTRIES = {
+  US: "🇺🇸 أمريكا", CA: "🇨🇦 كندا", UK: "🇬🇧 بريطانيا", BR: "🇧🇷 البرازيل", FR: "🇫🇷 فرنسا", JP: "🇯🇵 اليابان",
+  KR: "🇰🇷 كوريا", AU: "🇦🇺 أستراليا", TH: "🇹🇭 تايلند", SA: "🇸🇦 السعودية", EG: "🇪🇬 مصر", CH: "🇨🇭 سويسرا",
+  NL: "🇬🇧🇳🇱 بريطانيا وهولندا", DE: "🇩🇪 ألمانيا"
+};
+const CATEGORIES = {
+  hair: { shampoo: "شامبو", conditioner: "بلسم", mask: "ماسكات", oil: "زيوت", treatment: "علاجات", styling: "تصفيف", heat: "حماية من الحرارة", curly: "كيرلي وكِنكي" },
+  skin: { cleanser: "غسول", moisturizer: "مرطبات", serum: "سيرومات", spf: "واقي شمس", treatment: "علاجات العناية بالوجه" }
+};
+/* البراند: [البلد، لون العبوة، لون الغطاء، لون الكتابة] */
+const SHOP_BRANDS = {
+  "K18": ["US", "#FFFFFF", "#1B1B1B", "#00A3AD"], "COLOR WOW": ["US", "#F1ECF7", "#6B3FA0", "#6B3FA0"], "OLAPLEX": ["US", "#FFFFFF", "#111111", "#111111"],
+  "AMIKA": ["US", "#F7C6D9", "#E2196E", "#E2196E"], "BRIOGEO": ["US", "#FFFFFF", "#1E1E1E", "#1E1E1E"], "GIOVANNI": ["US", "#FFFFFF", "#2E7D32", "#2E7D32"],
+  "KINKY-CURLY": ["US", "#FFFFFF", "#2E7D32", "#2E7D32"], "CURLSMITH": ["US", "#FFFFFF", "#F26B21", "#F26B21"], "REDKEN": ["US", "#5B2A86", "#3E1C5E", "#FFFFFF"],
+  "MATRIX": ["US", "#1F4FA3", "#163A7A", "#FFFFFF"], "PAUL MITCHELL": ["US", "#3A8F3A", "#2E6F2E", "#FFFFFF"], "LIVING PROOF": ["US", "#FFFFFF", "#FFFFFF", "#222222"],
+  "OUAI": ["US", "#F6EDEA", "#3A3A3A", "#3A3A3A"], "SHEAMOISTURE": ["US", "#6B3A2A", "#F2E6D0", "#F2E6D0"], "CANTU": ["US", "#FFFFFF", "#00838F", "#00838F"],
+  "PATTERN": ["US", "#F4E3B2", "#1E1E1E", "#1E1E1E"], "TGIN": ["US", "#FFFFFF", "#7B2D8E", "#7B2D8E"], "IT'S A 10": ["US", "#FFFFFF", "#1E1E1E", "#1E1E1E"],
+  "AS I AM": ["US", "#EDE1F2", "#6A1B9A", "#6A1B9A"], "NOT YOUR MOTHER'S": ["US", "#7E57C2", "#5E35B1", "#FFFFFF"],
+  "TRESEMMÉ": ["US", "#1E1E1E", "#D4AF37", "#D4AF37"], "HEAD & SHOULDERS": ["US", "#FFFFFF", "#1565C0", "#1565C0"], "HERBAL ESSENCES": ["US", "#E1BEE7", "#8E24AA", "#4A148C"],
+  "OGX": ["US", "#B87333", "#8D5524", "#FFFFFF"],
+  "CERAVE": ["US", "#FFFFFF", "#FFFFFF", "#1F5DA8"], "PAULA'S CHOICE": ["US", "#FFFFFF", "#3C9DBB", "#3C9DBB"], "DRUNK ELEPHANT": ["US", "#FFFFFF", "#FF6F61", "#FF6F61"],
+  "CLINIQUE": ["US", "#F6C9D4", "#F6C9D4", "#333333"], "ESTÉE LAUDER": ["US", "#4A2C1F", "#C9A24B", "#E8C77A"], "NEUTROGENA": ["US", "#3D7FD1", "#2A64B0", "#FFFFFF"],
+  "GLOW RECIPE": ["US", "#F78DA7", "#3BB273", "#FFFFFF"], "YOUTH TO THE PEOPLE": ["US", "#CFE3C4", "#1B5E20", "#1B5E20"], "SUMMER FRIDAYS": ["US", "#8FB8DE", "#6E9CCB", "#FFFFFF"],
+  "AVEENO": ["US", "#FFFFFF", "#00704A", "#00704A"], "OLAY": ["US", "#B0123C", "#8E0E30", "#FFFFFF"], "CETAPHIL": ["US", "#FFFFFF", "#0072CE", "#0072CE"], "VASELINE": ["US", "#EAF2FB", "#1E5AA8", "#1E5AA8"],
+  "THE ORDINARY": ["CA", "#F1F3F4", "#FFFFFF", "#111111"],
+  "UMBERTO GIANNINI": ["UK", "#FFFFFF", "#111111", "#111111"], "ONLY CURLS": ["UK", "#FFFFFF", "#E85C9C", "#E85C9C"], "BOUCLÈME": ["UK", "#F7EFE6", "#C17F59", "#8D5A3B"],
+  "ELEMIS": ["UK", "#FFFFFF", "#1E1E1E", "#1E1E1E"], "BYOMA": ["UK", "#FFD3E0", "#111111", "#111111"], "SIMPLE": ["UK", "#FFFFFF", "#2E7D32", "#2E7D32"], "NO7": ["UK", "#FFFFFF", "#0D2C6C", "#0D2C6C"],
+  "TIGI": ["UK", "#D32F2F", "#B71C1C", "#FFFFFF"],
+  "SKALA": ["BR", "#F5D3E8", "#9C27B0", "#9C27B0"], "LOLA COSMETICS": ["BR", "#FFC2A8", "#E64A19", "#E64A19"], "SALON LINE": ["BR", "#E9D5F2", "#8E24AA", "#8E24AA"],
+  "KÉRASTASE": ["FR", "#C9963A", "#2B2B2B", "#FFFFFF"], "L'ORÉAL PROFESSIONNEL": ["FR", "#C9A24B", "#1E1E1E", "#1E1E1E"], "L'ORÉAL PARIS ELVIVE": ["FR", "#F3C3D3", "#C2185B", "#7B1F45"],
+  "GARNIER": ["FR", "#7AC143", "#4E8A26", "#FFFFFF"], "L'ORÉAL PARIS": ["FR", "#DDEFFB", "#1F4E79", "#1F4E79"],
+  "LA ROCHE-POSAY": ["FR", "#FFFFFF", "#FFFFFF", "#2B6CB0"], "AVÈNE": ["FR", "#FFFFFF", "#FFFFFF", "#2B7BB9"], "BIODERMA": ["FR", "#EEF6FA", "#E86A8C", "#E86A8C"],
+  "VICHY": ["FR", "#FFFFFF", "#2E5AAC", "#2E5AAC"], "CAUDALIE": ["FR", "#FFFFFF", "#8B1E3F", "#8B1E3F"], "NUXE": ["FR", "#E8C27A", "#C9A24B", "#5D4037"],
+  "EMBRYOLISSE": ["FR", "#FFFFFF", "#1E5AA8", "#1E5AA8"], "SVR": ["FR", "#FFFFFF", "#2E8B57", "#2E8B57"], "URIAGE": ["FR", "#FFFFFF", "#00A0DC", "#00A0DC"],
+  "FILORGA": ["FR", "#EEF1F6", "#3B4A6B", "#3B4A6B"], "CLARINS": ["FR", "#F4E7D3", "#B71C1C", "#B71C1C"],
+  "TSUBAKI": ["JP", "#C8283A", "#B7202F", "#E8C77A"], "&HONEY": ["JP", "#F6C343", "#222222", "#222222"], "FINO": ["JP", "#D9A7A0", "#C79089", "#FFFFFF"],
+  "ORBIS": ["JP", "#FFFFFF", "#9E9E9E", "#555555"], "BIOLISS": ["JP", "#F1DDB3", "#8D6E63", "#5D4037"], "BIORÉ": ["JP", "#2F86DE", "#1F6BC0", "#FFFFFF"],
+  "SKIN AQUA": ["JP", "#CDB4DB", "#B39BC8", "#4A2E66"], "MELANO CC": ["JP", "#FFFFFF", "#F2A33A", "#E8742B"], "SANA": ["JP", "#F3EBDD", "#9E8F5E", "#6D5F3A"],
+  "MEISHOKU": ["JP", "#FFFFFF", "#C2185B", "#C2185B"], "ISHIZAWA LAB": ["JP", "#FFFFFF", "#333333", "#333333"], "PDC": ["JP", "#F2E8D5", "#8D6E63", "#5D4037"],
+  "LION PAIR": ["JP", "#FFFFFF", "#D32F2F", "#D32F2F"], "NATURIE": ["JP", "#EAF5E3", "#43A047", "#2E7D32"], "HADA LABO": ["JP", "#FFFFFF", "#E9EEF5", "#1C3F94"],
+  "KOSE SOFTYMO": ["JP", "#F6E7A1", "#C9A24B", "#5D4037"], "MUJI": ["JP", "#F7F7F7", "#FFFFFF", "#7B1F1F"], "SENKA": ["JP", "#F8D7DA", "#C62828", "#C62828"],
+  "KUNDAL": ["KR", "#F6C343", "#8D6E63", "#5D4037"], "UNOVE": ["KR", "#FFFFFF", "#6A1B9A", "#6A1B9A"], "AROMATICA": ["KR", "#DDEFD9", "#1B5E20", "#1B5E20"],
+  "TORRIDEN": ["KR", "#DDEFFB", "#FFFFFF", "#1F4E79"], "DR. ALTHEA": ["KR", "#FFFFFF", "#FFFFFF", "#333333"], "CENTELLIAN24": ["KR", "#FFFFFF", "#5D4037", "#5D4037"],
+  "MEDICUBE": ["KR", "#F8BBD0", "#F48FB1", "#880E4F"], "PURITO SEOUL": ["KR", "#FFFFFF", "#2E7D32", "#2E7D32"], "ISNTREE": ["KR", "#D7F0FB", "#FFFFFF", "#0277BD"],
+  "AXIS-Y": ["KR", "#FFE0B2", "#FFFFFF", "#E65100"], "ABIB": ["KR", "#DDEFD9", "#A5D6A7", "#1B5E20"], "HARUHARU WONDER": ["KR", "#3E3E3E", "#222222", "#FFFFFF"],
+  "MIXSOON": ["KR", "#F5E6C8", "#FFFFFF", "#333333"], "NUMBUZIN": ["KR", "#E8D3C0", "#FFFFFF", "#5D4037"], "AESTURA": ["KR", "#FFFFFF", "#FFFFFF", "#1565C0"],
+  "GOODAL": ["KR", "#FFE0B2", "#2E7D32", "#E65100"],
+  "AESOP": ["AU", "#5D4037", "#1E1E1E", "#F5E6C8"],
+  "LOLANE": ["TH", "#F8BBD0", "#C2185B", "#880E4F"], "CARING": ["TH", "#E1F5FE", "#0288D1", "#01579B"], "SRICHAND": ["TH", "#FFFFFF", "#C9A24B", "#5D4037"],
+  "MIZUMI": ["TH", "#B3E5FC", "#0288D1", "#01579B"], "SMOOTH E": ["TH", "#FFFFFF", "#1E88E5", "#1E88E5"],
+  "BLUE CURLS": ["SA", "#D6E9FF", "#1565C0", "#0D47A1"], "CLARA HAIR": ["SA", "#F3E5F5", "#8E24AA", "#6A1B9A"], "NGWAA": ["SA", "#FFF3E0", "#EF6C00", "#E65100"],
+  "SEDRA CARE": ["SA", "#E8F5E9", "#388E3C", "#1B5E20"], "CURL IT": ["SA", "#FCE4EC", "#D81B60", "#AD1457"], "HENNA RAGHAD": ["SA", "#EFEBE9", "#6D4C41", "#4E342E"],
+  "HENNA AFNAN": ["SA", "#F1F8E9", "#689F38", "#33691E"], "SMOOTH KSA": ["SA", "#FFFFFF", "#212121", "#212121"], "JH CARE": ["SA", "#E0F7FA", "#00838F", "#006064"],
+  "EVA": ["EG", "#FFFFFF", "#AD1457", "#AD1457"], "BOBANA": ["EG", "#FFF8E1", "#F9A825", "#6D4C41"], "THE HAIR ADDICT": ["EG", "#212121", "#FFFFFF", "#FFFFFF"],
+  "LES KARITES": ["EG", "#F5E6C8", "#8D6E63", "#5D4037"], "HERBAL SENSATION": ["EG", "#E8F5E9", "#2E7D32", "#1B5E20"], "DERMACY": ["EG", "#FFFFFF", "#00897B", "#00695C"],
+  "NUT BOTANICALS": ["EG", "#EFEBE9", "#795548", "#4E342E"], "INFINITY": ["EG", "#EDE7F6", "#5E35B1", "#4527A0"],
+  "PANTENE": ["CH", "#FFFFFF", "#C9A24B", "#7B5E1F"], "DOVE": ["NL", "#FFFFFF", "#1A237E", "#1A237E"], "SUNSILK": ["NL", "#F06292", "#D81B60", "#FFFFFF"],
+  "SCHWARZKOPF GLISS": ["DE", "#2B2B2B", "#C9A24B", "#E8C77A"], "SYOSS": ["DE", "#FFFFFF", "#111111", "#111111"], "NIVEA": ["DE", "#0D47A1", "#0D47A1", "#FFFFFF"],
+  "EUCERIN": ["DE", "#FFFFFF", "#C62828", "#1565C0"]
+};
+const SHOP_ROWS = [
+  // ---------------- 🇺🇸 أمريكا — شعر ----------------
+  ["K18", "treatment", "Leave-In Molecular Repair Hair Mask", "ماسك K18 للإصلاح الجزيئي (بدون شطف)", "50 مل", 299, "tube", ["damage"]],
+  ["COLOR WOW", "styling", "Dream Coat Supernatural Spray", "بخاخ كلر واو دريم كوت ضد الرطوبة", "200 مل", 139, "spray", ["frizz", "shine"]],
+  ["OLAPLEX", "shampoo", "No.4 Bond Maintenance Shampoo", "شامبو أولابلكس رقم 4", "250 مل", 129, "bottle", ["damage"]],
+  ["OLAPLEX", "conditioner", "No.5 Bond Maintenance Conditioner", "بلسم أولابلكس رقم 5", "250 مل", 129, "bottle", ["damage"]],
+  ["OLAPLEX", "oil", "No.7 Bonding Oil", "زيت أولابلكس رقم 7", "30 مل", 129, "dropper", ["shine", "heat"]],
+  ["AMIKA", "styling", "Perk Up Dry Shampoo", "شامبو جاف أميكا بيرك أب", "232 مل", 105, "spray", ["oilyScalp"]],
+  ["AMIKA", "mask", "The Kure Bond Repair Mask", "ماسك أميكا ذا كيور للإصلاح", "250 مل", 159, "jar", ["damage"]],
+  ["BRIOGEO", "mask", "Don't Despair, Repair! Deep Conditioning Mask", "ماسك بريوجيو دونت ديسبير ريبير", "236 مل", 159, "jar", ["damage", "dryness"]],
+  ["GIOVANNI", "conditioner", "Direct Leave-In Weightless Moisture Conditioner", "بلسم جيوفاني دايركت بدون شطف", "250 مل", 59, "bottle", ["dryness", "curls"]],
+  ["KINKY-CURLY", "curly", "Knot Today Leave-In Detangler", "كِنكي كيرلي نوت توداي لفك التشابك", "236 مل", 85, "bottle", ["curls", "dryness"]],
+  ["KINKY-CURLY", "curly", "Curling Custard Gel", "جل كِنكي كيرلي كاستارد لتعريف الكيرلي", "236 مل", 95, "jar", ["curls"]],
+  ["CURLSMITH", "curly", "Curl Quenching Conditioning Wash", "غسول كيرل سميث المرطب للكيرلي", "355 مل", 119, "bottle", ["curls", "dryness"]],
+  ["CURLSMITH", "curly", "In Shower Style Fixer", "جل كيرل سميث للتصفيف في الشاور", "237 مل", 119, "tube", ["curls", "frizz"]],
+  ["REDKEN", "treatment", "Acidic Bonding Concentrate Intensive Treatment", "علاج ريدكن أسيديك بوندينغ المركز", "150 مل", 139, "tube", ["damage"]],
+  ["MATRIX", "shampoo", "Total Results Brass Off Shampoo", "شامبو ماتريكس براس أوف للأشقر", "300 مل", 79, "bottle", ["damage"]],
+  ["PAUL MITCHELL", "shampoo", "Tea Tree Special Shampoo", "شامبو بول ميتشل بشجرة الشاي", "300 مل", 89, "bottle", ["oilyScalp"]],
+  ["LIVING PROOF", "styling", "Perfect Hair Day Dry Shampoo", "شامبو جاف ليفنغ بروف", "198 مل", 129, "spray", ["oilyScalp"]],
+  ["OUAI", "oil", "Hair Oil", "زيت الشعر من واي", "45 مل", 119, "dropper", ["shine", "frizz"]],
+  ["OUAI", "shampoo", "Detox Shampoo", "شامبو واي ديتوكس", "300 مل", 129, "bottle", ["oilyScalp"]],
+  ["SHEAMOISTURE", "mask", "Jamaican Black Castor Oil Strengthen & Restore Masque", "ماسك شيا مويستشر بزيت الخروع الأسود", "340 غ", 69, "tub", ["damage", "hairfall"]],
+  ["CANTU", "curly", "Shea Butter Coconut Curling Cream", "كريم كانتو لتعريف الكيرلي بجوز الهند", "340 غ", 49, "tub", ["curls", "frizz"]],
+  ["CANTU", "curly", "Shea Butter Leave-In Conditioning Repair Cream", "كريم كانتو الأصلي بدون شطف", "453 غ", 49, "tub", ["curls", "dryness"]],
+  ["PATTERN", "curly", "Leave-In Conditioner", "بلسم باترن بيوتي بدون شطف", "296 مل", 109, "bottle", ["curls", "dryness"]],
+  ["TGIN", "curly", "Twist & Define Cream", "كريم تي جن لتعريف التويست", "340 غ", 79, "jar", ["curls"]],
+  ["IT'S A 10", "treatment", "Miracle Leave-In Product", "بخاخ إتس أ تن ميراكل بدون شطف", "120 مل", 99, "spray", ["frizz", "dryness"]],
+  ["AS I AM", "curly", "Coconut CoWash Cleansing Conditioner", "غسول آز آي آم بجوز الهند للكيرلي", "454 غ", 69, "tub", ["curls", "dryness"]],
+  ["NOT YOUR MOTHER'S", "curly", "Curl Talk Curl Cream", "كريم نوت يور ماذرز كيرل توك", "177 مل", 49, "tube", ["curls"]],
+  ["HEAD & SHOULDERS", "shampoo", "Classic Clean Anti-Dandruff Shampoo", "شامبو هيد آند شولدرز الكلاسيكي ضد القشرة", "400 مل", 29, "bottle", ["oilyScalp"]],
+  ["HERBAL ESSENCES", "shampoo", "Bio:Renew Argan Oil Repair Shampoo", "شامبو هيربال إيسنسز بزيت الأرغان", "400 مل", 35, "bottle", ["dryness", "shine"]],
+  ["OGX", "shampoo", "Renewing Argan Oil of Morocco Shampoo", "شامبو أو جي إكس بزيت الأرغان المغربي", "385 مل", 45, "bottle", ["dryness", "shine"]],
+  ["TRESEMMÉ", "conditioner", "Keratin Smooth Conditioner", "بلسم تريسيمي كيراتين سموث", "400 مل", 32, "bottle", ["frizz"]],
+  // ---------------- 🇺🇸 أمريكا / 🇨🇦 كندا — بشرة ----------------
+  ["CERAVE", "cleanser", "Foaming Facial Cleanser", "غسول سيرافي الرغوي", "236 مل", 65, "pump", ["oil", "acne"]],
+  ["CERAVE", "treatment", "Eye Repair Cream", "كريم سيرافي للعين", "14 مل", 69, "tube", ["dryness"]],
+  ["PAULA'S CHOICE", "serum", "10% Niacinamide Booster", "بوستر بولاز تشويس نياسيناميد 10%", "20 مل", 189, "dropper", ["pores", "oil", "marks"]],
+  ["DRUNK ELEPHANT", "moisturizer", "Protini Polypeptide Cream", "كريم درنك إليفنت بروتيني", "50 مل", 259, "jar", ["dryness", "barrier"]],
+  ["DRUNK ELEPHANT", "serum", "C-Firma Fresh Day Serum", "سيروم درنك إليفنت سي فيرما", "28 مل", 329, "pump", ["pigment", "marks"]],
+  ["CLINIQUE", "moisturizer", "Moisture Surge 100H Auto-Replenishing Hydrator", "مرطب كلينيك مويستشر سيرج", "50 مل", 189, "jar", ["dryness"]],
+  ["CLINIQUE", "moisturizer", "Dramatically Different Moisturizing Gel", "جل كلينيك دراماتيكلي ديفرنت", "125 مل", 169, "pump", ["oil", "dryness"]],
+  ["ESTÉE LAUDER", "serum", "Advanced Night Repair Serum", "سيروم إستي لودر أدفانسد نايت ريبير", "50 مل", 459, "dropper", ["barrier", "dryness"]],
+  ["NEUTROGENA", "cleanser", "Oil-Free Acne Wash", "غسول نيوتروجينا الخالي من الزيوت للحبوب", "269 مل", 49, "pump", ["acne", "oil"]],
+  ["GLOW RECIPE", "serum", "Watermelon Glow Niacinamide Dew Drops", "قطرات جلو ريسبي بالبطيخ والنياسيناميد", "40 مل", 179, "dropper", ["pigment", "dryness"]],
+  ["YOUTH TO THE PEOPLE", "cleanser", "Superfood Antioxidant Cleanser", "غسول يوث تو ذا بيبل سوبرفود", "237 مل", 159, "pump", ["oil", "pores"]],
+  ["SUMMER FRIDAYS", "treatment", "Jet Lag Mask", "ماسك سمر فرايديز جت لاق", "64 غ", 189, "tube", ["dryness", "barrier"]],
+  ["AVEENO", "moisturizer", "Daily Moisturizing Lotion", "لوشن أفينو المرطب اليومي", "354 مل", 59, "pump", ["dryness", "redness"]],
+  ["OLAY", "moisturizer", "Regenerist Micro-Sculpting Cream", "كريم أولاي ريجنريست", "50 غ", 129, "jar", ["dryness"]],
+  ["CETAPHIL", "cleanser", "Gentle Skin Cleanser", "غسول سيتافيل اللطيف", "236 مل", 55, "pump", ["redness", "dryness"]],
+  ["CETAPHIL", "moisturizer", "Moisturizing Cream", "كريم سيتافيل المرطب", "453 غ", 79, "tub", ["dryness", "barrier"]],
+  ["VASELINE", "treatment", "Original Healing Jelly", "فازلين الأصلي", "100 مل", 19, "jar", ["dryness", "barrier"]],
+  ["THE ORDINARY", "treatment", "AHA 30% + BHA 2% Peeling Solution", "مقشر ذا أوردينري الأحمر AHA+BHA", "30 مل", 49, "dropper", ["pigment", "pores", "marks"]],
+  ["THE ORDINARY", "moisturizer", "Natural Moisturizing Factors + HA", "مرطب ذا أوردينري NMF", "30 مل", 39, "tube", ["dryness", "barrier"]],
+  // ---------------- 🇬🇧 بريطانيا ----------------
+  ["UMBERTO GIANNINI", "shampoo", "Banana Butter Nourishing Shampoo", "شامبو أومبرتو جيانيني بزبدة الموز", "250 مل", 59, "bottle", ["dryness"], ["#FBE9A6", "#F2C230", "#5D4037"]],
+  ["UMBERTO GIANNINI", "conditioner", "Banana Butter Nourishing Conditioner", "بلسم أومبرتو جيانيني بزبدة الموز", "250 مل", 59, "bottle", ["dryness"], ["#FBE9A6", "#F2C230", "#5D4037"]],
+  ["UMBERTO GIANNINI", "mask", "Banana Butter Nourishing Super Mask", "ماسك أومبرتو جيانيني بزبدة الموز", "230 مل", 69, "jar", ["dryness", "damage"], ["#FBE9A6", "#F2C230", "#5D4037"]],
+  ["UMBERTO GIANNINI", "curly", "Curl Jelly Curl Defining Gel", "جل أومبرتو جيانيني كيرل جيلي", "200 مل", 59, "tube", ["curls", "frizz"], ["#E1F5FE", "#0277BD", "#01579B"]],
+  ["UMBERTO GIANNINI", "curly", "Curl Whip Curl Defining Mousse", "موس أومبرتو جيانيني كيرل ويب", "200 مل", 59, "spray", ["curls"], ["#FCE4EC", "#D81B60", "#880E4F"]],
+  ["UMBERTO GIANNINI", "curly", "Curl Leave-In Conditioner", "بلسم أومبرتو جيانيني للكيرلي بدون شطف", "200 مل", 59, "bottle", ["curls", "dryness"], ["#EDE7F6", "#5E35B1", "#311B92"]],
+  ["UMBERTO GIANNINI", "shampoo", "Glossing Shampoo", "شامبو أومبرتو جيانيني للمعان", "250 مل", 55, "bottle", ["shine"], ["#F5F5F5", "#9E9E9E", "#424242"]],
+  ["UMBERTO GIANNINI", "conditioner", "Glossing Conditioner", "بلسم أومبرتو جيانيني للمعان", "250 مل", 55, "bottle", ["shine"], ["#F5F5F5", "#9E9E9E", "#424242"]],
+  ["UMBERTO GIANNINI", "oil", "Glossing Hair Oil", "زيت أومبرتو جيانيني للمعان", "100 مل", 65, "pump", ["shine", "frizz"], ["#F5F5F5", "#9E9E9E", "#424242"]],
+  ["UMBERTO GIANNINI", "treatment", "Grow Like A Pro Scalp Serum", "سيروم أومبرتو جيانيني لفروة الرأس", "50 مل", 69, "dropper", ["hairfall"], ["#E8F5E9", "#2E7D32", "#1B5E20"]],
+  ["UMBERTO GIANNINI", "heat", "Heat Protection Spray", "بخاخ أومبرتو جيانيني للحماية من الحرارة", "150 مل", 55, "spray", ["heat"]],
+  ["ONLY CURLS", "curly", "Curl Defining Gel", "جل أونلي كيرلز لتعريف الكيرلي", "250 مل", 89, "tube", ["curls"]],
+  ["BOUCLÈME", "curly", "Curl Cream", "كريم بوكليم للكيرلي", "250 مل", 119, "tube", ["curls", "dryness"]],
+  ["ELEMIS", "cleanser", "Pro-Collagen Cleansing Balm", "بلسم إليمس برو كولاجين للتنظيف", "100 غ", 239, "jar", ["dryness"]],
+  ["BYOMA", "moisturizer", "Moisturizing Gel Cream", "جل كريم بايوما المرطب", "50 مل", 79, "tube", ["barrier", "dryness"]],
+  ["SIMPLE", "cleanser", "Kind to Skin Refreshing Facial Wash", "غسول سيمبل كايند تو سكن", "150 مل", 29, "tube", ["redness"]],
+  ["NO7", "serum", "Protect & Perfect Intense Advanced Serum", "سيروم نمبر 7 بروتكت آند بيرفكت", "30 مل", 129, "pump", ["dryness"]],
+  ["TIGI", "shampoo", "Bed Head Resurrection Shampoo", "شامبو تيجي بيد هيد ريزركشن", "400 مل", 59, "bottle", ["damage"]],
+  // ---------------- 🇧🇷 البرازيل ----------------
+  ["SKALA", "curly", "Mais Cachos Treatment Cream", "كريم سكالا مايس كاشوس للكيرلي", "1 كغ", 45, "tub", ["curls", "dryness"]],
+  ["LOLA COSMETICS", "curly", "Meu Cacho Minha Vida Activator", "منشط لولا كوزمتكس للكيرلي", "500 مل", 79, "bottle", ["curls"]],
+  ["SALON LINE", "curly", "#todecacho Curl Activator", "منشط سالون لاين للكيرلي", "300 مل", 49, "bottle", ["curls", "frizz"]],
+  // ---------------- 🇫🇷 فرنسا ----------------
+  ["KÉRASTASE", "shampoo", "Nutritive Bain Satin Shampoo", "شامبو كيراستاس نيوتريتيف", "250 مل", 159, "bottle", ["dryness"], ["#D9E8F5", "#1F4E79", "#1F4E79"]],
+  ["KÉRASTASE", "mask", "Elixir Ultime Le Masque", "ماسك كيراستاس إليكسير ألتيم", "200 مل", 229, "jar", ["damage", "shine"]],
+  ["L'ORÉAL PROFESSIONNEL", "mask", "Absolut Repair Mask", "ماسك لوريال بروفيشنال أبسوليوت ريبير", "250 مل", 119, "jar", ["damage"]],
+  ["L'ORÉAL PROFESSIONNEL", "shampoo", "Metal Detox Shampoo", "شامبو لوريال بروفيشنال ميتال ديتوكس", "300 مل", 119, "bottle", ["damage"], ["#B0BEC5", "#455A64", "#263238"]],
+  ["L'ORÉAL PARIS ELVIVE", "shampoo", "Dream Lengths Shampoo", "شامبو إلفيف دريم لينثس", "400 مل", 35, "bottle", ["damage"]],
+  ["L'ORÉAL PARIS ELVIVE", "oil", "Extraordinary Oil", "زيت إلفيف الاستثنائي", "100 مل", 49, "pump", ["shine", "dryness"], ["#E8C27A", "#C9A24B", "#5D4037"]],
+  ["GARNIER", "mask", "Fructis Hair Food Banana Mask", "ماسك غارنييه فركتس هير فود بالموز", "390 مل", 39, "jar", ["dryness"], ["#FBE9A6", "#F2C230", "#5D4037"]],
+  ["GARNIER", "cleanser", "SkinActive Micellar Cleansing Water", "ماء ميسيلار غارنييه", "400 مل", 35, "bottle", ["redness"], ["#F3F7FB", "#E86A8C", "#1F4E79"]],
+  ["L'ORÉAL PARIS", "serum", "Revitalift 1.5% Hyaluronic Acid Serum", "سيروم لوريال ريفيتاليفت هيالورونيك", "30 مل", 89, "dropper", ["dryness"]],
+  ["AVÈNE", "moisturizer", "Cicalfate+ Restorative Protective Cream", "كريم أفين سيكالفات+", "40 مل", 79, "tube", ["barrier", "redness"]],
+  ["AVÈNE", "treatment", "Thermal Spring Water Spray", "بخاخ مياه أفين الحرارية", "150 مل", 55, "spray", ["redness"]],
+  ["BIODERMA", "cleanser", "Sébium Foaming Gel", "جل بيوديرما سيبيوم الرغوي", "200 مل", 69, "tube", ["oil", "acne"], ["#EAF7EE", "#3BA86B", "#2E7D32"]],
+  ["VICHY", "serum", "Minéral 89 Hyaluronic Acid Booster", "سيروم فيشي مينرال 89", "50 مل", 129, "dropper", ["dryness", "barrier"]],
+  ["CAUDALIE", "serum", "Vinoperfect Radiance Serum", "سيروم كودالي فينوبيرفكت", "30 مل", 199, "dropper", ["pigment", "marks"]],
+  ["CAUDALIE", "treatment", "Beauty Elixir", "بخاخ كودالي بيوتي إليكسير", "100 مل", 159, "spray", ["pores"], ["#E8F3E8", "#2E7D32", "#1B5E20"]],
+  ["NUXE", "treatment", "Huile Prodigieuse Multi-Purpose Dry Oil", "زيت نوكس بروديجيوز", "100 مل", 129, "spray", ["dryness"]],
+  ["EMBRYOLISSE", "moisturizer", "Lait-Crème Concentré", "كريم إمبريوليس لي كريم", "75 مل", 89, "tube", ["dryness", "barrier"]],
+  ["SVR", "cleanser", "Sebiaclear Gel Moussant", "غسول إس في آر سيبياكلير", "200 مل", 65, "tube", ["acne", "oil"]],
+  ["URIAGE", "moisturizer", "Bariéderm Cica-Cream", "كريم يورياج سيكا", "40 مل", 69, "tube", ["barrier", "redness"]],
+  ["FILORGA", "moisturizer", "Time-Filler 5XP Cream", "كريم فيلورجا تايم فيلر", "50 مل", 249, "jar", ["dryness"]],
+  ["CLARINS", "serum", "Double Serum", "سيروم كلارنس دبل", "50 مل", 449, "pump", ["dryness", "barrier"]],
+  // ---------------- 🇯🇵 اليابان — شعر ----------------
+  ["&HONEY", "shampoo", "Deep Moist Shampoo 1.0", "شامبو آند هني ديب مويست", "440 مل", 69, "pump", ["dryness", "shine"]],
+  ["&HONEY", "oil", "Deep Moist Hair Oil 3.0", "زيت آند هني ديب مويست", "100 مل", 65, "bottle", ["shine", "frizz"]],
+  ["ORBIS", "treatment", "Essence in Hair Milk", "حليب أوربيس إسنس للشعر", "140 غ", 75, "tube", ["frizz", "damage"]],
+  ["BIOLISS", "oil", "Pure Retouch Glow Hair Oil", "زيت بيوليس بيور ريتاتش للمعان", "80 مل", 55, "bottle", ["shine", "frizz"]],
+  ["TSUBAKI", "mask", "Premium Repair Mask", "ماسك تسوباكي بريميوم ريبير", "180 غ", 59, "jar", ["damage"]],
+  // ---------------- 🇯🇵 اليابان — بشرة ----------------
+  ["SKIN AQUA", "spf", "Tone Up UV Essence Lavender SPF50+", "واقي سكن أكوا تون أب لافندر", "80 غ", 59, "tube", ["pigment"]],
+  ["SKIN AQUA", "spf", "Super Moisture Gel Pump SPF50+", "واقي سكن أكوا سوبر مويستشر جل", "140 غ", 69, "pump", ["dryness"], ["#E1F5FE", "#4FC3F7", "#0277BD"]],
+  ["SANA", "treatment", "Soy Milk Sheer & Moisture Eye Cream", "كريم سانا للعين بحليب الصويا للترطيب", "25 غ", 59, "tube", ["dryness"]],
+  ["SANA", "treatment", "Soy Milk Wrinkle Care Eye Cream", "كريم سانا للعين بحليب الصويا للخطوط", "25 غ", 69, "tube", ["dryness"]],
+  ["MEISHOKU", "treatment", "Brilliant Colors Whitening Eye Cream", "كريم ميشوكو للعين للتفتيح", "30 غ", 55, "jar", ["pigment"]],
+  ["ISHIZAWA LAB", "treatment", "Keana Nadeshiko Rice Pack", "ماسك إيشيزاوا كيانا بالأرز", "170 غ", 59, "tub", ["pores", "oil"]],
+  ["PDC", "treatment", "Wafood Made Sake Lees Face Pack", "ماسك بي دي سي بخميرة الساكي", "170 غ", 55, "tube", ["pigment", "pores"]],
+  ["ISHIZAWA LAB", "treatment", "Keana Rice Mask", "ماسك كيانا الورقي بالأرز", "10 ماسكات", 59, "box", ["pores"]],
+  ["LION PAIR", "treatment", "Acne Care Cream", "كريم لايون بير للحبوب", "24 غ", 39, "tube", ["acne"]],
+  ["NATURIE", "moisturizer", "Hatomugi Skin Conditioning Gel", "جل ناتشوري هاتوموجي", "180 غ", 49, "tub", ["dryness", "oil"]],
+  ["HADA LABO", "moisturizer", "Shirojyun Arbutin Whitening Cream", "كريم هادا لابو شيروجيون بالأربوتين", "50 غ", 69, "jar", ["pigment"]],
+  ["KOSE SOFTYMO", "cleanser", "Speedy Cleansing Oil", "زيت كوسيه سوفتيمو المنظف", "230 مل", 49, "pump", ["pores"]],
+  ["BIORÉ", "cleanser", "Makeup Remover Perfect Cleansing Oil", "زيت بيوريه لإزالة المكياج", "150 مل", 49, "pump", ["pores"], ["#E3F2FD", "#1F6BC0", "#1F6BC0"]],
+  ["MUJI", "cleanser", "Mild Cleansing Oil for Sensitive Skin", "زيت موجي المنظف للبشرة الحساسة", "200 مل", 59, "pump", ["redness"]],
+  ["MELANO CC", "cleanser", "Deep Clear Enzyme Face Wash", "غسول ميلانو سي سي بالإنزيم", "130 غ", 45, "tube", ["pores", "pigment"]],
+  ["HADA LABO", "cleanser", "Gokujyun Hyaluronic Acid Face Wash", "غسول هادا لابو غوكوجيون", "100 غ", 39, "tube", ["dryness"]],
+  ["SENKA", "cleanser", "Perfect Whip Beauty Foam Collagen", "غسول سينكا بيرفكت ويب بالكولاجين", "120 غ", 35, "tube", ["dryness"]],
+  // ---------------- 🇰🇷 كوريا ----------------
+  ["KUNDAL", "shampoo", "Honey & Macadamia Protein Repair Shampoo", "شامبو كوندال بالعسل والمكاديميا", "500 مل", 59, "pump", ["damage", "dryness"]],
+  ["UNOVE", "treatment", "Deep Damage Treatment EX", "علاج يونوف ديب داميج", "320 مل", 79, "tube", ["damage"]],
+  ["AROMATICA", "shampoo", "Rosemary Scalp Scaling Shampoo", "شامبو أروماتيكا بالروزماري للفروة", "400 مل", 79, "pump", ["oilyScalp", "hairfall"]],
+  ["TORRIDEN", "serum", "DIVE-IN Low Molecular Hyaluronic Acid Serum", "سيروم توريدن دايف إن", "50 مل", 89, "dropper", ["dryness"]],
+  ["DR. ALTHEA", "moisturizer", "345 Relief Cream", "كريم دكتور ألثيا 345", "50 مل", 89, "tube", ["redness", "barrier"]],
+  ["CENTELLIAN24", "moisturizer", "Madeca Cream", "كريم سنتليان24 ماديكا", "50 مل", 99, "jar", ["barrier", "redness"]],
+  ["MEDICUBE", "treatment", "Zero Pore Pad 2.0", "بادات ميديكيوب زيرو بور", "70 باد", 99, "jar", ["pores", "oil"]],
+  ["PURITO SEOUL", "spf", "Daily Go-To Sunscreen SPF50+", "واقي بوريتو سول اليومي", "60 مل", 69, "tube", ["redness"]],
+  ["ISNTREE", "spf", "Hyaluronic Acid Watery Sun Gel SPF50+", "واقي إزنتري جل مائي", "50 مل", 69, "tube", ["dryness"]],
+  ["AXIS-Y", "serum", "Dark Spot Correcting Glow Serum", "سيروم أكسس واي للبقع الداكنة", "50 مل", 89, "dropper", ["pigment", "marks"]],
+  ["ABIB", "treatment", "Heartleaf Spot Pad Calming Touch", "بادات أبيب بالهارتليف", "80 باد", 89, "jar", ["redness", "acne"]],
+  ["HARUHARU WONDER", "treatment", "Black Rice Hyaluronic Toner", "تونر هاروهارو بالأرز الأسود", "150 مل", 79, "bottle", ["dryness"]],
+  ["MIXSOON", "serum", "Bean Essence", "إسنس ميكسون بالفول", "50 مل", 85, "bottle", ["pores", "marks"]],
+  ["NUMBUZIN", "serum", "No.3 Skin Softening Serum", "سيروم نمبوزين رقم 3", "50 مل", 95, "dropper", ["pores", "dryness"]],
+  ["AESTURA", "moisturizer", "Atobarrier 365 Cream", "كريم أستورا أتوباريير 365", "80 مل", 99, "tube", ["barrier", "dryness"]],
+  ["GOODAL", "serum", "Green Tangerine Vita C Dark Spot Serum", "سيروم قودال بالتانجرين الأخضر", "40 مل", 99, "dropper", ["pigment", "marks"]],
+  // ---------------- 🇦🇺 أستراليا ----------------
+  ["AESOP", "cleanser", "Parsley Seed Facial Cleanser", "غسول إيسوب ببذور البقدونس", "200 مل", 229, "bottle", ["oil"]],
+  // ---------------- 🇹🇭 تايلند ----------------
+  ["LOLANE", "oil", "Natura Daily Hair Serum Magic in One", "سيروم لولان ناتورا للشعر", "50 مل", 29, "bottle", ["frizz", "shine"]],
+  ["CARING", "treatment", "Hair Treatment (منتج توضيحي)", "علاج كيرنج للشعر (منتج توضيحي)", "250 مل", 35, "jar", ["damage"], null, true],
+  ["SRICHAND", "moisturizer", "Skin Care Cream (منتج توضيحي)", "كريم سريتشاند للبشرة (منتج توضيحي)", "50 مل", 45, "jar", ["dryness"], null, true],
+  ["MIZUMI", "spf", "UV Water Serum SPF50+", "واقي ميزومي يو في واتر سيروم", "40 غ", 49, "tube", ["oil"]],
+  ["SMOOTH E", "cleanser", "Babyface Foam", "غسول سموث إي بيبي فيس", "120 غ", 39, "tube", ["acne", "redness"]],
+  // ---------------- 🇸🇦 السعودية (أسماء منتجات توضيحية) ----------------
+  ["BLUE CURLS", "curly", "Curl Defining Cream (منتج توضيحي)", "كريم بلو كيرلز لتعريف الكيرلي (منتج توضيحي)", "250 مل", 69, "jar", ["curls"], null, true],
+  ["CLARA HAIR", "oil", "Hair Oil (منتج توضيحي)", "زيت كلارا للشعر (منتج توضيحي)", "100 مل", 59, "dropper", ["hairfall", "shine"], null, true],
+  ["NGWAA", "mask", "Hair Mask (منتج توضيحي)", "ماسك نجوى للشعر (منتج توضيحي)", "250 مل", 65, "jar", ["damage"], null, true],
+  ["SEDRA CARE", "oil", "Sidr Hair Oil (منتج توضيحي)", "زيت سدرة كير بالسدر (منتج توضيحي)", "100 مل", 55, "dropper", ["hairfall"], null, true],
+  ["CURL IT", "curly", "Curl Gel (منتج توضيحي)", "جل كيرل إت للكيرلي (منتج توضيحي)", "250 مل", 59, "tube", ["curls"], null, true],
+  ["HENNA RAGHAD", "treatment", "Natural Henna (منتج توضيحي)", "حناء رغد الطبيعية (منتج توضيحي)", "200 غ", 35, "box", ["shine"], null, true],
+  ["HENNA AFNAN", "treatment", "Natural Henna (منتج توضيحي)", "حناء أفنان الطبيعية (منتج توضيحي)", "200 غ", 35, "box", ["shine"], null, true],
+  ["SMOOTH KSA", "treatment", "Smoothing Treatment (منتج توضيحي)", "علاج سموث للتنعيم (منتج توضيحي)", "250 مل", 89, "bottle", ["frizz"], null, true],
+  ["JH CARE", "shampoo", "Hair Shampoo (منتج توضيحي)", "شامبو جي إتش كير (منتج توضيحي)", "300 مل", 49, "bottle", [], null, true],
+  // ---------------- 🇪🇬 مصر (أسماء منتجات توضيحية) ----------------
+  ["EVA", "treatment", "Hair Clinic Treatment (منتج توضيحي)", "علاج إيفا هير كلينك (منتج توضيحي)", "300 مل", 29, "bottle", ["damage"], null, true],
+  ["BOBANA", "curly", "Curly Hair Cream (منتج توضيحي)", "كريم بوبانا للكيرلي (منتج توضيحي)", "200 مل", 35, "jar", ["curls"], null, true],
+  ["THE HAIR ADDICT", "oil", "Hair Oil (منتج توضيحي)", "زيت ذا هير أديكت (منتج توضيحي)", "100 مل", 45, "dropper", ["hairfall"], null, true],
+  ["LES KARITES", "mask", "Shea Butter Hair Mask (منتج توضيحي)", "ماسك ليه كاريتيه بزبدة الشيا (منتج توضيحي)", "250 مل", 49, "jar", ["dryness"], null, true],
+  ["HERBAL SENSATION", "shampoo", "Herbal Shampoo (منتج توضيحي)", "شامبو هيربال سنسيشن (منتج توضيحي)", "300 مل", 29, "bottle", [], null, true],
+  ["EVA", "moisturizer", "Skin Clinic Cream (منتج توضيحي)", "كريم إيفا سكن كلينك (منتج توضيحي)", "50 مل", 29, "jar", ["dryness"], null, true],
+  ["BOBANA", "cleanser", "Face Wash (منتج توضيحي)", "غسول بوبانا للوجه (منتج توضيحي)", "150 مل", 29, "tube", [], null, true],
+  ["DERMACY", "serum", "Face Serum (منتج توضيحي)", "سيروم ديرماسي للوجه (منتج توضيحي)", "30 مل", 45, "dropper", ["pigment"], null, true],
+  ["NUT BOTANICALS", "moisturizer", "Botanical Cream (منتج توضيحي)", "كريم نت بوتانيكالز (منتج توضيحي)", "50 مل", 49, "jar", ["dryness"], null, true],
+  ["INFINITY", "cleanser", "Face Cleanser (منتج توضيحي)", "غسول إنفينيتي للوجه (منتج توضيحي)", "150 مل", 29, "tube", [], null, true],
+  // ---------------- ماركات تجارية ----------------
+  ["PANTENE", "shampoo", "Pro-V Repair & Protect Shampoo", "شامبو بانتين برو في للإصلاح", "400 مل", 29, "bottle", ["damage"]],
+  ["DOVE", "shampoo", "Intensive Repair Shampoo", "شامبو دوف للإصلاح المكثف", "400 مل", 25, "bottle", ["damage"]],
+  ["SUNSILK", "conditioner", "Soft & Smooth Conditioner", "بلسم صانسيلك للنعومة", "350 مل", 19, "bottle", ["frizz"]],
+  ["SCHWARZKOPF GLISS", "shampoo", "Gliss Ultimate Repair Shampoo", "شامبو شوارزكوف جليس ألتيميت ريبير", "400 مل", 29, "bottle", ["damage"]],
+  ["SYOSS", "conditioner", "Keratin Conditioner", "بلسم سيوس بالكيراتين", "500 مل", 29, "bottle", ["damage"]],
+  ["NIVEA", "moisturizer", "Soft Moisturising Cream", "كريم نيفيا سوفت المرطب", "100 مل", 19, "jar", ["dryness"]],
+  ["EUCERIN", "spf", "Sun Oil Control Gel-Cream SPF50+", "واقي يوسيرين أويل كنترول", "50 مل", 99, "tube", ["oil", "acne"]],
+  ["EUCERIN", "serum", "Hyaluron-Filler Serum", "سيروم يوسيرين هيالورون فيلر", "30 مل", 179, "dropper", ["dryness"]]
+];
+const STEP_OF = { shampoo: "shampoo", conditioner: "conditioner", mask: "mask", oil: "oil", treatment: "treatment", styling: "styler", heat: "protect", curly: "styler",
+  cleanser: "cleanser", moisturizer: "moisturizer", serum: "serum", spf: "spf" };
+const CATEGORY_DESC = {
+  shampoo: "شامبو ينظف الشعر وفروة الرأس.", conditioner: "بلسم يرطب الشعر ويسهل تسريحه.", mask: "ماسك عناية مكثفة مرة أو مرتين بالأسبوع.",
+  oil: "زيت أو سيروم يعطي الشعر لمعة ونعومة.", treatment: "علاج عناية مركّز.", styling: "منتج تصفيف للشعر.", heat: "يحمي الشعر من حرارة الاستشوار والمكواة.",
+  curly: "منتج مخصص للشعر الكيرلي والكِنكي: ترطيب وتعريف للتموجات.", cleanser: "غسول ينظف البشرة.", moisturizer: "مرطب يحافظ على رطوبة البشرة.",
+  serum: "سيروم مركّز يعالج مشكلة محددة.", spf: "واقي شمس للحماية اليومية من الأشعة."
+};
+const HAIR_CATS = Object.keys(CATEGORIES.hair);
+let shopSeq = 0;
+for (const r of SHOP_ROWS) {
+  const [brand, category, nameEn, name, size, price, shape, goodFor, colors, demo] = r;
+  const b = SHOP_BRANDS[brand];
+  const cat = HAIR_CATS.includes(category) && !(category === "treatment" && ["SANA", "MEISHOKU", "ISHIZAWA LAB", "PDC", "LION PAIR", "MEDICUBE", "ABIB", "HARUHARU WONDER", "SUMMER FRIDAYS", "VASELINE", "THE ORDINARY", "CERAVE", "AVÈNE", "CAUDALIE", "NUXE"].includes(brand)) ? "hair" : "skin";
+  const [body, cap, accent] = colors || [b[1], b[2], b[3]];
+  const id = "x" + String(++shopSeq).padStart(3, "0");
+  PRODUCTS.push({
+    id, cat, step: STEP_OF[category], category, brand, country: COUNTRIES[b[0]], nameEn, name, size, price,
+    suits: cat === "skin" ? ["dry", "oily", "combo", "normal", "sensitive"] : ["dry", "oily", "curly", "damaged", "normal"],
+    contains: [], kitEligible: false, demo: !!demo, shopGoodFor: goodFor,
+    desc: (demo ? `منتج من البراند المحلي ${brand} (${COUNTRIES[b[0]].replace(/^\S+ /, "")}). اسم المنتج توضيحي ويتعدل من لوحة الإدارة. ` : "") + CATEGORY_DESC[category],
+    pack: { shape, body, cap, accent, clear: ["bottle", "dropper"].includes(shape) && /^#F|^#E/.test(body) && !demo && ["serum", "oil"].includes(category) }
+  });
+}
+/* قسم المتجر لمنتجات الكيتات (عشان تظهر في المتجر بعد) */
+const STEP_TO_CATEGORY = { cleanser: "cleanser", toner: "treatment", serum: "serum", moisturizer: "moisturizer", spf: "spf", treatment: "treatment", exfoliant: "treatment",
+  shampoo: "shampoo", conditioner: "conditioner", oil: "oil", scalp: "treatment", styler: "styling", protect: "heat" };
+PRODUCTS.forEach(p => {
+  if (!p.category) p.category = p.step === "mask" ? (p.cat === "hair" ? "mask" : "treatment") : (p.id === "h04" || p.id === "h11") ? "curly" : STEP_TO_CATEGORY[p.step] || "treatment";
+});
+
+/* منتجات المتجر: "مناسب لـ" + رابط ريفيوهات تيك توك */
+PRODUCTS.forEach(p => {
+  if (p.kitEligible !== false) return;
+  p.goodFor = p.shopGoodFor || []; p.fungal = null; delete p.shopGoodFor;
+  p.tiktok = "https://www.tiktok.com/search?q=" + encodeURIComponent(p.demo ? `${p.brand} ${p.cat === "hair" ? "hair" : "skincare"} review` : `${p.brand} ${p.nameEn} review`);
+});
+
+
 /* ---------- الاستشارات ----------
    أسماء الطبيبات توضيحية لأغراض المشروع. */
 const DOCTORS = [
@@ -396,6 +681,55 @@ const CONSULT_TYPES = {
 };
 const CONSULT_TIMES = ["17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"];
 
+/* ---------- المشاكل وحلولها في المتجر ----------
+   لكل مشكلة: ترشيح عنايتي (الأفضل) مع السبب، والكيت المتكامل اللي يعالجها. */
+const PROBLEMS = {
+  skin: {
+    acne:     { name: "حبوب ورؤوس سوداء", kit: "k-acne" },
+    hormonal: { name: "حبوب هرمونية", kit: "k-acne", consult: true },
+    fungal:   { name: "حبوب فطرية", kit: "k-acne", consult: true },
+    marks:    { name: "آثار الحبوب", kit: "k-bright" },
+    pigment:  { name: "تصبغات وكلف", kit: "k-bright" },
+    dryness:  { name: "جفاف البشرة", kit: "k-dry" },
+    oil:      { name: "دهون ولمعان", kit: "k-oily" },
+    pores:    { name: "مسام واسعة", kit: "k-oily" },
+    redness:  { name: "احمرار وتحسس", kit: "k-sensitive" },
+    barrier:  { name: "ضعف حاجز البشرة", kit: "k-sensitive" }
+  },
+  hair: {
+    dryness:        { name: "شعر جاف", kit: "h-dry" },
+    damage:         { name: "شعر تالف ومصبوغ", kit: "h-damaged" },
+    frizz:          { name: "هيشان", kit: "h-dry" },
+    curls:          { name: "كيرلي وكِنكي", kit: "h-curly" },
+    shine:          { name: "شعر باهت بدون لمعة", kit: "h-dry" },
+    heat:           { name: "تلف من الحرارة", kit: "h-damaged" },
+    oilyScalp:      { name: "فروة دهنية", kit: "h-oily" },
+    hairfall:       { name: "تساقط الشعر", kit: "h-oily", consult: true },
+    sensitiveScalp: { name: "فروة حساسة", kit: "h-normal" }
+  }
+};
+const BEST_PICKS = {
+  "skin:acne":     ["PAULA'S CHOICE", "2% BHA", "حمض الساليسيليك 2% يدخل المسام وينظفها من الداخل، ومن أكثر المنتجات اللي عليها ريفيوهات للحبوب والرؤوس السوداء."],
+  "skin:hormonal": ["LA ROCHE-POSAY", "Effaclar Duo", "يهدّي الحبوب الملتهبة العميقة ويقلل آثارها. والحبوب الهرمونية علاجها الأساسي عند الطبيبة."],
+  "skin:fungal":   ["MARIO BADESCU", "Drying Lotion", "فيه كبريت، وهو مضاد طبيعي للفطريات، وبدون زيوت تغذيها. يستخدم موضعياً بالليل."],
+  "skin:marks":    ["AXIS-Y", "Dark Spot", "مخصص للبقع وآثار الحبوب بالنياسيناميد، لطيف ومناسب للاستخدام اليومي."],
+  "skin:pigment":  ["MELANO CC", "Anti-Spot", "فيتامين C نقي مركّز من اليابان، مشهور بتفتيح البقع والكلف بسعر مناسب."],
+  "skin:dryness":  ["CeraVe", "Moisturizing Cream", "سيراميد يرمم حاجز البشرة ويرطب 24 ساعة، بدون عطر، ومن أكثر المرطبات اللي ينصح فيها أطباء الجلدية."],
+  "skin:oil":      ["THE ORDINARY", "Niacinamide 10%", "النياسيناميد والزنك ينظمون الدهون ويقللون اللمعان، وسعره من الأوفر."],
+  "skin:pores":    ["MEDICUBE", "Zero Pore", "بادات بأحماض لطيفة تنظف المسام وتصغر مظهرها، سهلة للاستخدام اليومي."],
+  "skin:redness":  ["SKIN1004", "Centella", "سنتيلا 100% تهدّي الاحمرار وتقوي البشرة الحساسة، وبدون عطور."],
+  "skin:barrier":  ["AESTURA", "Atobarrier", "كريم كوري بالسيراميد مصمم للبشرة الجافة جداً والحساسة، يرمم الحاجز بسرعة."],
+  "hair:dryness":  ["FINO", "Premium Touch", "ماسك ياباني يرطب الشعر الجاف ويعطيه نعومة من أول استخدام، وسعره مناسب."],
+  "hair:damage":   ["K18", "Molecular Repair", "يصلح روابط الشعرة المتضررة من الصبغة والحرارة في 4 دقائق، بدون شطف."],
+  "hair:frizz":    ["COLOR WOW", "Dream Coat", "يحمي الشعر من الرطوبة ويخليه ناعم بدون هيشان لأيام."],
+  "hair:curls":    ["KINKY-CURLY", "Curling Custard", "يعرّف الكيرلي والكِنكي ويثبّته بدون قشور ولا ثقل."],
+  "hair:shine":    ["&HONEY", "Hair Oil", "زيت ياباني بالعسل يعطي لمعة ونعومة بدون ما يثقل الشعر."],
+  "hair:heat":     ["OLAPLEX", "No.7", "زيت يحمي من الحرارة ويرمم الشعر ويعطيه لمعة."],
+  "hair:oilyScalp":["BRIOGEO", "Charcoal", "شامبو بالفحم ينظف الفروة الدهنية بعمق ويزيل التراكمات."],
+  "hair:hairfall": ["MIELLE", "Rosemary", "زيت الروزماري ترند تيك توك لتقوية الشعر وتقليل التساقط. وإذا التساقط كثير استشيري الطبيبة."],
+  "hair:sensitiveScalp": ["VANICREAM", "Shampoo", "بدون عطور ولا صبغات ولا كبريتات، ألطف خيار للفروة الحساسة."]
+};
+
 const TIER_LABELS = {
   basic: { name: "أساسي", note: "3 منتجات للبداية" },
   full:  { name: "متكامل", note: "الروتين الكامل" },
@@ -403,4 +737,4 @@ const TIER_LABELS = {
 };
 
 
-if (typeof module !== "undefined") module.exports = { BRAND, SKIN_TYPES, SKIN_CONCERNS, HAIR_TYPES, ALLERGENS, PRODUCTS, KITS, TIER_LABELS, CONCERN_TAGS, DOCTORS, CONSULT_TYPES, CONSULT_TIMES };
+if (typeof module !== "undefined") module.exports = { COUNTRIES, CATEGORIES, PROBLEMS, BEST_PICKS, BRAND, SKIN_TYPES, SKIN_CONCERNS, HAIR_TYPES, ALLERGENS, PRODUCTS, KITS, TIER_LABELS, CONCERN_TAGS, DOCTORS, CONSULT_TYPES, CONSULT_TIMES };

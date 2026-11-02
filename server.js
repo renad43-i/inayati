@@ -119,6 +119,13 @@ function priceCart(items) {
   const kMap = Object.fromEntries(kits.map(k => [k.id, k]));
   const lines = [];
   for (const it of items) {
+    if (it.productId) { // منتج منفرد من المتجر
+      const p = pMap[it.productId];
+      if (!p) throw new Error("منتج غير متوفر");
+      const qty = Math.min(10, Math.max(1, parseInt(it.qty, 10) || 1));
+      lines.push({ product: p, kit: null, tier: "single", productIds: [p.id], qty, purchaseType: "once", unitPrice: p.price });
+      continue;
+    }
     const kit = kMap[it.kitId];
     if (!kit) throw new Error("كيت غير متوفر");
     if (!Engine.TIERS.includes(it.tier)) throw new Error("مستوى غير صحيح");
@@ -134,7 +141,7 @@ function priceCart(items) {
   return { lines, subtotal, shipping, total: subtotal + shipping };
 }
 app.post("/api/cart/quote", (req, res) => {
-  try { const q = priceCart((req.body && req.body.items) || []); res.json({ subtotal: q.subtotal, shipping: q.shipping, total: q.total, lines: q.lines.map(l => ({ kitId: l.kit.id, unitPrice: l.unitPrice })) }); }
+  try { const q = priceCart((req.body && req.body.items) || []); res.json({ subtotal: q.subtotal, shipping: q.shipping, total: q.total, lines: q.lines.map(l => ({ kitId: l.kit ? l.kit.id : null, productId: l.product ? l.product.id : null, unitPrice: l.unitPrice })) }); }
   catch (e) { bad(res, e.message); }
 });
 
@@ -165,7 +172,7 @@ app.post("/api/orders", requireUser, (req, res) => {
     const insItem = db.prepare("INSERT INTO order_items (order_id,kit_id,kit_name,tier,product_ids,purchase_type,qty,unit_price) VALUES (?,?,?,?,?,?,?,?)");
     const insSub = db.prepare("INSERT INTO subscriptions (user_id,kit_id,tier,product_ids,price,next_renewal,address,origin_order_id) VALUES (?,?,?,?,?,?,?,?)");
     for (const l of q.lines) {
-      insItem.run(orderId, l.kit.id, l.kit.name, l.tier, JSON.stringify(l.productIds), l.purchaseType, l.qty, l.unitPrice);
+      insItem.run(orderId, l.kit ? l.kit.id : null, l.kit ? l.kit.name : `${l.product.brand} — ${l.product.name}`, l.tier, JSON.stringify(l.productIds), l.purchaseType, l.qty, l.unitPrice);
       if (l.purchaseType === "subscription")
         for (let i = 0; i < l.qty; i++) insSub.run(req.user.id, l.kit.id, l.tier, JSON.stringify(l.productIds), l.unitPrice, addMonth(), JSON.stringify(address), orderId);
     }
@@ -356,7 +363,9 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
 });
 app.get("/api/admin/catalog", requireAdmin, (req, res) => res.json(getCatalog({ includeInactive: true })));
 
-const tagsJSON = p => JSON.stringify({ fungal: p.fungal === true || p.fungal === false ? p.fungal : null, goodFor: Array.isArray(p.goodFor) ? p.goodFor.filter(k => seed.CONCERN_TAGS[k]) : [] });
+const tagsJSON = (p, old = {}) => JSON.stringify({ ...old, fungal: p.fungal === true || p.fungal === false ? p.fungal : null, goodFor: Array.isArray(p.goodFor) ? p.goodFor.filter(k => seed.CONCERN_TAGS[k]) : [],
+  category: seed.CATEGORIES[p.cat || old.cat] && seed.CATEGORIES[p.cat || old.cat][p.category] ? p.category : (old.category || "treatment"),
+  kitEligible: old.kitEligible !== undefined ? old.kitEligible : false });
 app.post("/api/admin/products", requireAdmin, (req, res) => {
   const p = req.body || {};
   if (!p.id || !p.name || !p.brand || !["skin", "hair"].includes(p.cat) || !p.step || !(p.price >= 0)) return bad(res, "بيانات المنتج ناقصة (الرمز، البراند، الاسم، السعر)");
@@ -370,7 +379,7 @@ app.post("/api/admin/products", requireAdmin, (req, res) => {
 app.put("/api/admin/products/:id", requireAdmin, (req, res) => {
   const p = req.body || {};
   const r = db.prepare("UPDATE products SET tags=?, brand=COALESCE(?,brand), country=COALESCE(?,country), name=?, name_en=COALESCE(?,name_en), tiktok=COALESCE(?,tiktok), step=?, size=?, price=?, description=?, suits=?, contains=?, stock=?, active=? WHERE id=?")
-    .run(tagsJSON(p), p.brand || null, p.country || null, p.name, p.nameEn || null, p.tiktok || null, p.step, p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []), +p.stock || 0, p.active === false ? 0 : 1, req.params.id);
+    .run(tagsJSON(p, (() => { const r = db.prepare("SELECT cat, tags FROM products WHERE id=?").get(req.params.id); return r ? { ...JSON.parse(r.tags || "{}"), cat: r.cat } : {}; })()), p.brand || null, p.country || null, p.name, p.nameEn || null, p.tiktok || null, p.step, p.size || "", +p.price, p.desc || "", JSON.stringify(p.suits || []), JSON.stringify(p.contains || []), +p.stock || 0, p.active === false ? 0 : 1, req.params.id);
   if (!r.changes) return bad(res, "المنتج غير موجود", 404);
   res.json({ ok: true });
 });

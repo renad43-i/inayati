@@ -28,9 +28,9 @@ App.layout("account");
       ${o.source === "renewal" ? `<p class="small muted">تجديد شهري للاشتراك #${o.subscription_id}</p>` : ""}
       ${o.status === "cancelled" ? `<p class="alert error">تم إلغاء هذا الطلب.</p>` : `<div class="tracker">${labels.map((l, i) => `<div class="t-step ${i <= reached ? "done" : ""}"><div class="dot">${i <= reached ? "✓" : i + 1}</div>${l}</div>`).join("")}</div>`}
       <h3>المنتجات</h3>
-      ${o.items.map(it => { const k = cat.kMap[it.kit_id]; return `<div class="cart-item" style="grid-template-columns:64px 1fr auto">
-        <div class="kit-visual" style="background:${k ? k.color : "#eee"}">${k ? App.kitSVG(k, it.product_ids) : ""}</div>
-        <div><b>${App.esc(it.kit_name)}</b> <span class="tag">${App.TIER_AR[it.tier]}</span> × ${it.qty}
+      ${o.items.map(it => { const k = cat.kMap[it.kit_id], sp = !it.kit_id && cat.pMap[it.product_ids[0]]; return `<div class="cart-item" style="grid-template-columns:64px 1fr auto">
+        <div class="kit-visual" style="background:${k ? k.color : "var(--sand)"}">${k ? App.kitSVG(k, it.product_ids) : sp ? `<span style="width:60%">${App.productImg(sp)}</span>` : ""}</div>
+        <div><b>${App.esc(it.kit_name)}</b> ${it.kit_id ? `<span class="tag">${App.TIER_AR[it.tier]}</span>` : `<span class="tag">منتج منفرد</span>`} × ${it.qty}
         <div class="small muted">${it.purchase_type === "subscription" ? "🔁 اشتراك شهري" : "مرة واحدة"} · ${it.product_ids.map(id => App.esc(cat.pMap[id] ? cat.pMap[id].name : id)).join("، ")}</div></div>
         <span>${App.fmt(it.unit_price * it.qty)}</span></div>`; }).join("")}
       <div style="max-width:320px;margin-inline-start:auto;margin-top:12px">
