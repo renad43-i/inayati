@@ -7,11 +7,11 @@
 <link rel="apple-touch-icon" href="assets/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Noto+Naskh+Arabic:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+<link rel="stylesheet" href="css/style.css?v=mvyuhxya">
+<script src="js/data.js?v=mvyuhxya"></script><script src="js/engine.js?v=mvyuhxya"></script><script src="js/mock-api.js?v=mvyuhxya"></script><script src="js/packshots.js?v=mvyuhxya"></script><script src="js/app.js?v=mvyuhxya"></script>
 </head>
 <body>
-<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<div style="background:#3E4130;color:#F4EFEA;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
 <main class="container">
   <div class="quiz-wrap">
     <div id="quiz" class="card">
@@ -70,17 +70,25 @@ async function submit() {
   showResult(res, cat, user);
 }
 
+const FIT_AR = { curls: "الكيرلي", frizz: "الهيشان", dryness: "الجفاف", damage: "التلف", shine: "اللمعان", heat: "الحرارة", oilyScalp: "الفروة الدهنية", hairfall: "التساقط", sensitiveScalp: "الفروة الحساسة", dandruff: "القشرة",
+  acne: "الحبوب", hormonal: "الحبوب الهرمونية", fungal: "الحبوب الفطرية", marks: "الآثار", pigment: "التصبغات", oil: "الدهون", pores: "المسام", redness: "الاحمرار", barrier: "ترميم الحاجز" };
 const SKIN_AR = { dry: "جافة", oily: "دهنية", combo: "مختلطة", normal: "عادية", sensitive: "حساسة" };
 const HAIR_AR = { dry: "جاف", oily: "دهني", curly: "كيرلي", coily: "كِنكي", damaged: "تالف/مصبوغ", hairfall: "يتساقط", dandruff: "فيه قشرة", normal: "عادي" };
 function showResult(res, cat, user) {
   App.qs("#quiz").classList.add("hidden");
   const box = App.qs("#result"); box.classList.remove("hidden");
   const subId = App.params.get("sub"), pr = res.profile || {};
+  // المنتجات اللي شالتها بـ✕ قبل، نتذكرها عشان ما ترجع لها في كل اختبار
+  const DIS_KEY = "renaura_disliked";
+  let disliked = []; try { disliked = JSON.parse(localStorage.getItem(DIS_KEY) || "[]") || []; } catch {}
+  const saveDisliked = () => { try { localStorage.setItem(DIS_KEY, JSON.stringify(disliked.slice(-200))); } catch {} };
+  const concernsOf = sec => (sec === "skin" ? pr.skinConcerns : pr.hairConcerns) || [];
   // «ابني روتينك»: كل أنواع المنتجات. لكل نوع: هل تبين تضيفينه؟ ووش المنتج اللي تختارينه؟
   const builders = res.kits.map(r => {
     const sec = cat.kMap[r.kitId].cat;
     const slots = Engine.routineSlots(r, sec, pr, cat.products, r.allergens || res.allergens)
-      .map(s => ({ ...s, dismissed: [], chosen: s.candidates[0] }));
+      .map(s => { const dis = s.candidates.filter(id => disliked.includes(id)); const left = s.candidates.filter(id => !dis.includes(id));
+        return { ...s, dismissed: left.length ? dis : [], chosen: (left.length ? left : s.candidates)[0] }; });
     return { r, sec, slots };
   });
   const MAX_ITEMS = 12, SHOWN = 3;
@@ -114,12 +122,13 @@ function showResult(res, cat, user) {
           return `<div class="b-step ${st.included ? "" : "off"}">
           <div class="b-head"><label class="b-inc"><input type="checkbox" data-inc="${bi}:${si}" ${st.included ? "checked" : ""}> <b>${App.esc(st.label)}</b></label>
             <span class="small muted">${st.included ? "في روتينك" : "اضغطي لإضافته"} · ${left} خيار</span></div>
-          ${vis.length ? `<div class="b-opts">${vis.map(id => { const p = cat.pMap[id], on = st.included && st.chosen === id, top = id === st.candidates[0];
+          ${vis.length ? `<div class="b-opts">${vis.map(id => { const p = cat.pMap[id], on = st.included && st.chosen === id, top = id === st.candidates.find(x => !st.dismissed.includes(x));
             return `<div class="b-cell"><button type="button" class="b-opt ${on ? "active" : ""}" data-b="${bi}" data-s="${si}" data-p="${p.id}" aria-pressed="${on}">
             ${top ? `<span class="b-star">⭐ ترشيحنا</span>` : ""}
             <span class="b-img">${App.productImg(p)}</span>
             <span class="brand-name" dir="ltr">${App.esc(p.brand)} ${(p.country || "").split(" ")[0]}</span>
             <span class="small b-name">${App.esc(p.name)}</span>
+            ${(() => { const fit = (p.goodFor || []).filter(g => concernsOf(b.sec).includes(g)); return fit.length ? `<span class="b-fit">يناسب: ${fit.map(g => App.esc(FIT_AR[g] || CONCERN_TAGS[g] || g)).join("، ")}</span>` : ""; })()}
             <span class="small"><b>${App.fmt(p.price)}</b></span>
             <a class="small" href="product.html?id=${p.id}" target="_blank" rel="noopener" onclick="event.stopPropagation()">التفاصيل</a></button>
             <button type="button" class="b-x" data-x="${bi}:${si}:${p.id}" aria-label="ما يعجبني، اعرضي بديل" title="ما يعجبني، اعرضي بديل">✕</button></div>`; }).join("")}</div>`
@@ -136,10 +145,10 @@ function showResult(res, cat, user) {
           ${subId ? `<button class="btn" id="applySub">طبّقي على اشتراكي #${App.esc(subId)}</button>` :
           `<button class="btn" id="addSub" ${anyItems ? "" : "disabled"}>اشتركي شهرياً (وفري 10%)</button><button class="btn outline" id="addOnce" ${anyItems ? "" : "disabled"}>شراء مرة واحدة</button>`}
           <button class="link-btn" onclick="location.href='quiz.html'">أعيدي الاختبار</button></div>
-        ${user ? `<p class="small muted" style="margin:10px 0 0">حفظنا النتيجة في حسابك.</p>` : `<p class="small muted" style="margin:10px 0 0">سجلي دخولك عشان نحفظ نتيجتك ونقدر نجدد كيتك كل شهر.</p>`}</div>`;
+        ${user ? `<p class="small muted" style="margin:10px 0 0">حفظنا النتيجة في حسابك.</p>` : `<p class="small muted" style="margin:10px 0 0">سجلي دخولك عشان نحفظ نتيجتك ونقدر نجدد روتينك كل شهر.</p>`}</div>`;
     const count = () => builders.reduce((n, b) => n + ids(b).length, 0);
     const slot = v => { const [bi, si] = v.split(":").map(Number); return [builders[bi], builders[bi].slots[si]]; };
-    const canAdd = b => { if (ids(b).length >= MAX_ITEMS) { App.toast(`الحد الأقصى ${MAX_ITEMS} منتج في الكيت الواحد`); return false; } return true; };
+    const canAdd = b => { if (ids(b).length >= MAX_ITEMS) { App.toast(`الحد الأقصى ${MAX_ITEMS} منتج في الروتين الواحد`); return false; } return true; };
     App.qsa(".b-opt").forEach(el => el.onclick = () => { const b = builders[+el.dataset.b], st = b.slots[+el.dataset.s];
       if (!st.included) { if (!canAdd(b)) return; st.included = true; } st.chosen = el.dataset.p; save(); draw(); });
     App.qsa("[data-inc]").forEach(el => el.onchange = () => { const [b, st] = slot(el.dataset.inc);
@@ -147,9 +156,9 @@ function showResult(res, cat, user) {
       if (st.included && (!st.chosen || st.dismissed.includes(st.chosen))) st.chosen = visibleOf(st)[0];
       if (st.included && !st.chosen) st.included = false; save(); draw(); });
     App.qsa("[data-x]").forEach(el => el.onclick = () => { const [bi, si, pid] = el.dataset.x.split(":"); const [, st] = slot(bi + ":" + si);
-      st.dismissed.push(pid); if (st.chosen === pid) { st.chosen = visibleOf(st)[0] || null; if (!st.chosen) st.included = false; }
-      save(); draw(); App.toast("شلناه وطلع لك بديل"); });
-    App.qsa("[data-reset]").forEach(el => el.onclick = () => { const [, st] = slot(el.dataset.reset); st.dismissed = []; if (!st.chosen) st.chosen = st.candidates[0]; save(); draw(); });
+      st.dismissed.push(pid); if (!disliked.includes(pid)) { disliked.push(pid); saveDisliked(); } if (st.chosen === pid) { st.chosen = visibleOf(st)[0] || null; if (!st.chosen) st.included = false; }
+      save(); draw(); App.toast("شلناه وطلع لك بديل، وما راح نرشحه لك مرة ثانية"); });
+    App.qsa("[data-reset]").forEach(el => el.onclick = () => { const [, st] = slot(el.dataset.reset); disliked = disliked.filter(id => !st.dismissed.includes(id)); saveDisliked(); st.dismissed = []; if (!st.chosen) st.chosen = st.candidates[0]; save(); draw(); });
     const add = type => { builders.forEach(b => { if (ids(b).length) App.cart.add({ kitId: b.r.kitId, tier: b.r.tier, productIds: ids(b), purchaseType: type, qty: 1 }); }); location.href = "cart.html"; };
     if (subId) App.qs("#applySub").onclick = async () => {
       const b = builders.find(x => x.sec === (App.params.get("cat") === "hair" ? "hair" : "skin")) || builders[0];

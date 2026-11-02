@@ -7,11 +7,11 @@
 <link rel="apple-touch-icon" href="assets/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Noto+Naskh+Arabic:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+<link rel="stylesheet" href="css/style.css?v=mvyuhxya">
+<script src="js/data.js?v=mvyuhxya"></script><script src="js/engine.js?v=mvyuhxya"></script><script src="js/mock-api.js?v=mvyuhxya"></script><script src="js/packshots.js?v=mvyuhxya"></script><script src="js/app.js?v=mvyuhxya"></script>
 </head>
 <body>
-<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<div style="background:#3E4130;color:#F4EFEA;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
 <main class="container">
   <p class="small muted" style="margin-top:20px"><a href="home.html">الرئيسية</a> / <a href="shop.html" id="crumbShop">المتجر</a> / <span id="crumb"></span></p>
   <div class="product" id="product"></div>
@@ -53,7 +53,7 @@ App.layout("shop");
           <a class="btn tiktok sm" href="${App.esc(App.ttHref(p.tiktok))}" target="_blank" rel="noopener">${App.tiktokIcon} شاهدي الريفيوهات</a>
         </div>
         <div style="margin-top:14px">${App.consultCTA(false, "مو متأكدة إذا يناسبك؟ أو صار عندك تقشير أو احمرار أو حبوب بعد الاستخدام؟ الطبيبة تساعدك تختارين الصح.")}</div>
-        ${kits.length ? `<div class="card" style="margin-top:18px"><b>موجود في روتين متكامل</b><div class="small muted">وفري 15% لما تاخذينه ضمن كيت:</div>
+        ${kits.length ? `<div class="card" style="margin-top:18px"><b>موجود في روتين متكامل</b><div class="small muted">وفري 15% لما تاخذينه ضمن روتين:</div>
           <div class="row" style="margin-top:8px">${kits.map(k => `<a class="btn outline sm" href="kit.html?id=${k.id}">${App.esc(k.name)}</a>`).join("")}</div></div>` : ""}
       </div>`;
     App.qs("#plus").onclick = () => { qty = Math.min(10, qty + 1); draw(); };

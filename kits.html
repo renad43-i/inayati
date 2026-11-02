@@ -1,19 +1,19 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<title>الكيتات | رينورا</title>
+<title>الروتينات | رينورا</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Noto+Naskh+Arabic:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+<link rel="stylesheet" href="css/style.css?v=mvyuhxya">
+<script src="js/data.js?v=mvyuhxya"></script><script src="js/engine.js?v=mvyuhxya"></script><script src="js/mock-api.js?v=mvyuhxya"></script><script src="js/packshots.js?v=mvyuhxya"></script><script src="js/app.js?v=mvyuhxya"></script>
 </head>
 <body>
-<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<div style="background:#3E4130;color:#F4EFEA;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
 <main class="container section">
-  <div class="section-head"><span class="eyebrow">الكيتات</span><h1>اختاري كيتك</h1>
+  <div class="section-head"><span class="eyebrow">الروتينات</span><h1>اختاري روتينك</h1>
     <p class="muted">ما تعرفين وش يناسبك؟ <a href="quiz.html">خلي الاختبار يختار لك</a>.</p></div>
   <div class="filters" id="filters">
     <button class="chip" data-cat="all">الكل</button>
@@ -29,7 +29,7 @@ App.catalog().then(cat => {
   const draw = () => {
     App.qsa("#filters .chip").forEach(c => c.classList.toggle("active", c.dataset.cat === current));
     const list = cat.kits.filter(k => current === "all" || k.cat === current);
-    App.qs("#grid").innerHTML = list.length ? list.map(k => App.kitCard(k, cat)).join("") : `<p class="empty">لا توجد كيتات حالياً</p>`;
+    App.qs("#grid").innerHTML = list.length ? list.map(k => App.kitCard(k, cat)).join("") : `<p class="empty">لا توجد روتينات حالياً</p>`;
   };
   App.qsa("#filters .chip").forEach(c => c.onclick = () => { current = c.dataset.cat; history.replaceState(null, "", current === "all" ? "kits.html" : `kits.html?cat=${current}`); draw(); });
   draw();

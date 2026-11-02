@@ -130,7 +130,7 @@
     return `<svg viewBox="0 0 100 160" role="img" aria-label="${esc(p.brand + " " + (p.nameEn || p.name))}" ${opts.cls ? `class="${opts.cls}"` : ""}><defs>${defs}</defs>${g}</svg>`;
   }
 
-  /* صورة كيت: المنتجات مصفوفة جنب بعض مثل صور المتاجر */
+  /* صورة روتين: المنتجات مصفوفة جنب بعض مثل صور المتاجر */
   function kit(products, opts = {}) {
     const list = products.slice(0, opts.max || 6), n = list.length || 1;
     const scale = 1;
