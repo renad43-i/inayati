@@ -60,6 +60,11 @@
         { v: "hairfall", t: "يتساقط" },
         { v: "dandruff", t: "قشرة أو حكة في الفروة" },
         { v: "normal", t: "عادي", exclusive: true } ] },
+    { id: "dandruff", title: "القشرة عندك كيف؟", sub: "عشان نعرف تحتاجين شامبو قشرة عادي ولا علاجي", type: "multi", when: a => has(a.focus, "hair") && has(a.hairType, "dandruff"),
+      options: [
+        { v: "mild", t: "قشور بيضاء خفيفة", d: "تروح وتجي، خصوصاً بالشتاء" },
+        { v: "severe", t: "قشور كثيفة أو صفراء ودهنية", d: "ما تروح مع الشامبو العادي" },
+        { v: "red", t: "احمرار أو حكة قوية", d: "أو القشور توصل للحواجب أو ورا الأذن" } ] },
     { id: "hairThickness", title: "شعرك خفيف ولا ثقيل؟", sub: "الشعرة نفسها وكثافة الشعر", type: "multi", when: a => has(a.focus, "hair"),
       options: [
         { v: "fine", t: "خفيف وناعم", d: "الشعرة رفيعة، ويثقل بسرعة من المنتجات" },
@@ -97,17 +102,17 @@
     const barrier = arr(a.barrier).filter(x => x !== "no");
     const hairTypes = arr(a.hairType);
     const hairType = ["damaged", "coily", "curly", "oily", "dry", "normal"].find(t => hairTypes.includes(t)) || (anyOf(hairTypes, ["hairfall", "dandruff"]) ? "oily" : "normal");
-    const thickness = arr(a.hairThickness), frizz = arr(a.frizz).filter(x => x !== "no");
+    const thickness = arr(a.hairThickness), frizz = arr(a.frizz).filter(x => x !== "no"), dandruff = arr(a.dandruff);
     const budgets = arr(a.budget);
     const budget = ["high", "mid", "low"].find(b => budgets.includes(b)) || "mid";
     const skinConcerns = [...new Set([
       ...concerns, ...(marks.includes("pie") ? ["redness", "marks"] : []), ...(marks.includes("pih") ? ["pigment", "marks"] : []),
       ...(skinTypes.includes("dry") ? ["dryness"] : []), ...(skinTypes.includes("oily") || skinTypes.includes("combo") ? ["oil"] : []), ...(skinTypes.includes("sensitive") ? ["redness", "barrier"] : []), ...(barrier.length ? ["barrier", "redness"] : []), ...(barrier.includes("tight") ? ["dryness"] : [])
     ])];
-    const HMAP = { dry: ["dryness"], oily: ["oilyScalp"], curly: ["curls"], coily: ["curls", "dryness"], damaged: ["damage"], hairfall: ["hairfall"], dandruff: ["sensitiveScalp", "oilyScalp"] };
+    const HMAP = { dry: ["dryness"], oily: ["oilyScalp"], curly: ["curls"], coily: ["curls", "dryness"], damaged: ["damage"], hairfall: ["hairfall"], dandruff: ["dandruff", "sensitiveScalp"] };
     const hairConcerns = [...new Set([...hairTypes.flatMap(t => HMAP[t] || []), ...(frizz.length ? ["frizz"] : []), ...(thickness.includes("thick") ? ["dryness"] : [])])];
     return { ...a, focus, skinType, concern, hairType: hairType === "coily" ? "curly" : hairType, budget, allergies: arr(a.allergies),
-      barrierDamaged: barrier.length > 0, profile: { skinTypes, concerns, marks, barrier, hairTypes, thickness, frizz, skinConcerns, hairConcerns } };
+      barrierDamaged: barrier.length > 0, dandruffSevere: anyOf(dandruff, ["severe", "red"]), profile: { skinTypes, concerns, marks, barrier, dandruff, hairTypes, thickness, frizz, skinConcerns, hairConcerns } };
   }
 
   const BUDGET_MAX = { low: 250, mid: 400, high: Infinity };
@@ -241,10 +246,11 @@
       notes.push("الكيتين معاً يتجاوزان ميزانيتك قليلاً، تقدرين تبدئين بكيت البشرة وتضيفين الشعر لاحقاً.");
     }
     if (allergens.length) notes.push("استبعدنا المنتجات اللي فيها: " + allergens.map(a => REASON_AR[a]).join("، ") + ".");
-    const consult = picks.some(p => p.consult) || !!answers.seeDoctor;
+    const consult = picks.some(p => p.consult) || !!answers.seeDoctor || !!answers.dandruffSevere;
     const consultWhy = answers.doctorReason || (answers.concern === "hormonal"
       ? "الحبوب الهرمونية تحتاج تقييم طبي (أحياناً تحاليل أو علاج بوصفة)، والكيت يساندك بس ما يغني عن العلاج."
-      : answers.concern === "fungal" ? "الحبوب الفطرية تشبه الحبوب العادية، والطبيبة تأكد التشخيص وتصرف العلاج المضاد للفطريات إذا احتجتي." : "");
+      : answers.concern === "fungal" ? "الحبوب الفطرية تشبه الحبوب العادية، والطبيبة تأكد التشخيص وتصرف العلاج المضاد للفطريات إذا احتجتي."
+      : answers.dandruffSevere ? "القشرة الكثيفة أو اللي معها احمرار ممكن تكون التهاب جلدي دهني (seborrheic dermatitis)، وهذا تشخصه الطبيبة وأحياناً يحتاج علاج بوصفة." : "");
     return { kits: result, total: total(), notes, allergens, consult, consultWhy, profile: answers.profile };
   }
 
@@ -303,7 +309,9 @@
     const pick = bestPicks && bestPicks[section + ":" + concern];
     let best = pick ? list.find(p => p.brand.toUpperCase() === pick[0].toUpperCase() && (p.nameEn || "").toLowerCase().includes(pick[1].toLowerCase())) : null;
     if (!best) best = list.find(p => !p.demo) || list[0] || null;
-    const others = list.filter(p => p !== best && !p.demo);
+    let others = list.filter(p => p !== best && !p.demo);
+    // الأوفر والفاخر من ماركات غير ماركة الترشيح، إذا فيه
+    if (best && others.some(p => p.brand !== best.brand)) others = others.filter(p => p.brand !== best.brand);
     const value = others.length ? others.reduce((m, p) => p.price < m.price ? p : m) : null;
     const lux = others.filter(p => p !== value);
     const luxury = lux.length ? lux.reduce((m, p) => p.price > m.price ? p : m) : null;
@@ -370,6 +378,7 @@
     const overlap = p => (p.goodFor || []).filter(g => concerns.includes(g)).length;
     const kitProducts = (kitRes.productIds || []).map(id => pMap[id]).filter(Boolean);
     const barrier = profile && profile.barrier && profile.barrier.length;
+    const dandruff = concerns.includes("dandruff"), severe = profile && profile.dandruff && profile.dandruff.some(x => x === "severe" || x === "red");
     return SLOT_ORDER[section].map(key => {
       const def = SLOTS[section].find(s => s.key === key);
       const kitP = kitProducts.find(p => slotOf(p) === key);
@@ -379,7 +388,9 @@
       let cands = kitP ? [kitP, ...c] : c;
       // حاجز متضرر: كريم الترميم الأنسب يصير الأول في المرطب
       if (barrier && key === "moisturizer") cands = [...cands].sort((a, b) => ((b.goodFor || []).includes("barrier") - (a.goodFor || []).includes("barrier")));
-      return { key, label: barrier && def.barrierLabel ? def.barrierLabel : def.label, candidates: cands.map(p => p.id), included: !!kitP };
+      // قشرة: شامبو القشرة يصير الأول (والعلاجي أول لو القشرة كثيفة)
+      if (dandruff && key === "shampoo") { const dd = p => (p.goodFor || []).includes("dandruff") ? (severe && /ketoconazole|ds|t\/gel|medicated/i.test(p.nameEn) ? 2 : 1) : 0; cands = [...cands].sort((a, b) => dd(b) - dd(a)); }
+      return { key, label: barrier && def.barrierLabel ? def.barrierLabel : dandruff && key === "shampoo" ? "شامبو القشرة" : def.label, candidates: cands.map(p => p.id), included: !!kitP };
     }).filter(s => s.candidates.length);
   }
 
