@@ -23,6 +23,7 @@
     <button class="chip" data-sec="hair">الشعر</button>
   </div>
   <div class="problem-chips" id="problems"></div>
+  <div class="actives-row" id="actives"></div>
 
   <section id="solutions" class="hidden"></section>
 
@@ -34,13 +35,14 @@
       <option value="">الكل</option><option value="0-50">حتى 50 ر.س</option><option value="50-100">50 – 100</option><option value="100-200">100 – 200</option><option value="200-9999">أكثر من 200</option></select></div>
     <div class="field"><label for="fSort">الترتيب</label><select id="fSort"><option value="match">الأنسب لمشكلتك</option><option value="asc">السعر: الأقل أولاً</option><option value="desc">السعر: الأعلى أولاً</option><option value="brand">البراند (أ-ي)</option></select></div>
     <div class="field"><label for="fSearch">بحث</label><input id="fSearch" placeholder="اسم منتج أو براند"></div>
+    <label class="preg-filter" for="fPreg"><input type="checkbox" id="fPreg"> آمن للحامل والمرضع</label>
   </div>
   <p class="small muted" id="count" style="margin:12px 0"></p>
   <div class="shop-grid" id="grid"></div>
 </main>
 <script>
 App.layout("shop");
-const st = { sec: App.params.get("section") || "skin", problem: App.params.get("problem") || "", cat: App.params.get("category") || "", country: App.params.get("country") || "", brand: App.params.get("brand") || "", price: "", sort: "match", q: "" };
+const st = { sec: App.params.get("section") || "skin", problem: App.params.get("problem") || "", cat: App.params.get("category") || "", country: App.params.get("country") || "", brand: App.params.get("brand") || "", active: App.params.get("active") || "", preg: App.params.get("preg") === "1", price: "", sort: "match", q: "" };
 let C;
 const flag = c => (c || "").split(" ")[0];
 
@@ -66,6 +68,12 @@ function drawSections() {
   App.qs("#problems").innerHTML = `<button class="chip ${!st.problem ? "active" : ""}" data-pr="">كل المنتجات</button>` +
     Object.entries(probs).map(([k, v]) => `<button class="chip ${st.problem === k ? "active" : ""}" data-pr="${k}">${App.esc(v.name)}</button>`).join("");
   App.qsa("[data-pr]").forEach(b => b.onclick = () => { st.problem = b.dataset.pr; st.cat = ""; sync(); });
+  // حلول حسب المكون الفعال
+  const acts = Object.entries(ACTIVES).filter(([k, a]) => a.cat === st.sec && C.products.some(p => p.cat === st.sec && activesOf(p).includes(k)));
+  if (st.active && !acts.some(([k]) => k === st.active)) st.active = "";
+  App.qs("#actives").innerHTML = acts.length ? `<span class="small muted">أو حسب المكوّن الفعال:</span>` + acts.map(([k, a]) =>
+    `<button class="chip sm ${st.active === k ? "active" : ""}" data-act="${k}" title="${App.esc(a.for)}">${App.esc(a.name)}</button>`).join("") : "";
+  App.qsa("[data-act]").forEach(b => b.onclick = () => { st.active = st.active === b.dataset.act ? "" : b.dataset.act; sync(); });
   // قوائم الفلاتر حسب القسم
   const inSec = C.products.filter(p => p.cat === st.sec);
   App.qs("#fCat").innerHTML = `<option value="">كل الأقسام</option>` + Object.entries(CATEGORIES[st.sec]).map(([k, v]) => `<option value="${k}" ${st.cat === k ? "selected" : ""}>${v}</option>`).join("");
@@ -108,6 +116,8 @@ function draw() {
 
   // القائمة
   let list = sol ? sol.list.slice() : C.products.filter(p => p.cat === st.sec);
+  if (st.active) list = list.filter(p => activesOf(p).includes(st.active));
+  if (st.preg) list = list.filter(p => !Engine.pregnancyUnsafe(p));
   if (st.cat) list = list.filter(p => p.category === st.cat);
   if (st.country) list = list.filter(p => p.country === st.country);
   if (st.brand) list = list.filter(p => p.brand === st.brand);
@@ -118,22 +128,24 @@ function draw() {
   else if (st.sort === "brand") list.sort((a, b) => a.brand.localeCompare(b.brand));
   else if (!sol) list.sort((a, b) => (a.demo - b.demo) || (b.kitEligible - a.kitEligible) || a.brand.localeCompare(b.brand));
   const badgeOf = p => !sol ? null : p === sol.best ? ["best", "⭐ ترشيحنا"] : p === sol.value ? ["value", "💰 الأوفر"] : p === sol.luxury ? ["luxury", "💎 فاخر"] : null;
-  App.qs("#count").textContent = `${list.length} منتج من ${new Set(list.map(p => p.brand)).size} براند`;
+  App.qs("#count").textContent = (st.active ? `${ACTIVES[st.active].name}: ${ACTIVES[st.active].for} · ` : "") + `${list.length} منتج من ${new Set(list.map(p => p.brand)).size} براند`;
   App.qs("#grid").innerHTML = list.length ? list.map(p => productCard(p, badgeOf(p))).join("") : `<p class="empty">ما فيه منتجات بهالفلاتر. جربي تشيلين فلتر.</p>`;
   App.qsa("[data-add]").forEach(b => b.onclick = () => { App.cart.add({ productId: b.dataset.add, qty: 1, purchaseType: "once" }); App.toast("تمت الإضافة للسلة ✓"); });
 }
 function sync() {
   const q = new URLSearchParams();
-  q.set("section", st.sec); if (st.problem) q.set("problem", st.problem); if (st.cat) q.set("category", st.cat); if (st.country) q.set("country", st.country); if (st.brand) q.set("brand", st.brand);
+  q.set("section", st.sec); if (st.problem) q.set("problem", st.problem); if (st.cat) q.set("category", st.cat); if (st.country) q.set("country", st.country); if (st.brand) q.set("brand", st.brand); if (st.active) q.set("active", st.active); if (st.preg) q.set("preg", "1");
   history.replaceState(null, "", "shop.html?" + q.toString());
   draw();
 }
-App.qsa("#sections .chip").forEach(c => c.onclick = () => { st.sec = c.dataset.sec; st.problem = ""; st.cat = ""; st.brand = ""; sync(); });
+App.qsa("#sections .chip").forEach(c => c.onclick = () => { st.sec = c.dataset.sec; st.problem = ""; st.cat = ""; st.brand = ""; st.active = ""; sync(); });
 App.qs("#fCat").onchange = e => { st.cat = e.target.value; sync(); };
 App.qs("#fCountry").onchange = e => { st.country = e.target.value; st.brand = ""; sync(); };
 App.qs("#fBrand").onchange = e => { st.brand = e.target.value; sync(); };
 App.qs("#fPrice").onchange = e => { st.price = e.target.value; draw(); };
 App.qs("#fSort").onchange = e => { st.sort = e.target.value; draw(); };
+App.qs("#fPreg").checked = st.preg;
+App.qs("#fPreg").onchange = e => { st.preg = e.target.checked; sync(); };
 let t; App.qs("#fSearch").oninput = e => { clearTimeout(t); t = setTimeout(() => { st.q = e.target.value.trim(); draw(); }, 200); };
 App.catalog().then(c => {
   C = c;
