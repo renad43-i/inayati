@@ -8,11 +8,14 @@ const src = path.join(root, "public"), out = path.join(root, "static");
 fs.rmSync(out, { recursive: true, force: true });
 fs.cpSync(src, out, { recursive: true });
 
+// رقم نسخة يُضاف لروابط الملفات، عشان المتصفح يحمّل النسخة الجديدة بعد كل نشر بدل القديمة المحفوظة عنده
+const ver = Date.now().toString(36);
 for (const f of fs.readdirSync(out).filter(f => f.endsWith(".html"))) {
   const p = path.join(out, f);
   let html = fs.readFileSync(p, "utf8");
-  html = html.replace('<script src="js/engine.js"></script>', '<script src="js/engine.js"></script><script src="js/mock-api.js"></script>');
-  html = html.replace("<body>", '<body>\n<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>');
+  html = html.replace(/(src|href)="((?:js|css)\/[^"?]+\.(?:js|css))"/g, `$1="$2?v=${ver}"`);
+  html = html.replace(/(<script src="js\/engine\.js[^"]*"><\/script>)/, `$1<script src="js/mock-api.js?v=${ver}"></script>`);
+  html = html.replace("<body>", '<body>\n<div style="background:#3E4130;color:#F4EFEA;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>');
   fs.writeFileSync(p, html);
 }
 

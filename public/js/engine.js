@@ -342,10 +342,11 @@
   /* «ابني روتينك» الكامل: كل أنواع منتجات القسم (مو بس اللي في الكيت).
      لكل نوع: قائمة مرتبة من الأنسب للأقل، والعميلة تختار وش تضيف، وتقدر تشيل أي منتج ما يعجبها ويطلع لها اللي بعده. */
   const LEAVE = p => /leave[- ]?in/i.test(p.nameEn || ""), MOUSSE = p => /mousse|whip/i.test(p.nameEn || "");
+  const WASH = p => /co-?wash|conditioning wash|cleans|shampoo/i.test(p.nameEn || "");
   const SLOTS = {
     hair: [
-      { key: "shampoo", label: "شامبو", m: p => p.category === "shampoo" },
-      { key: "conditioner", label: "بلسم", m: p => p.category === "conditioner" && !LEAVE(p) },
+      { key: "shampoo", label: "شامبو", m: p => p.category === "shampoo" || (p.category === "curly" && WASH(p)) },
+      { key: "conditioner", label: "بلسم", m: p => (p.category === "conditioner" || (p.category === "curly" && /conditioner/i.test(p.nameEn || ""))) && !LEAVE(p) },
       { key: "mask", label: "ماسك", m: p => p.category === "mask" },
       { key: "serum", label: "سيروم الشعر", m: p => p.category === "hairserum" || (p.category === "oil" && /serum/i.test(p.nameEn || "")) },
       { key: "oil", label: "زيت الشعر", m: p => p.category === "oil" },
@@ -383,9 +384,11 @@
       const def = SLOTS[section].find(s => s.key === key);
       const kitP = kitProducts.find(p => slotOf(p) === key);
       const c = pool.filter(p => slotOf(p) === key && (!kitP || p.id !== kitP.id));
-      // الأنسب: يحل أكثر احتياجاتها، بعدها المنتجات اللي مكوناتها مراجعة، وبعدها السعر
-      c.sort((a, b) => (overlap(b) * 3 + (b.kitEligible !== false ? 0.5 : 0)) - (overlap(a) * 3 + (a.kitEligible !== false ? 0.5 : 0)) || a.price - b.price);
-      let cands = kitP ? [kitP, ...c] : c;
+      if (kitP) c.push(kitP);
+      // الأنسب: يحل أكثر احتياجاتها، بعدها منتج الكيت، والمنتجات اللي مكوناتها مراجعة، وبعدها السعر
+      const score = p => overlap(p) * 3 + (kitP && p.id === kitP.id ? 1 : 0) + (p.kitEligible !== false ? 0.5 : 0);
+      c.sort((a, b) => score(b) - score(a) || a.price - b.price);
+      let cands = c;
       // حاجز متضرر: كريم الترميم الأنسب يصير الأول في المرطب
       if (barrier && key === "moisturizer") cands = [...cands].sort((a, b) => ((b.goodFor || []).includes("barrier") - (a.goodFor || []).includes("barrier")));
       // قشرة: شامبو القشرة يصير الأول (والعلاجي أول لو القشرة كثيفة)
