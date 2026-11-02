@@ -28,6 +28,13 @@
         { v: "combo", t: "لامعة في الجبهة والأنف فقط", d: "والخدود طبيعية أو جافة" },
         { v: "normal", t: "مريحة ومتوازنة", d: "ما ألاحظ شي" },
         { v: "sensitive", t: "تحمر أو تحرقني بسهولة", d: "تتهيج من منتجات كثيرة" } ] },
+    { id: "barrier", title: "هل حاجز بشرة وجهك متضرر؟", sub: "علامات ضعف حاجز بشرة الوجه · اختاري كل اللي ينطبق", type: "multi", when: a => has(a.focus, "skin"),
+      options: [
+        { v: "sting", t: "تحرقني أو تلسعني المنتجات", d: "حتى المرطب العادي، أو الماء أحياناً" },
+        { v: "tight", t: "مشدودة وتقشر وتلمع بنفس الوقت", d: "شكلها ملمّع بس هي جافة من تحت" },
+        { v: "over", t: "استخدمت تقشير أو ريتينول كثير مؤخراً", d: "أحماض، سكراب، ريتينول، أو علاج حبوب قوي" },
+        { v: "red", t: "احمرار أو حبوب صغيرة ظهرت فجأة", d: "بعد ما جربت منتج جديد" },
+        { v: "no", t: "لا، ما ألاحظ شي من هذا", exclusive: true } ] },
     { id: "concern", title: "وش يضايقك في بشرتك؟", sub: "اختاري كل اللي ينطبق", type: "multi", when: a => has(a.focus, "skin"),
       options: [
         { v: "acne", t: "حبوب ورؤوس سوداء" },
@@ -53,6 +60,11 @@
         { v: "hairfall", t: "يتساقط" },
         { v: "dandruff", t: "قشرة أو حكة في الفروة" },
         { v: "normal", t: "عادي", exclusive: true } ] },
+    { id: "dandruff", title: "القشرة عندك كيف؟", sub: "عشان نعرف تحتاجين شامبو قشرة عادي ولا علاجي", type: "multi", when: a => has(a.focus, "hair") && has(a.hairType, "dandruff"),
+      options: [
+        { v: "mild", t: "قشور بيضاء خفيفة", d: "تروح وتجي، خصوصاً بالشتاء" },
+        { v: "severe", t: "قشور كثيفة أو صفراء ودهنية", d: "ما تروح مع الشامبو العادي" },
+        { v: "red", t: "احمرار أو حكة قوية", d: "أو القشور توصل للحواجب أو ورا الأذن" } ] },
     { id: "hairThickness", title: "شعرك خفيف ولا ثقيل؟", sub: "الشعرة نفسها وكثافة الشعر", type: "multi", when: a => has(a.focus, "hair"),
       options: [
         { v: "fine", t: "خفيف وناعم", d: "الشعرة رفيعة، ويثقل بسرعة من المنتجات" },
@@ -87,19 +99,20 @@
     const concerns = arr(a.concern).filter(c => c !== "none");
     const concern = ["hormonal", "fungal", "acne", "marks", "pigment", "dryness", "pores"].find(c => concerns.includes(c)) || "none";
     const marks = arr(a.marks).filter(x => x !== "none");
+    const barrier = arr(a.barrier).filter(x => x !== "no");
     const hairTypes = arr(a.hairType);
     const hairType = ["damaged", "coily", "curly", "oily", "dry", "normal"].find(t => hairTypes.includes(t)) || (anyOf(hairTypes, ["hairfall", "dandruff"]) ? "oily" : "normal");
-    const thickness = arr(a.hairThickness), frizz = arr(a.frizz).filter(x => x !== "no");
+    const thickness = arr(a.hairThickness), frizz = arr(a.frizz).filter(x => x !== "no"), dandruff = arr(a.dandruff);
     const budgets = arr(a.budget);
     const budget = ["high", "mid", "low"].find(b => budgets.includes(b)) || "mid";
     const skinConcerns = [...new Set([
       ...concerns, ...(marks.includes("pie") ? ["redness", "marks"] : []), ...(marks.includes("pih") ? ["pigment", "marks"] : []),
-      ...(skinTypes.includes("dry") ? ["dryness"] : []), ...(skinTypes.includes("oily") || skinTypes.includes("combo") ? ["oil"] : []), ...(skinTypes.includes("sensitive") ? ["redness", "barrier"] : [])
+      ...(skinTypes.includes("dry") ? ["dryness"] : []), ...(skinTypes.includes("oily") || skinTypes.includes("combo") ? ["oil"] : []), ...(skinTypes.includes("sensitive") ? ["redness", "barrier"] : []), ...(barrier.length ? ["barrier", "redness"] : []), ...(barrier.includes("tight") ? ["dryness"] : [])
     ])];
-    const HMAP = { dry: ["dryness"], oily: ["oilyScalp"], curly: ["curls"], coily: ["curls", "dryness"], damaged: ["damage"], hairfall: ["hairfall"], dandruff: ["sensitiveScalp", "oilyScalp"] };
+    const HMAP = { dry: ["dryness"], oily: ["oilyScalp"], curly: ["curls"], coily: ["curls", "dryness"], damaged: ["damage"], hairfall: ["hairfall"], dandruff: ["dandruff", "sensitiveScalp"] };
     const hairConcerns = [...new Set([...hairTypes.flatMap(t => HMAP[t] || []), ...(frizz.length ? ["frizz"] : []), ...(thickness.includes("thick") ? ["dryness"] : [])])];
     return { ...a, focus, skinType, concern, hairType: hairType === "coily" ? "curly" : hairType, budget, allergies: arr(a.allergies),
-      profile: { skinTypes, concerns, marks, hairTypes, thickness, frizz, skinConcerns, hairConcerns } };
+      barrierDamaged: barrier.length > 0, dandruffSevere: anyOf(dandruff, ["severe", "red"]), profile: { skinTypes, concerns, marks, barrier, dandruff, hairTypes, thickness, frizz, skinConcerns, hairConcerns } };
   }
 
   const BUDGET_MAX = { low: 250, mid: 400, high: Infinity };
@@ -135,7 +148,9 @@
                نخفّض مستوى كيت الشعر أولاً ثم البشرة
      القاعدة 8: أي منتج فيه مكوّن تتحسس منه يُستبدل ببديل من نفس الخطوة يناسب نوعها،
                وإذا ما فيه بديل يُحذف ونوضح ذلك */
-  function pickSkinKit(type, concern) {
+  function pickSkinKit(type, concern, barrier) {
+    if (barrier && type !== "sensitive" && concern !== "hormonal" && concern !== "fungal") return { kit: "k-sensitive", barrier: true,
+      why: "حاجز بشرتك متضرر، فأول شي نرممه قبل أي علاج: كيت التهدئة مع كريم ترميم بالسيراميد. وقّفي التقشير والريتينول أسبوعين إلى أربعة، وبعدها ترجعين تعالجين مشكلتك الأساسية." };
     if (type === "sensitive") return { kit: "k-sensitive", consult: concern === "hormonal" || concern === "fungal", avoidFungal: concern === "fungal", why: "بشرتك حساسة، فبدأنا بالتهدئة وتقوية الحاجز قبل أي علاج." };
     if (concern === "hormonal") return { kit: "k-acne", consult: true,
       why: "الحبوب الهرمونية سببها من الداخل، فكيت صفاء عناية مساندة تهدّي الالتهاب وتمنع الانسداد، والعلاج الأساسي عند الطبيبة." };
@@ -189,11 +204,12 @@
     const userAllergens = (answers.allergies || []).filter(a => a !== "none");
     const allergens = [...userAllergens];
     const skinAllergens = [...userAllergens];
-    if (answers.skinType === "sensitive" && !skinAllergens.includes("fragrance")) skinAllergens.push("fragrance");
+    if ((answers.skinType === "sensitive" || answers.barrierDamaged) && !skinAllergens.includes("fragrance")) skinAllergens.push("fragrance");
 
     const picks = [];
     if (answers.focus !== "hair") {
-      const sk = pickSkinKit(answers.skinType, answers.concern);
+      const sk = pickSkinKit(answers.skinType, answers.concern, answers.barrierDamaged);
+      if (answers.barrierDamaged && !sk.barrier) sk.why += " وبما إن حاجز بشرتك متضرر، رشحنا لك كريم ترميم، وخففي الأحماض والريتينول لين يرتاح.";
       if (sk.avoidFungal && !skinAllergens.includes("fungal")) skinAllergens.push("fungal");
       skinAllergens.forEach(x => { if (!allergens.includes(x)) allergens.push(x); });
       const mk = answers.profile.marks;
@@ -230,10 +246,11 @@
       notes.push("الكيتين معاً يتجاوزان ميزانيتك قليلاً، تقدرين تبدئين بكيت البشرة وتضيفين الشعر لاحقاً.");
     }
     if (allergens.length) notes.push("استبعدنا المنتجات اللي فيها: " + allergens.map(a => REASON_AR[a]).join("، ") + ".");
-    const consult = picks.some(p => p.consult) || !!answers.seeDoctor;
+    const consult = picks.some(p => p.consult) || !!answers.seeDoctor || !!answers.dandruffSevere;
     const consultWhy = answers.doctorReason || (answers.concern === "hormonal"
       ? "الحبوب الهرمونية تحتاج تقييم طبي (أحياناً تحاليل أو علاج بوصفة)، والكيت يساندك بس ما يغني عن العلاج."
-      : answers.concern === "fungal" ? "الحبوب الفطرية تشبه الحبوب العادية، والطبيبة تأكد التشخيص وتصرف العلاج المضاد للفطريات إذا احتجتي." : "");
+      : answers.concern === "fungal" ? "الحبوب الفطرية تشبه الحبوب العادية، والطبيبة تأكد التشخيص وتصرف العلاج المضاد للفطريات إذا احتجتي."
+      : answers.dandruffSevere ? "القشرة الكثيفة أو اللي معها احمرار ممكن تكون التهاب جلدي دهني (seborrheic dermatitis)، وهذا تشخصه الطبيبة وأحياناً يحتاج علاج بوصفة." : "");
     return { kits: result, total: total(), notes, allergens, consult, consultWhy, profile: answers.profile };
   }
 
@@ -292,7 +309,9 @@
     const pick = bestPicks && bestPicks[section + ":" + concern];
     let best = pick ? list.find(p => p.brand.toUpperCase() === pick[0].toUpperCase() && (p.nameEn || "").toLowerCase().includes(pick[1].toLowerCase())) : null;
     if (!best) best = list.find(p => !p.demo) || list[0] || null;
-    const others = list.filter(p => p !== best && !p.demo);
+    let others = list.filter(p => p !== best && !p.demo);
+    // الأوفر والفاخر من ماركات غير ماركة الترشيح، إذا فيه
+    if (best && others.some(p => p.brand !== best.brand)) others = others.filter(p => p.brand !== best.brand);
     const value = others.length ? others.reduce((m, p) => p.price < m.price ? p : m) : null;
     const lux = others.filter(p => p !== value);
     const luxury = lux.length ? lux.reduce((m, p) => p.price > m.price ? p : m) : null;
@@ -320,5 +339,60 @@
     }).filter(Boolean);
   }
 
-  return { DELIVERY, EXPRESS_CITIES, QUIZ, TIERS, REASON_AR, solutionsFor, normalize, stepOptions, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
+  /* «ابني روتينك» الكامل: كل أنواع منتجات القسم (مو بس اللي في الكيت).
+     لكل نوع: قائمة مرتبة من الأنسب للأقل، والعميلة تختار وش تضيف، وتقدر تشيل أي منتج ما يعجبها ويطلع لها اللي بعده. */
+  const LEAVE = p => /leave[- ]?in/i.test(p.nameEn || ""), MOUSSE = p => /mousse|whip/i.test(p.nameEn || "");
+  const SLOTS = {
+    hair: [
+      { key: "shampoo", label: "شامبو", m: p => p.category === "shampoo" },
+      { key: "conditioner", label: "بلسم", m: p => p.category === "conditioner" && !LEAVE(p) },
+      { key: "mask", label: "ماسك", m: p => p.category === "mask" },
+      { key: "serum", label: "سيروم الشعر", m: p => p.category === "hairserum" || (p.category === "oil" && /serum/i.test(p.nameEn || "")) },
+      { key: "oil", label: "زيت الشعر", m: p => p.category === "oil" },
+      { key: "leavein", label: "ليف إن وكريم تعريف", m: p => p.category === "curly" && !MOUSSE(p) || (LEAVE(p) && p.category !== "mousse") || p.category === "styling" },
+      { key: "mousse", label: "موس", m: p => p.category === "mousse" || MOUSSE(p) },
+      { key: "heat", label: "حامي حرارة", m: p => p.category === "heat" },
+      { key: "scalp", label: "علاج الفروة والتساقط", m: p => p.category === "treatment" }
+    ],
+    skin: [
+      { key: "cleanser", label: "غسول", m: p => p.category === "cleanser" },
+      { key: "toner", label: "تونر", m: p => p.step === "toner" || /toner|pad/i.test(p.nameEn || "") },
+      { key: "serum", label: "سيروم", m: p => p.category === "serum" },
+      { key: "mask", label: "ماسك", m: p => p.step === "mask" || /mask|jelly/i.test(p.nameEn || "") },
+      { key: "treatment", label: "علاج موضعي ومقشر", m: p => p.category === "treatment" },
+      { key: "moisturizer", label: "مرطب", barrierLabel: "مرطب وكريم ترميم", m: p => p.category === "moisturizer" },
+      { key: "spf", label: "واقي شمس", m: p => p.category === "spf" }
+    ]
+  };
+  const SLOT_ORDER = { hair: ["shampoo", "conditioner", "mask", "serum", "oil", "leavein", "mousse", "heat", "scalp"], skin: ["cleanser", "toner", "serum", "treatment", "moisturizer", "spf", "mask"] };
+  const slotOf = p => { const sl = SLOTS[p.cat]; if (!sl) return null; const f = sl.find(s => s.m(p)); return f ? f.key : null; };
+  function routineSlots(kitRes, section, profile, products, allergens) {
+    const pMap = Object.fromEntries(products.map(p => [p.id, p]));
+    const concerns = (profile && (section === "skin" ? profile.skinConcerns : profile.hairConcerns)) || [];
+    const fine = profile && profile.thickness && profile.thickness.includes("fine");
+    const al = allergens || [];
+    let pool = products.filter(p => p.active !== false && p.cat === section && !p.demo);
+    if (al.filter(x => x !== "fungal").length) pool = pool.filter(p => p.kitEligible !== false && !badReasons(p, al).length);
+    if (al.includes("fungal")) pool = pool.filter(p => p.fungal !== false);
+    if (fine && section === "hair") pool = pool.filter(p => !["tub", "jar"].includes((p.pack || {}).shape) || p.category === "mask");
+    const overlap = p => (p.goodFor || []).filter(g => concerns.includes(g)).length;
+    const kitProducts = (kitRes.productIds || []).map(id => pMap[id]).filter(Boolean);
+    const barrier = profile && profile.barrier && profile.barrier.length;
+    const dandruff = concerns.includes("dandruff"), severe = profile && profile.dandruff && profile.dandruff.some(x => x === "severe" || x === "red");
+    return SLOT_ORDER[section].map(key => {
+      const def = SLOTS[section].find(s => s.key === key);
+      const kitP = kitProducts.find(p => slotOf(p) === key);
+      const c = pool.filter(p => slotOf(p) === key && (!kitP || p.id !== kitP.id));
+      // الأنسب: يحل أكثر احتياجاتها، بعدها المنتجات اللي مكوناتها مراجعة، وبعدها السعر
+      c.sort((a, b) => (overlap(b) * 3 + (b.kitEligible !== false ? 0.5 : 0)) - (overlap(a) * 3 + (a.kitEligible !== false ? 0.5 : 0)) || a.price - b.price);
+      let cands = kitP ? [kitP, ...c] : c;
+      // حاجز متضرر: كريم الترميم الأنسب يصير الأول في المرطب
+      if (barrier && key === "moisturizer") cands = [...cands].sort((a, b) => ((b.goodFor || []).includes("barrier") - (a.goodFor || []).includes("barrier")));
+      // قشرة: شامبو القشرة يصير الأول (والعلاجي أول لو القشرة كثيفة)
+      if (dandruff && key === "shampoo") { const dd = p => (p.goodFor || []).includes("dandruff") ? (severe && /ketoconazole|ds|t\/gel|medicated/i.test(p.nameEn) ? 2 : 1) : 0; cands = [...cands].sort((a, b) => dd(b) - dd(a)); }
+      return { key, label: barrier && def.barrierLabel ? def.barrierLabel : dandruff && key === "shampoo" ? "شامبو القشرة" : def.label, candidates: cands.map(p => p.id), included: !!kitP };
+    }).filter(s => s.candidates.length);
+  }
+
+  return { DELIVERY, EXPRESS_CITIES, QUIZ, routineSlots, slotOf, TIERS, REASON_AR, solutionsFor, normalize, stepOptions, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
 });

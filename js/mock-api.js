@@ -36,6 +36,19 @@
     if (mem) return mem;
     try { mem = JSON.parse(localStorage.getItem(KEY)); } catch {}
     if (!mem) mem = seed();
+    else {
+      // تحديث بيانات قديمة محفوظة في المتصفح: نضيف المنتجات الجديدة، ونطبق وسوم/أقسام جديدة مرة وحدة
+      const have = new Set(mem.products.map(p => p.id));
+      PRODUCTS.forEach(p => { if (!have.has(p.id)) mem.products.push({ ...clone(p), stock: 100, active: true }); });
+      if (!mem.m2026_11) {
+        const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+        mem.products.forEach(p => { const s = byId[p.id]; if (!s) return;
+          if (p.category === "curly" && s.category === "mousse") p.category = "mousse";
+          if ((s.goodFor || []).includes("dandruff") && !(p.goodFor || []).includes("dandruff")) p.goodFor = [...(p.goodFor || []), "dandruff"]; });
+        mem.m2026_11 = true;
+      }
+      save();
+    }
     return mem;
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch {} }
