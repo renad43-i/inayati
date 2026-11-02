@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>المتجر | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<main class="container" style="padding:30px 0 10px">
+  <div class="section-head" style="margin-bottom:18px">
+    <span class="eyebrow">المتجر</span>
+    <h1>وش تبين تعالجين؟</h1>
+    <p class="muted">اختاري مشكلتك، ونرشح لك الأفضل من براندات كل الدول، ومعها الأوفر والفاخر، وكل البدائل عشان تختارين اللي يناسبك.</p>
+  </div>
+
+  <div class="filters" id="sections">
+    <button class="chip" data-sec="skin">البشرة</button>
+    <button class="chip" data-sec="hair">الشعر</button>
+  </div>
+  <div class="problem-chips" id="problems"></div>
+
+  <section id="solutions" class="hidden"></section>
+
+  <div class="card shop-filters">
+    <div class="field"><label for="fCat">القسم</label><select id="fCat"></select></div>
+    <div class="field"><label for="fCountry">البلد</label><select id="fCountry"></select></div>
+    <div class="field"><label for="fBrand">البراند</label><select id="fBrand"></select></div>
+    <div class="field"><label for="fPrice">السعر</label><select id="fPrice">
+      <option value="">الكل</option><option value="0-50">حتى 50 ر.س</option><option value="50-100">50 – 100</option><option value="100-200">100 – 200</option><option value="200-9999">أكثر من 200</option></select></div>
+    <div class="field"><label for="fSort">الترتيب</label><select id="fSort"><option value="match">الأنسب لمشكلتك</option><option value="asc">السعر: الأقل أولاً</option><option value="desc">السعر: الأعلى أولاً</option><option value="brand">البراند (أ-ي)</option></select></div>
+    <div class="field"><label for="fSearch">بحث</label><input id="fSearch" placeholder="اسم منتج أو براند"></div>
+  </div>
+  <p class="small muted" id="count" style="margin:12px 0"></p>
+  <div class="shop-grid" id="grid"></div>
+</main>
+<script>
+App.layout("shop");
+const st = { sec: App.params.get("section") || "skin", problem: App.params.get("problem") || "", cat: App.params.get("category") || "", country: App.params.get("country") || "", brand: App.params.get("brand") || "", price: "", sort: "match", q: "" };
+let C;
+const flag = c => (c || "").split(" ")[0];
+
+function productCard(p, badge) {
+  const tags = (p.goodFor || []).slice(0, 2).map(k => CONCERN_TAGS[k]).filter(Boolean);
+  return `<div class="card shop-card">
+    ${badge ? `<span class="pick-badge ${badge[0]}">${badge[1]}</span>` : ""}
+    <a href="product.html?id=${p.id}" class="shop-img">${App.productImg(p)}</a>
+    <div class="shop-body">
+      <div class="brand-name" dir="ltr">${App.esc(p.brand)} <span title="${App.esc(p.country)}">${flag(p.country)}</span></div>
+      <a href="product.html?id=${p.id}" class="shop-name">${App.esc(p.name)}</a>
+      <div class="small muted">${App.esc(CATEGORIES[p.cat][p.category] || "")} · ${App.esc(p.size)}</div>
+      ${tags.length ? `<div class="small" style="color:var(--sage-dark)">${tags.map(App.esc).join(" · ")}</div>` : ""}
+      <div class="spacer"></div>
+      <div class="row"><span class="price" style="font-size:1.05rem">${App.fmt(p.price)}</span><span class="spacer"></span>
+        <button class="btn sm" data-add="${p.id}" aria-label="أضيفي للسلة">+ السلة</button></div>
+    </div></div>`;
+}
+
+function drawSections() {
+  App.qsa("#sections .chip").forEach(c => c.classList.toggle("active", c.dataset.sec === st.sec));
+  const probs = PROBLEMS[st.sec];
+  App.qs("#problems").innerHTML = `<button class="chip ${!st.problem ? "active" : ""}" data-pr="">كل المنتجات</button>` +
+    Object.entries(probs).map(([k, v]) => `<button class="chip ${st.problem === k ? "active" : ""}" data-pr="${k}">${App.esc(v.name)}</button>`).join("");
+  App.qsa("[data-pr]").forEach(b => b.onclick = () => { st.problem = b.dataset.pr; st.cat = ""; sync(); });
+  // قوائم الفلاتر حسب القسم
+  const inSec = C.products.filter(p => p.cat === st.sec);
+  App.qs("#fCat").innerHTML = `<option value="">كل الأقسام</option>` + Object.entries(CATEGORIES[st.sec]).map(([k, v]) => `<option value="${k}" ${st.cat === k ? "selected" : ""}>${v}</option>`).join("");
+  const countries = [...new Set(inSec.map(p => p.country))].sort();
+  App.qs("#fCountry").innerHTML = `<option value="">كل الدول</option>` + countries.map(c => `<option ${st.country === c ? "selected" : ""}>${App.esc(c)}</option>`).join("");
+  const brands = [...new Set(inSec.filter(p => !st.country || p.country === st.country).map(p => p.brand))].sort((a, b) => a.localeCompare(b));
+  if (st.brand && !brands.includes(st.brand)) st.brand = "";
+  App.qs("#fBrand").innerHTML = `<option value="">كل البراندات (${brands.length})</option>` + brands.map(b => `<option ${st.brand === b ? "selected" : ""}>${App.esc(b)}</option>`).join("");
+}
+
+function draw() {
+  drawSections();
+  // حلول المشكلة
+  const solBox = App.qs("#solutions");
+  let sol = null;
+  if (st.problem) {
+    sol = Engine.solutionsFor(st.sec, st.problem, C.products, BEST_PICKS);
+    const pr = PROBLEMS[st.sec][st.problem], kit = C.kMap[pr.kit];
+    solBox.classList.remove("hidden");
+    solBox.innerHTML = `<h2 style="font-size:1.5rem;margin:22px 0 12px">حلول «${App.esc(pr.name)}»</h2>
+      <div class="picks">
+        ${sol.best ? `<div class="card pick best"><span class="pick-badge best">⭐ ترشيح عنايتي</span>
+          <a href="product.html?id=${sol.best.id}" class="pick-img">${App.productImg(sol.best)}</a>
+          <div><div class="brand-name" dir="ltr">${App.esc(sol.best.brand)} ${flag(sol.best.country)}</div>
+          <a class="shop-name" href="product.html?id=${sol.best.id}">${App.esc(sol.best.name)}</a>
+          ${sol.bestWhy ? `<p class="small" style="margin:6px 0">${App.esc(sol.bestWhy)}</p>` : ""}
+          <div class="row"><span class="price">${App.fmt(sol.best.price)}</span><span class="spacer"></span><button class="btn sm" data-add="${sol.best.id}">+ السلة</button></div></div></div>` : ""}
+        ${[["value", "💰 الأوفر", sol.value], ["luxury", "💎 الخيار الفاخر", sol.luxury]].filter(x => x[2]).map(([cls, label, p]) => `<div class="card pick ${cls}"><span class="pick-badge ${cls}">${label}</span>
+          <a href="product.html?id=${p.id}" class="pick-img">${App.productImg(p)}</a>
+          <div><div class="brand-name" dir="ltr">${App.esc(p.brand)} ${flag(p.country)}</div><a class="shop-name" href="product.html?id=${p.id}">${App.esc(p.name)}</a>
+          <div class="row" style="margin-top:6px"><span class="price">${App.fmt(p.price)}</span><span class="spacer"></span><button class="btn sm" data-add="${p.id}">+ السلة</button></div></div></div>`).join("")}
+      </div>
+      <div class="row" style="margin:14px 0 4px;gap:10px">
+        ${kit ? `<a class="btn outline sm" href="kit.html?id=${kit.id}">تبين روتين متكامل؟ ${App.esc(kit.name)} ←</a>` : ""}
+        <a class="btn outline sm" href="analysis.html">مو متأكدة؟ حللي بشرتك</a>
+      </div>
+      <div style="margin-top:12px">${App.consultCTA(!!pr.consult, pr.consult ? (st.problem === "hairfall" ? "التساقط الكثير ممكن يكون سببه نقص فيتامينات أو هرمونات أو فقر دم، والطبيبة تحدد السبب." : "هذا النوع من الحبوب يحتاج تشخيص وعلاج من الطبيبة، والمنتجات هنا عناية مساندة.") : "", pr.name)}</div>
+      <h3 style="margin:22px 0 0">كل البدائل (${sol.list.length})</h3>`;
+  } else { solBox.classList.add("hidden"); solBox.innerHTML = ""; }
+
+  // القائمة
+  let list = sol ? sol.list.slice() : C.products.filter(p => p.cat === st.sec);
+  if (st.cat) list = list.filter(p => p.category === st.cat);
+  if (st.country) list = list.filter(p => p.country === st.country);
+  if (st.brand) list = list.filter(p => p.brand === st.brand);
+  if (st.price) { const [a, b] = st.price.split("-").map(Number); list = list.filter(p => p.price >= a && p.price <= b); }
+  if (st.q) { const q = st.q.toLowerCase(); list = list.filter(p => (p.brand + " " + p.name + " " + (p.nameEn || "")).toLowerCase().includes(q)); }
+  if (st.sort === "asc") list.sort((a, b) => a.price - b.price);
+  else if (st.sort === "desc") list.sort((a, b) => b.price - a.price);
+  else if (st.sort === "brand") list.sort((a, b) => a.brand.localeCompare(b.brand));
+  else if (!sol) list.sort((a, b) => (a.demo - b.demo) || (b.kitEligible - a.kitEligible) || a.brand.localeCompare(b.brand));
+  const badgeOf = p => !sol ? null : p === sol.best ? ["best", "⭐ ترشيحنا"] : p === sol.value ? ["value", "💰 الأوفر"] : p === sol.luxury ? ["luxury", "💎 فاخر"] : null;
+  App.qs("#count").textContent = `${list.length} منتج من ${new Set(list.map(p => p.brand)).size} براند`;
+  App.qs("#grid").innerHTML = list.length ? list.map(p => productCard(p, badgeOf(p))).join("") : `<p class="empty">ما فيه منتجات بهالفلاتر. جربي تشيلين فلتر.</p>`;
+  App.qsa("[data-add]").forEach(b => b.onclick = () => { App.cart.add({ productId: b.dataset.add, qty: 1, purchaseType: "once" }); App.toast("تمت الإضافة للسلة ✓"); });
+}
+function sync() {
+  const q = new URLSearchParams();
+  q.set("section", st.sec); if (st.problem) q.set("problem", st.problem); if (st.cat) q.set("category", st.cat); if (st.country) q.set("country", st.country); if (st.brand) q.set("brand", st.brand);
+  history.replaceState(null, "", "shop.html?" + q.toString());
+  draw();
+}
+App.qsa("#sections .chip").forEach(c => c.onclick = () => { st.sec = c.dataset.sec; st.problem = ""; st.cat = ""; st.brand = ""; sync(); });
+App.qs("#fCat").onchange = e => { st.cat = e.target.value; sync(); };
+App.qs("#fCountry").onchange = e => { st.country = e.target.value; st.brand = ""; sync(); };
+App.qs("#fBrand").onchange = e => { st.brand = e.target.value; sync(); };
+App.qs("#fPrice").onchange = e => { st.price = e.target.value; draw(); };
+App.qs("#fSort").onchange = e => { st.sort = e.target.value; draw(); };
+let t; App.qs("#fSearch").oninput = e => { clearTimeout(t); t = setTimeout(() => { st.q = e.target.value.trim(); draw(); }, 200); };
+App.catalog().then(c => {
+  C = c;
+  if (!PROBLEMS[st.sec]) st.sec = "skin";
+  if (st.problem && !PROBLEMS[st.sec][st.problem]) st.problem = "";
+  draw();
+});
+</script>
+</body>
+</html>

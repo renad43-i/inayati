@@ -90,7 +90,7 @@ function showResult(res, cat, user, ans) {
         <div class="row"><span class="price">${App.fmt(r.price)}</span><span class="spacer"></span>
           <a class="btn outline sm" href="kit.html?id=${k.id}&tier=${r.tier}&rec=${i}">التفاصيل وطريقة الاستخدام</a></div></div></div>`;
     }).join("")}
-    ${res.consult ? `<div class="consult-cta" style="margin-bottom:16px"><div><b>ننصحك باستشارة طبيبة جلدية</b><div class="small">${App.esc(res.consultWhy || "")}</div></div><a class="btn dark" href="consult.html">احجزي استشارة</a></div>` : ""}
+    <div style="margin-bottom:16px">${App.consultCTA(!!res.consult, res.consult ? res.consultWhy : "")}</div>
     ${res.notes.map(n => `<p class="alert info small">${App.esc(n)}</p>`).join("")}
     <div class="card"><div class="row"><div><b>المجموع</b><div class="muted small">أو ${App.fmt(res.kits.reduce((s, r) => s + Engine.kitPrice(r.productIds, cat.pMap, "subscription"), 0))} شهرياً مع الاشتراك</div></div>
       <span class="spacer"></span><span class="price">${App.fmt(res.total)}</span></div>

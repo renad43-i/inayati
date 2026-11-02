@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>المنتج | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<main class="container">
+  <p class="small muted" style="margin-top:20px"><a href="home.html">الرئيسية</a> / <a href="shop.html" id="crumbShop">المتجر</a> / <span id="crumb"></span></p>
+  <div class="product" id="product"></div>
+  <section id="more" style="padding-bottom:30px"></section>
+</main>
+<script>
+App.layout("shop");
+(async () => {
+  const cat = await App.catalog();
+  const p = cat.pMap[App.params.get("id")];
+  if (!p) { App.qs("#product").innerHTML = `<p class="empty">المنتج غير موجود. <a href="shop.html">ارجعي للمتجر</a></p>`; return; }
+  document.title = `${p.brand} ${p.name} | عنايتي`;
+  App.qs("#crumb").textContent = p.name;
+  App.qs("#crumbShop").href = `shop.html?section=${p.cat}`;
+  let qty = 1;
+  const kits = cat.kits.filter(k => Object.values(k.tiers).some(ids => ids.includes(p.id)));
+  const mainProblem = (p.goodFor || []).find(k => PROBLEMS[p.cat][k]);
+  const draw = () => {
+    App.qs("#product").innerHTML = `
+      <div class="gallery" style="background:var(--sand)"><div style="width:52%">${App.productImg(p)}</div></div>
+      <div>
+        <div class="brand-name" dir="ltr" style="font-size:1rem">${App.esc(p.brand)}</div>
+        <h1 style="margin:6px 0 4px;font-size:clamp(1.5rem,3.5vw,2.2rem)">${App.esc(p.name)}</h1>
+        <p class="muted" style="margin:0"><span dir="ltr">${App.esc(p.nameEn || "")}</span></p>
+        <div class="row" style="margin:10px 0"><span class="tag">${App.esc(p.country)}</span><span class="tag sage">${App.esc(CATEGORIES[p.cat][p.category] || "")}</span><span class="tag">${App.esc(p.size)}</span></div>
+        ${p.demo ? `<p class="alert info small">اسم هذا المنتج توضيحي لبراند محلي، ويتعدل من لوحة الإدارة بالاسم الحقيقي.</p>` : ""}
+        <div class="price" style="font-size:1.7rem">${App.fmt(p.price)}</div>
+        <p class="small muted">شامل الضريبة · شحن مجاني فوق 200 ر.س</p>
+        <p>${App.esc(p.desc)}</p>
+        ${App.suitabilityHTML(p)}
+        ${p.contains && p.contains.length ? `<p class="small muted" style="margin-top:6px">يحتوي: ${p.contains.map(a => App.ALLERGEN_AR[a]).join("، ")}</p>` : ""}
+        <div class="row" style="margin-top:16px">
+          <div class="qty"><button id="plus" aria-label="زيادة">+</button><span>${qty}</span><button id="minus" aria-label="نقص">−</button></div>
+          <button class="btn" id="addBtn" style="flex:1">أضيفي للسلة</button>
+        </div>
+        <div class="tiktok-box">
+          <svg width="34" viewBox="0 0 24 24" fill="#111" aria-hidden="true"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2-2.8V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>
+          <div style="flex:1"><b>ريفيوهات حقيقية على تيك توك</b><div class="small muted">شوفي تجارب الناس مع هذا المنتج</div></div>
+          <a class="btn tiktok sm" href="${App.esc(App.ttHref(p.tiktok))}" target="_blank" rel="noopener">${App.tiktokIcon} شاهدي الريفيوهات</a>
+        </div>
+        <div style="margin-top:14px">${App.consultCTA(false, "مو متأكدة إذا يناسبك؟ أو صار عندك تقشير أو احمرار أو حبوب بعد الاستخدام؟ الطبيبة تساعدك تختارين الصح.")}</div>
+        ${kits.length ? `<div class="card" style="margin-top:18px"><b>موجود في روتين متكامل</b><div class="small muted">وفري 15% لما تاخذينه ضمن كيت:</div>
+          <div class="row" style="margin-top:8px">${kits.map(k => `<a class="btn outline sm" href="kit.html?id=${k.id}">${App.esc(k.name)}</a>`).join("")}</div></div>` : ""}
+      </div>`;
+    App.qs("#plus").onclick = () => { qty = Math.min(10, qty + 1); draw(); };
+    App.qs("#minus").onclick = () => { qty = Math.max(1, qty - 1); draw(); };
+    App.qs("#addBtn").onclick = () => { App.cart.add({ productId: p.id, qty, purchaseType: "once" }); App.toast("تمت الإضافة للسلة ✓"); };
+  };
+  draw();
+  // بدائل لنفس المشكلة من براندات ثانية
+  if (mainProblem) {
+    const sol = Engine.solutionsFor(p.cat, mainProblem, cat.products, BEST_PICKS);
+    const alts = [sol.best, sol.value, sol.luxury, ...sol.list].filter((x, i, a) => x && x.id !== p.id && a.indexOf(x) === i && x.brand !== p.brand).slice(0, 4);
+    const badge = x => x === sol.best ? "⭐ ترشيحنا" : x === sol.value ? "💰 الأوفر" : x === sol.luxury ? "💎 فاخر" : "";
+    if (alts.length) App.qs("#more").innerHTML = `<div class="row"><h2 style="margin:0">بدائل لـ«${App.esc(PROBLEMS[p.cat][mainProblem].name)}» من براندات ثانية</h2><span class="spacer"></span>
+      <a class="btn outline sm" href="shop.html?section=${p.cat}&problem=${mainProblem}">كل الحلول ←</a></div><br>
+      <div class="shop-grid">${alts.map(x => `<a class="card shop-card" href="product.html?id=${x.id}">${badge(x) ? `<span class="pick-badge ${x === sol.best ? "best" : x === sol.value ? "value" : "luxury"}">${badge(x)}</span>` : ""}
+        <span class="shop-img">${App.productImg(x)}</span><span class="shop-body"><span class="brand-name" dir="ltr">${App.esc(x.brand)} ${(x.country || "").split(" ")[0]}</span>
+        <span class="shop-name">${App.esc(x.name)}</span><span class="price" style="font-size:1rem">${App.fmt(x.price)}</span></span></a>`).join("")}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

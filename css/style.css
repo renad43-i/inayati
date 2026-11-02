@@ -290,6 +290,38 @@ dialog::backdrop { background: rgba(47,59,48,.4); }
 .slots .chip:disabled { opacity: .4; text-decoration: line-through; cursor: not-allowed; }
 .consult-cta { display: flex; gap: 14px; align-items: center; background: var(--blush); border-radius: var(--radius); padding: 18px; flex-wrap: wrap; }
 .consult-cta > div { flex: 1; min-width: 220px; }
+.consult-cta.soft { background: var(--sand); }
 .disclaimer { font-size: .82rem; color: var(--muted); background: var(--sand); border-radius: var(--radius-sm); padding: 10px 14px; }
 @media (max-width: 1100px) and (min-width: 821px) { .nav { gap: 14px; font-size: .92rem; } }
 @media (min-width: 821px) { .features.two { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- المتجر ---------- */
+.problem-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: -10px 0 8px; }
+.problem-chips .chip { font-size: .9rem; padding: 6px 14px; }
+.shop-filters { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0 12px; padding: 16px 18px 4px; margin-top: 18px; }
+@media (max-width: 1000px) { .shop-filters { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .shop-filters { grid-template-columns: 1fr 1fr; } }
+.shop-filters .field { min-width: 0; margin-bottom: 12px; } .shop-filters label { font-size: .82rem; } .shop-filters select, .shop-filters input { padding: 8px 10px; font-size: .9rem; }
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+@media (max-width: 560px) { .shop-grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+.shop-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; position: relative; color: inherit; }
+.shop-img { background: var(--sand); display: grid; place-items: end center; aspect-ratio: 1; padding: 10px 0 6px; }
+.shop-img svg { width: 46%; height: auto; }
+.shop-body { padding: 12px; display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.shop-name { color: var(--ink); font-weight: 700; line-height: 1.45; display: block; }
+.pick-badge { position: absolute; top: 10px; inset-inline-start: 10px; z-index: 1; border-radius: 99px; padding: 2px 10px; font-size: .76rem; font-weight: 700; background: var(--white); border: 1px solid var(--line); }
+.pick-badge.best { background: var(--sage); color: #fff; border-color: var(--sage); }
+.pick-badge.value { background: #FFF1D6; color: #8A5A00; border-color: #F3D9A4; }
+.pick-badge.luxury { background: var(--ink); color: #fff; border-color: var(--ink); }
+.picks { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 14px; }
+@media (max-width: 820px) { .picks { grid-template-columns: 1fr; } }
+.pick { position: relative; display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: center; padding: 16px; padding-top: 40px; }
+.pick.best { border: 2px solid var(--sage); background: linear-gradient(180deg, var(--sage-soft), var(--white) 60%); }
+.pick-img { background: var(--sand); border-radius: 12px; display: grid; place-items: end center; aspect-ratio: 3/4; padding-bottom: 4px; }
+.pick-img svg { width: 70%; }
+.pick > div { min-width: 0; }
+@media (max-width: 560px) { .shop-body .row .btn.sm { padding: 6px 10px; font-size: .8rem; } .shop-name { font-size: .9rem; } }
+.country-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.country-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 8px; color: var(--ink); text-align: center; }
+.country-tile:hover { border-color: var(--sage); }
+.cflag { font-size: 1.6rem; line-height: 1.2; }
