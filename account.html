@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>حسابي | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<main class="container">
+  <!-- تسجيل الدخول / إنشاء حساب -->
+  <div id="auth" class="auth-box card hidden">
+    <div class="tabs"><button data-mode="login" class="active">تسجيل الدخول</button><button data-mode="register">حساب جديد</button></div>
+    <div id="authErr" class="alert error hidden"></div>
+    <form id="authForm">
+      <div class="field reg hidden"><label for="rName">الاسم</label><input id="rName" autocomplete="name"></div>
+      <div class="field"><label for="email">البريد الإلكتروني</label><input id="email" type="email" class="ltr" required autocomplete="email"></div>
+      <div class="field"><label for="password">كلمة المرور</label><input id="password" type="password" class="ltr" required minlength="8" autocomplete="current-password"></div>
+      <div class="grid-2 reg hidden">
+        <div class="field"><label for="rPhone">الجوال (اختياري)</label><input id="rPhone" class="ltr" placeholder="05xxxxxxxx"></div>
+        <div class="field"><label for="rCity">المدينة (اختياري)</label><input id="rCity"></div>
+      </div>
+      <button class="btn block" id="authBtn">دخول</button>
+    </form>
+    <p class="small muted center" style="margin-top:14px">للتجربة: حساب الإدارة <span dir="ltr">admin@inayati.sa / Admin@123</span></p>
+  </div>
+
+  <!-- لوحة العميلة -->
+  <div id="dash" class="account-layout hidden">
+    <aside class="card side-nav" id="sideNav">
+      <button data-sec="orders">طلباتي</button>
+      <button data-sec="subs">اشتراكي الشهري</button>
+      <button data-sec="routine">روتيني ونتائج الاختبار</button>
+      <button data-sec="consults">استشاراتي</button>
+      <button data-sec="profile">بياناتي</button>
+      <button id="logout">تسجيل الخروج</button>
+    </aside>
+    <section>
+      <h1 style="font-size:1.6rem">أهلاً <span id="hello"></span> 👋</h1>
+      <div id="sec-orders" class="sec"></div>
+      <div id="sec-subs" class="sec hidden"></div>
+      <div id="sec-routine" class="sec hidden"></div>
+      <div id="sec-consults" class="sec hidden"></div>
+      <div id="sec-profile" class="sec hidden card">
+        <form id="profileForm">
+          <div class="field"><label for="pName">الاسم</label><input id="pName" required></div>
+          <div class="grid-2"><div class="field"><label for="pPhone">الجوال</label><input id="pPhone" class="ltr"></div>
+          <div class="field"><label for="pCity">المدينة</label><input id="pCity"></div></div>
+          <p class="small muted">البريد: <span id="pEmail" dir="ltr"></span></p>
+          <button class="btn">حفظ</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</main>
+<script>
+App.layout("account");
+let mode = "login", cat, user;
+const next = App.params.get("next");
+
+/* ---------- الدخول والتسجيل ---------- */
+App.qsa("#auth .tabs button").forEach(b => b.onclick = () => {
+  mode = b.dataset.mode;
+  App.qsa("#auth .tabs button").forEach(x => x.classList.toggle("active", x === b));
+  App.qsa(".reg").forEach(x => x.classList.toggle("hidden", mode !== "register"));
+  App.qs("#rName").required = mode === "register";
+  App.qs("#authBtn").textContent = mode === "login" ? "دخول" : "إنشاء الحساب";
+  App.qs("#password").autocomplete = mode === "login" ? "current-password" : "new-password";
+});
+App.qs("#authForm").onsubmit = async e => {
+  e.preventDefault();
+  const err = App.qs("#authErr"); err.classList.add("hidden");
+  const body = { email: App.qs("#email").value, password: App.qs("#password").value };
+  if (mode === "register") Object.assign(body, { name: App.qs("#rName").value, phone: App.qs("#rPhone").value, city: App.qs("#rCity").value });
+  try {
+    await App.api(`/api/auth/${mode}`, { body });
+    if (next && /^[a-z]+\.html/.test(next)) location.href = next; else location.reload();
+  } catch (ex) { err.textContent = ex.message; err.classList.remove("hidden"); }
+};
+
+/* ---------- الأقسام ---------- */
+function show(sec) {
+  App.qsa("#sideNav [data-sec]").forEach(b => b.classList.toggle("active", b.dataset.sec === sec));
+  App.qsa(".sec").forEach(s => s.classList.toggle("hidden", s.id !== "sec-" + sec));
+  history.replaceState(null, "", "#" + sec);
+  ({ orders: loadOrders, subs: loadSubs, routine: loadRoutine, consults: loadConsults, profile: () => {} })[sec]();
+}
+App.qsa("#sideNav [data-sec]").forEach(b => b.onclick = () => show(b.dataset.sec));
+App.qs("#logout").onclick = async () => { await App.api("/api/auth/logout", { method: "POST" }); location.href = "home.html"; };
+
+async function loadOrders() {
+  const orders = await App.api("/api/orders");
+  App.qs("#sec-orders").innerHTML = `<h2 style="font-size:1.3rem">طلباتي</h2>` + (orders.length ? orders.map(o => `
+    <a class="order-card" style="display:block;color:inherit" href="order.html?id=${o.id}">
+      <div class="row"><b>طلب #${o.id}</b><span class="status ${o.status}">${App.esc(o.status_ar)}</span>${o.source === "renewal" ? `<span class="tag sage">تجديد شهري</span>` : ""}<span class="spacer"></span><b>${App.fmt(o.total)}</b></div>
+      <div class="small muted">${App.dateAr(o.created_at)} · ${o.items.map(i => App.esc(i.kit_name)).join("، ")}</div>
+      <div class="small" style="color:var(--sage-dark)">تتبعي الطلب ←</div></a>`).join("")
+    : `<div class="empty card"><p>ما عندك طلبات للحين.</p><a class="btn" href="quiz.html">حددي روتينك</a></div>`);
+}
+async function loadSubs() {
+  const subs = await App.api("/api/subscriptions");
+  const ST = { active: "فعّال", paused: "موقوف مؤقتاً", cancelled: "ملغي" };
+  App.qs("#sec-subs").innerHTML = `<h2 style="font-size:1.3rem">اشتراكي الشهري</h2>` + (subs.length ? subs.map(s => {
+    const k = cat.kMap[s.kit_id];
+    return `<div class="order-card"><div class="cart-item" style="border:0;padding:0;grid-template-columns:72px 1fr">
+      <div class="kit-visual" style="background:${k.color}">${App.kitSVG(k, s.product_ids)}</div>
+      <div><div class="row"><b>${App.esc(k.name)}</b><span class="tag">${App.TIER_AR[s.tier]}</span><span class="status ${s.status}">${ST[s.status]}</span><span class="spacer"></span><b>${App.fmt(s.price)}/شهر</b></div>
+      <div class="small muted">${s.product_ids.map(id => App.esc(cat.pMap[id] ? cat.pMap[id].name : id)).join("، ")}</div>
+      ${s.status === "active" ? `<div class="small">التجديد القادم: <b>${App.dateAr(s.next_renewal)}</b></div>` : ""}</div></div>
+      ${s.status !== "cancelled" ? `<div class="row" style="margin-top:12px">
+        <a class="btn sm" href="quiz.html?sub=${s.id}&cat=${k.cat}">حدّثي احتياجك لهذا الشهر</a>
+        ${s.status === "active" ? `<button class="btn outline sm" data-a="skip" data-id="${s.id}">تخطي الشهر القادم</button><button class="btn outline sm" data-a="pause" data-id="${s.id}">إيقاف مؤقت</button>` : `<button class="btn outline sm" data-a="resume" data-id="${s.id}">استئناف</button>`}
+        <select data-tier="${s.id}" style="width:auto;padding:6px 10px">${Engine.TIERS.map(t => `<option value="${t}" ${t === s.tier ? "selected" : ""}>${App.TIER_AR[t]}</option>`).join("")}</select>
+        <button class="link-btn small" style="color:var(--danger)" data-a="cancel" data-id="${s.id}">إلغاء الاشتراك</button></div>` : ""}</div>`;
+  }).join("") : `<div class="empty card"><p>ما عندك اشتراك. اشتركي ووفري 10% كل شهر.</p><a class="btn" href="quiz.html">ابدئي الاختبار</a></div>`);
+  App.qsa("#sec-subs [data-a]").forEach(b => b.onclick = async () => {
+    if (b.dataset.a === "cancel" && !confirm("متأكدة تبين تلغين الاشتراك؟")) return;
+    try { await App.api(`/api/subscriptions/${b.dataset.id}`, { method: "PATCH", body: { action: b.dataset.a } }); App.toast("تم التحديث"); loadSubs(); } catch (e) { App.toast(e.message); }
+  });
+  App.qsa("#sec-subs [data-tier]").forEach(s => s.onchange = async () => {
+    try { await App.api(`/api/subscriptions/${s.dataset.tier}`, { method: "PATCH", body: { action: "update", tier: s.value } }); App.toast("تم تغيير المستوى"); loadSubs(); } catch (e) { App.toast(e.message); }
+  });
+}
+async function loadRoutine() {
+  const results = await App.api("/api/quiz-results");
+  App.qs("#sec-routine").innerHTML = `<div class="row"><h2 style="font-size:1.3rem;margin:0">روتيني</h2><span class="spacer"></span><a class="btn sm" href="quiz.html">إعادة الاختبار</a></div><br>` + (results.length ? results.map((r, i) => `
+    <div class="order-card"><div class="row"><b>${i === 0 ? "آخر نتيجة" : "نتيجة سابقة"}</b><span class="spacer"></span><span class="small muted">${App.dateAr(r.created_at)}</span></div>
+    ${r.result.kits.map(k => `<div class="small">• <a href="kit.html?id=${k.kitId}&tier=${k.tier}">${App.esc(cat.kMap[k.kitId] ? cat.kMap[k.kitId].name : k.kitId)}</a> (${App.TIER_AR[k.tier]}) — ${App.esc(k.why)}</div>`).join("")}</div>`).join("")
+    : `<div class="empty card"><p>ما سويتي الاختبار للحين.</p></div>`);
+}
+async function loadConsults() {
+  const list = await App.api("/api/consultations");
+  const ST = { confirmed: ["مؤكدة", "paid"], completed: ["تمت", "delivered"], cancelled: ["ملغية", "cancelled"] };
+  App.qs("#sec-consults").innerHTML = `<div class="row"><h2 style="font-size:1.3rem;margin:0">استشاراتي</h2><span class="spacer"></span><a class="btn sm" href="consult.html">احجزي استشارة</a></div><br>` + (list.length ? list.map(c => {
+    const k = c.recommended_kit && cat.kMap[c.recommended_kit];
+    return `<div class="order-card"><div class="row"><b>${App.esc(c.doctor ? c.doctor.name : "")}</b><span class="tag">${App.esc(c.type_ar)}</span><span class="status ${ST[c.status][1]}">${ST[c.status][0]}</span><span class="spacer"></span><b>${App.fmt(c.price)}</b></div>
+      <div class="small muted">${c.type === "video" ? `الموعد: ${App.esc(c.date)} الساعة ${App.esc(c.time)}` : "استشارة كتابية"} · ${App.esc(c.concern)}</div>
+      ${c.doctor_note ? `<div class="alert ok small" style="margin:10px 0 0"><b>توصية الطبيبة:</b> ${App.esc(c.doctor_note)}${k ? `<br><a href="kit.html?id=${k.id}">الكيت المقترح: ${App.esc(k.name)} ←</a>` : ""}</div>` : ""}
+      ${c.status === "confirmed" ? `<button class="link-btn small" style="color:var(--danger);margin-top:8px" data-cc="${c.id}">إلغاء الاستشارة</button>` : ""}</div>`;
+  }).join("") : `<div class="empty card"><p>ما عندك استشارات. إذا عندك حبوب هرمونية أو فطرية أو تساقط شعر، الطبيبة تساعدك.</p><a class="btn" href="consult.html">احجزي استشارة</a></div>`);
+  App.qsa("[data-cc]").forEach(b => b.onclick = async () => { if (!confirm("متأكدة تبين تلغين الاستشارة؟")) return; try { await App.api(`/api/consultations/${b.dataset.cc}/cancel`, { method: "POST" }); App.toast("تم الإلغاء"); loadConsults(); } catch (e) { App.toast(e.message); } });
+}
+App.qs("#profileForm").onsubmit = async e => {
+  e.preventDefault();
+  await App.api("/api/auth/me", { method: "PATCH", body: { name: App.qs("#pName").value, phone: App.qs("#pPhone").value, city: App.qs("#pCity").value } });
+  App.toast("تم حفظ بياناتك"); App.qs("#hello").textContent = App.qs("#pName").value;
+};
+
+(async () => {
+  [cat, user] = await Promise.all([App.catalog(), App.me()]);
+  if (!user) { App.qs("#auth").classList.remove("hidden"); return; }
+  if (next && /^[a-z]+\.html/.test(next)) { location.href = next; return; }
+  App.qs("#dash").classList.remove("hidden");
+  App.qs("#hello").textContent = user.name;
+  App.qs("#pName").value = user.name; App.qs("#pPhone").value = user.phone || ""; App.qs("#pCity").value = user.city || ""; App.qs("#pEmail").textContent = user.email;
+  const sec = (location.hash || "#orders").slice(1);
+  show(["orders", "subs", "routine", "consults", "profile"].includes(sec) ? sec : "orders");
+  window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (["orders", "subs", "routine", "consults", "profile"].includes(h)) show(h); });
+})();
+</script>
+</body>
+</html>

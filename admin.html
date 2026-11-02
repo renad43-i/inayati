@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>لوحة الإدارة | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<main class="container">
+  <div id="denied" class="auth-box card hidden"><p>هذه الصفحة للإدارة فقط. <a href="account.html?next=admin.html">سجلي الدخول بحساب الإدارة</a></p></div>
+  <div id="panel" class="account-layout hidden">
+    <aside class="card side-nav" id="sideNav">
+      <button data-sec="overview">نظرة عامة</button>
+      <button data-sec="orders">الطلبات</button>
+      <button data-sec="subs">الاشتراكات</button>
+      <button data-sec="consults">الاستشارات</button>
+      <button data-sec="products">المنتجات</button>
+      <button data-sec="kits">الكيتات</button>
+      <button data-sec="customers">العميلات</button>
+    </aside>
+    <section id="content"></section>
+  </div>
+</main>
+
+<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+
+<script>
+App.layout("admin");
+let cat;
+const STEPS = Object.keys(App.STEP_AR);
+const SUITS = { dry: "جاف/جافة", oily: "دهني/دهنية", combo: "مختلطة", normal: "عادي/عادية", sensitive: "حساسة", curly: "شعر مجعد", damaged: "شعر تالف" };
+const NEXT = { paid: "preparing", pending_cod: "preparing", preparing: "shipped", shipped: "delivered" };
+const NEXT_AR = { preparing: "بدء التجهيز", shipped: "تم الشحن", delivered: "تم التوصيل" };
+const C = () => App.qs("#content");
+
+const sections = {
+  async overview() {
+    const s = await App.api("/api/admin/stats");
+    C().innerHTML = `<h1 style="font-size:1.6rem">نظرة عامة</h1>
+      <div class="stats">
+        <div class="card stat"><span class="muted small">إجمالي المبيعات</span><b>${App.fmt(s.revenue)}</b></div>
+        <div class="card stat"><span class="muted small">الطلبات</span><b>${s.orders}</b></div>
+        <div class="card stat"><span class="muted small">العميلات</span><b>${s.customers}</b></div>
+        <div class="card stat"><span class="muted small">اشتراكات فعّالة</span><b>${s.activeSubs}</b></div>
+        <div class="card stat"><span class="muted small">الإيراد الشهري المتكرر (MRR)</span><b>${App.fmt(s.mrr)}</b></div>
+        <div class="card stat"><span class="muted small">اختبارات وتحليلات</span><b>${s.quizzes}</b></div>
+        <div class="card stat"><span class="muted small">الاستشارات (إيرادها)</span><b>${s.consultations} · ${App.fmt(s.consultRevenue)}</b></div>
+      </div>
+      <div class="card"><h3>الكيتات الأكثر مبيعاً</h3>${s.topKits.length ? `<table><tr><th>الكيت</th><th>الكمية</th></tr>${s.topKits.map(k => `<tr><td>${App.esc(k.name)}</td><td>${k.n}</td></tr>`).join("")}</table>` : `<p class="muted">لا توجد مبيعات بعد</p>`}</div>`;
+  },
+  async orders() {
+    const orders = await App.api("/api/admin/orders");
+    C().innerHTML = `<h1 style="font-size:1.6rem">الطلبات</h1><div class="card table-wrap"><table>
+      <tr><th>#</th><th>العميلة</th><th>الكيتات</th><th>الإجمالي</th><th>الدفع</th><th>الحالة</th><th></th></tr>
+      ${orders.map(o => `<tr><td><a href="order.html?id=${o.id}">${o.id}</a>${o.source === "renewal" ? ` <span class="tag sage">تجديد</span>` : ""}</td>
+        <td>${App.esc(o.customer)}<div class="small muted">${App.esc(o.address.city || "")}</div></td>
+        <td class="small">${o.items.map(i => `${App.esc(i.kit_name)} (${App.TIER_AR[i.tier]}) ×${i.qty}`).join("<br>")}</td>
+        <td>${App.fmt(o.total)}</td><td class="small">${App.esc(o.payment_method)}</td>
+        <td><span class="status ${o.status}">${App.esc(o.status_ar)}</span></td>
+        <td>${NEXT[o.status] ? `<button class="btn sm" data-o="${o.id}" data-s="${NEXT[o.status]}">${NEXT_AR[NEXT[o.status]]}</button>` : ""}
+          ${!["delivered", "cancelled"].includes(o.status) ? `<button class="link-btn small" data-o="${o.id}" data-s="cancelled">إلغاء</button>` : ""}</td></tr>`).join("") || `<tr><td colspan="7" class="muted">لا توجد طلبات</td></tr>`}
+      </table></div>`;
+    App.qsa("[data-o]").forEach(b => b.onclick = async () => { await App.api(`/api/admin/orders/${b.dataset.o}/status`, { body: { status: b.dataset.s } }); App.toast("تم تحديث الحالة"); sections.orders(); });
+  },
+  async subs() {
+    const subs = await App.api("/api/admin/subscriptions");
+    const ST = { active: "فعّال", paused: "موقوف", cancelled: "ملغي" };
+    C().innerHTML = `<div class="row"><h1 style="font-size:1.6rem;margin:0">الاشتراكات</h1><span class="spacer"></span>
+      <button class="btn outline sm" id="runDue">تشغيل التجديدات المستحقة</button><button class="btn sm" id="runAll">محاكاة مرور شهر (تجديد الكل)</button></div><br>
+      <div class="card table-wrap"><table><tr><th>#</th><th>العميلة</th><th>الكيت</th><th>السعر/شهر</th><th>الحالة</th><th>التجديد القادم</th></tr>
+      ${subs.map(s => `<tr><td>${s.id}</td><td>${App.esc(s.customer)}</td><td>${App.esc(s.kit_name)} (${App.TIER_AR[s.tier]})</td><td>${App.fmt(s.price)}</td><td><span class="status ${s.status}">${ST[s.status]}</span></td><td>${s.next_renewal}</td></tr>`).join("") || `<tr><td colspan="6" class="muted">لا توجد اشتراكات</td></tr>`}</table></div>`;
+    const run = async force => { const r = await App.api("/api/admin/renewals", { body: { force } }); App.toast(`تم إنشاء ${r.created.length} طلب تجديد`); sections.subs(); };
+    App.qs("#runDue").onclick = () => run(false); App.qs("#runAll").onclick = () => run(true);
+  },
+  async consults() {
+    const [list, catalog] = await Promise.all([App.api("/api/admin/consultations"), App.api("/api/admin/catalog")]);
+    const ST = { confirmed: "مؤكدة", completed: "تمت", cancelled: "ملغية" };
+    C().innerHTML = `<h1 style="font-size:1.6rem">الاستشارات</h1>` + (list.length ? list.map(c => `<div class="card" style="margin-bottom:14px">
+      <div class="row"><b>#${c.id} ${App.esc(c.customer)}</b><span class="tag">${App.esc(c.type_ar)}</span><span class="small muted">${App.esc(c.doctor ? c.doctor.name : "")}${c.type === "video" ? ` · ${App.esc(c.date)} ${App.esc(c.time)}` : ""}</span><span class="spacer"></span><b>${App.fmt(c.price)}</b></div>
+      <p class="small" style="margin:8px 0">${App.esc(c.concern)}${c.notes ? `<br><span class="muted">يستخدم: ${App.esc(c.notes)}</span>` : ""}</p>
+      ${c.analysis ? `<p class="small alert info" style="margin:0 0 8px"><b>تحليل AI مرفق:</b> ${App.esc(c.analysis.summary || "")}</p>` : ""}
+      <div class="grid-2"><div class="field"><label>توصية الطبيبة</label><textarea rows="2" data-note="${c.id}">${App.esc(c.doctor_note || "")}</textarea></div>
+      <div class="field"><label>كيت مقترح</label><select data-kit="${c.id}"><option value="">بدون</option>${catalog.kits.map(k => `<option value="${k.id}" ${c.recommended_kit === k.id ? "selected" : ""}>${App.esc(k.name)}</option>`).join("")}</select>
+      <label style="margin-top:8px">الحالة</label><select data-st="${c.id}">${Object.entries(ST).map(([v, t]) => `<option value="${v}" ${c.status === v ? "selected" : ""}>${t}</option>`).join("")}</select></div></div>
+      <button class="btn sm" data-save="${c.id}">حفظ</button></div>`).join("") : `<p class="muted">لا توجد استشارات</p>`);
+    App.qsa("[data-save]").forEach(b => b.onclick = async () => {
+      const id = b.dataset.save;
+      try { await App.api(`/api/admin/consultations/${id}`, { body: { status: App.qs(`[data-st="${id}"]`).value, doctorNote: App.qs(`[data-note="${id}"]`).value, recommendedKit: App.qs(`[data-kit="${id}"]`).value } }); App.toast("تم الحفظ"); }
+      catch (e) { App.toast(e.message); }
+    });
+  },
+  async products() {
+    cat = await App.api("/api/admin/catalog");
+    C().innerHTML = `<div class="row"><h1 style="font-size:1.6rem;margin:0">المنتجات</h1><span class="spacer"></span><button class="btn sm" id="newP">+ منتج جديد</button></div><br>
+      <div class="card table-wrap"><table><tr><th></th><th>المنتج</th><th>الفئة/الخطوة</th><th>السعر</th><th>المخزون</th><th>يحتوي</th><th>الحالة</th><th></th></tr>
+      ${cat.products.map(p => `<tr><td><span class="prod-img" style="width:46px;height:60px">${App.productImg(p)}</span></td><td><div class="brand-name" dir="ltr">${App.esc(p.brand)}</div>${App.esc(p.name)}<div class="small muted">${p.id} · ${App.esc(p.size)} · ${App.esc(p.country || "")}</div></td><td class="small">${p.cat === "skin" ? "بشرة" : "شعر"} · ${App.STEP_AR[p.step] || p.step}</td>
+        <td>${App.fmt(p.price)}</td><td>${p.stock}</td><td class="small">${p.contains.map(a => App.ALLERGEN_AR[a]).join("، ") || "—"}</td>
+        <td>${p.active ? `<span class="status active">ظاهر</span>` : `<span class="status paused">مخفي</span>`}</td><td><button class="btn outline sm" data-p="${p.id}">تعديل</button></td></tr>`).join("")}</table></div>`;
+    App.qs("#newP").onclick = () => productForm(null);
+    App.qsa("[data-p]").forEach(b => b.onclick = () => productForm(cat.products.find(p => p.id === b.dataset.p)));
+  },
+  async kits() {
+    cat = await App.api("/api/admin/catalog");
+    const pMap = Object.fromEntries(cat.products.map(p => [p.id, p]));
+    C().innerHTML = `<div class="row"><h1 style="font-size:1.6rem;margin:0">الكيتات</h1><span class="spacer"></span><button class="btn sm" id="newK">+ كيت جديد</button></div><br>
+      <div class="card table-wrap"><table><tr><th>الكيت</th><th>أساسي</th><th>متكامل</th><th>فاخر</th><th>الحالة</th><th></th></tr>
+      ${cat.kits.map(k => `<tr><td><b>${App.esc(k.name)}</b><div class="small muted">${App.esc(k.for)}</div></td>
+        ${Engine.TIERS.map(t => `<td class="small">${App.fmt(Engine.kitPrice(k.tiers[t], pMap))}<div class="muted">${k.tiers[t].length} منتجات</div></td>`).join("")}
+        <td>${k.active ? `<span class="status active">ظاهر</span>` : `<span class="status paused">مخفي</span>`}</td><td><button class="btn outline sm" data-k="${k.id}">تعديل</button></td></tr>`).join("")}</table>
+      <p class="small muted">السعر يُحسب تلقائياً: مجموع أسعار المنتجات − 15%.</p></div>`;
+    App.qs("#newK").onclick = () => kitForm(null);
+    App.qsa("[data-k]").forEach(b => b.onclick = () => kitForm(cat.kits.find(k => k.id === b.dataset.k)));
+  },
+  async customers() {
+    const cs = await App.api("/api/admin/customers");
+    C().innerHTML = `<h1 style="font-size:1.6rem">العميلات</h1><div class="card table-wrap"><table><tr><th>الاسم</th><th>البريد</th><th>المدينة</th><th>الطلبات</th><th>المشتريات</th><th>اشتراكات</th><th>التسجيل</th></tr>
+      ${cs.map(c => `<tr><td>${App.esc(c.name)}</td><td dir="ltr" style="text-align:right">${App.esc(c.email)}</td><td>${App.esc(c.city || "—")}</td><td>${c.orders}</td><td>${App.fmt(c.spent)}</td><td>${c.subs}</td><td class="small">${App.dateAr(c.created_at)}</td></tr>`).join("") || `<tr><td colspan="7" class="muted">لا توجد عميلات</td></tr>`}</table></div>`;
+  }
+};
+
+/* ---------- نماذج الإضافة والتعديل ---------- */
+const dlg = App.qs("#dlg"), form = App.qs("#dlgForm");
+const checks = (name, map, selected) => `<div class="check-grid">${Object.entries(map).map(([v, t]) => `<label><input type="checkbox" name="${name}" value="${v}" ${selected.includes(v) ? "checked" : ""}>${App.esc(t)}</label>`).join("")}</div>`;
+const vals = name => App.qsa(`input[name="${name}"]:checked`, form).map(i => i.value);
+
+function productForm(p) {
+  const isNew = !p; p = p || { id: "", cat: "skin", step: "serum", brand: "", country: "", nameEn: "", tiktok: "", name: "", size: "", price: 0, desc: "", suits: [], contains: [], stock: 100, active: true };
+  form.innerHTML = `<h2>${isNew ? "منتج جديد" : "تعديل " + App.esc(p.name)}</h2><div id="fErr" class="alert error hidden"></div>
+    <div class="grid-2"><div class="field"><label>الرمز</label><input name="id" value="${App.esc(p.id)}" ${isNew ? "" : "disabled"} required class="ltr" placeholder="p26"></div>
+    <div class="field"><label>الفئة</label><select name="cat" ${isNew ? "" : "disabled"}><option value="skin" ${p.cat === "skin" ? "selected" : ""}>بشرة</option><option value="hair" ${p.cat === "hair" ? "selected" : ""}>شعر</option></select></div></div>
+    <div class="grid-2"><div class="field"><label>البراند</label><input name="brand" value="${App.esc(p.brand)}" required class="ltr" placeholder="COSRX"></div>
+    <div class="field"><label>بلد البراند</label><input name="country" value="${App.esc(p.country)}" placeholder="🇰🇷 كوريا"></div></div>
+    <div class="field"><label>الاسم بالعربي</label><input name="name" value="${App.esc(p.name)}" required></div>
+    <div class="field"><label>الاسم الإنجليزي (يُستخدم في الصورة وبحث تيك توك)</label><input name="nameEn" value="${App.esc(p.nameEn)}" class="ltr"></div>
+    <div class="field"><label>رابط ريفيو تيك توك (اختياري — يُنشأ تلقائياً)</label><input name="tiktok" value="${App.esc(p.tiktok)}" class="ltr"></div>
+    <div class="grid-2"><div class="field"><label>الخطوة</label><select name="step">${STEPS.map(s => `<option value="${s}" ${s === p.step ? "selected" : ""}>${App.STEP_AR[s]}</option>`).join("")}</select></div>
+    <div class="field"><label>الحجم</label><input name="size" value="${App.esc(p.size)}"></div>
+    <div class="field"><label>السعر (ر.س)</label><input name="price" type="number" min="0" step="1" value="${p.price}" required></div>
+    <div class="field"><label>المخزون</label><input name="stock" type="number" min="0" value="${p.stock}"></div></div>
+    <div class="field"><label>الوصف</label><textarea name="desc" rows="2">${App.esc(p.desc)}</textarea></div>
+    <div class="field"><label>يناسب</label>${checks("suits", SUITS, p.suits)}</div>
+    <div class="field"><label>يحتوي على (مسببات حساسية)</label>${checks("contains", App.ALLERGEN_AR, p.contains)}</div>
+    <div class="field"><label>مناسب لـ</label>${checks("goodFor", CONCERN_TAGS, p.goodFor || [])}</div>
+    <div class="field"><label>الحبوب الفطرية</label><select name="fungal"><option value="" ${p.fungal == null ? "selected" : ""}>غير مؤكد</option><option value="true" ${p.fungal === true ? "selected" : ""}>مناسب غالباً</option><option value="false" ${p.fungal === false ? "selected" : ""}>غير مناسب (يغذي الفطريات)</option></select></div>
+    <label style="display:flex;gap:8px"><input type="checkbox" name="active" style="width:auto" ${p.active ? "checked" : ""}> ظاهر في المتجر</label>
+    <div class="row" style="margin-top:16px"><button class="btn" value="save">حفظ</button><button class="btn outline" value="cancel" formnovalidate>إلغاء</button></div>`;
+  form.onsubmit = async e => {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
+    const f = new FormData(form);
+    const body = { id: f.get("id") || p.id, cat: f.get("cat") || p.cat, brand: f.get("brand"), country: f.get("country"), nameEn: f.get("nameEn"), tiktok: f.get("tiktok"), name: f.get("name"), step: f.get("step"), size: f.get("size"), price: +f.get("price"), stock: +f.get("stock"), desc: f.get("desc"), suits: vals("suits"), contains: vals("contains"), goodFor: vals("goodFor"), fungal: f.get("fungal") === "" ? null : f.get("fungal") === "true", active: !!f.get("active") };
+    try { await App.api(isNew ? "/api/admin/products" : `/api/admin/products/${p.id}`, { method: isNew ? "POST" : "PUT", body }); dlg.close(); App.toast("تم الحفظ"); sections.products(); }
+    catch (ex) { const el = App.qs("#fErr"); el.textContent = ex.message; el.classList.remove("hidden"); }
+  };
+  dlg.showModal();
+}
+function kitForm(k) {
+  const isNew = !k; k = k || { id: "", cat: "skin", name: "", for: "", tagline: "", color: "#E3ECE4", tiktok: "https://www.tiktok.com/@inayati.sa", active: true, tiers: { basic: [], full: [], plus: [] }, routine: { morning: [], evening: [], weekly: [] } };
+  const prods = c => Object.fromEntries(cat.products.filter(p => p.cat === c).map(p => [p.id, p.name]));
+  const r = k.routine || {};
+  form.innerHTML = `<h2>${isNew ? "كيت جديد" : "تعديل " + App.esc(k.name)}</h2><div id="fErr" class="alert error hidden"></div>
+    <div class="grid-2"><div class="field"><label>الرمز</label><input name="id" value="${App.esc(k.id)}" ${isNew ? "" : "disabled"} required class="ltr" placeholder="k-new"></div>
+    <div class="field"><label>الفئة</label><select name="cat" id="kCat" ${isNew ? "" : "disabled"}><option value="skin" ${k.cat === "skin" ? "selected" : ""}>بشرة</option><option value="hair" ${k.cat === "hair" ? "selected" : ""}>شعر</option></select></div>
+    <div class="field"><label>الاسم</label><input name="name" value="${App.esc(k.name)}" required></div>
+    <div class="field"><label>مناسب لـ</label><input name="for" value="${App.esc(k.for)}"></div>
+    <div class="field"><label>الوصف المختصر</label><input name="tagline" value="${App.esc(k.tagline)}"></div>
+    <div class="field"><label>اللون</label><input name="color" type="color" value="${App.esc(k.color)}" style="height:46px;padding:4px"></div></div>
+    <div class="field"><label>رابط فيديو تيك توك</label><input name="tiktok" class="ltr" value="${App.esc(k.tiktok)}"></div>
+    <div id="tierBoxes">${tierBoxes(k.cat, k.tiers, prods)}</div>
+    <div class="field"><label>روتين الصباح (سطر لكل خطوة)</label><textarea name="morning" rows="3">${App.esc((r.morning || []).join("\n"))}</textarea></div>
+    <div class="field"><label>روتين المساء</label><textarea name="evening" rows="3">${App.esc((r.evening || []).join("\n"))}</textarea></div>
+    <div class="field"><label>أسبوعي / نصائح</label><textarea name="weekly" rows="2">${App.esc((r.weekly || []).join("\n"))}</textarea></div>
+    <label style="display:flex;gap:8px"><input type="checkbox" name="active" style="width:auto" ${k.active ? "checked" : ""}> ظاهر في المتجر</label>
+    <div class="row" style="margin-top:16px"><button class="btn" value="save">حفظ</button><button class="btn outline" value="cancel" formnovalidate>إلغاء</button></div>`;
+  if (isNew) App.qs("#kCat").onchange = e => App.qs("#tierBoxes").innerHTML = tierBoxes(e.target.value, { basic: [], full: [], plus: [] }, prods);
+  form.onsubmit = async e => {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
+    const f = new FormData(form), lines = n => (f.get(n) || "").split("\n").map(s => s.trim()).filter(Boolean);
+    const body = { id: f.get("id") || k.id, cat: f.get("cat") || k.cat, name: f.get("name"), for: f.get("for"), tagline: f.get("tagline"), color: f.get("color"), tiktok: f.get("tiktok"), active: !!f.get("active"),
+      tiers: Object.fromEntries(Engine.TIERS.map(t => [t, vals("tier_" + t)])), routine: { morning: lines("morning"), evening: lines("evening"), weekly: lines("weekly") } };
+    try { await App.api(isNew ? "/api/admin/kits" : `/api/admin/kits/${k.id}`, { method: isNew ? "POST" : "PUT", body }); dlg.close(); App.toast("تم الحفظ"); sections.kits(); }
+    catch (ex) { const el = App.qs("#fErr"); el.textContent = ex.message; el.classList.remove("hidden"); }
+  };
+  dlg.showModal();
+}
+const tierBoxes = (c, tiers, prods) => Engine.TIERS.map(t => `<div class="field"><label>منتجات المستوى ${App.TIER_AR[t]}</label>${checks("tier_" + t, prods(c), tiers[t] || [])}</div>`).join("");
+
+/* ---------- التشغيل ---------- */
+function show(sec) {
+  App.qsa("#sideNav [data-sec]").forEach(b => b.classList.toggle("active", b.dataset.sec === sec));
+  history.replaceState(null, "", "#" + sec);
+  sections[sec]().catch(e => C().innerHTML = `<p class="alert error">${App.esc(e.message)}</p>`);
+}
+App.qsa("#sideNav [data-sec]").forEach(b => b.onclick = () => show(b.dataset.sec));
+App.me().then(u => {
+  if (!u || u.role !== "admin") { App.qs("#denied").classList.remove("hidden"); return; }
+  App.qs("#panel").classList.remove("hidden");
+  const sec = location.hash.slice(1); show(sections[sec] ? sec : "overview");
+  window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (sections[h]) show(h); });
+});
+</script>
+</body>
+</html>

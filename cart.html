@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>السلة | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<main class="container">
+  <div class="cart-layout">
+    <div>
+      <div class="card"><h1 style="font-size:1.6rem">سلتك</h1><div id="items"></div></div>
+      <div class="card hidden" id="checkout" style="margin-top:20px">
+        <h2 style="font-size:1.4rem">بيانات التوصيل</h2>
+        <div id="loginNote" class="alert info hidden">لازم <a href="account.html?next=cart.html">تسجلين دخولك أو تنشئين حساب</a> عشان تكملين الطلب.</div>
+        <form id="form">
+          <div class="grid-2">
+            <div class="field"><label for="aName">الاسم</label><input id="aName" required></div>
+            <div class="field"><label for="aPhone">رقم الجوال</label><input id="aPhone" class="ltr" required placeholder="05xxxxxxxx" pattern="05\d{8}" title="رقم سعودي يبدأ بـ 05"></div>
+            <div class="field"><label for="aCity">المدينة</label><select id="aCity" required><option value="">اختاري</option><option>الرياض</option><option>جدة</option><option>مكة المكرمة</option><option>المدينة المنورة</option><option>الدمام</option><option>الخبر</option><option>أبها</option><option>تبوك</option><option>القصيم</option><option>حائل</option></select></div>
+            <div class="field"><label for="aStreet">الحي والشارع</label><input id="aStreet" required></div>
+          </div>
+          <h2 style="font-size:1.4rem;margin-top:10px">الدفع</h2>
+          <div class="purchase pay-methods">
+            <label class="active"><input type="radio" name="pm" value="card" checked> بطاقة (مدى / فيزا / ماستركارد)</label>
+            <label id="codLabel"><input type="radio" name="pm" value="cod"> الدفع عند الاستلام</label>
+          </div>
+          <div id="cardFields">
+            <div class="test-cards">🔒 <b>بوابة دفع تجريبية</b> — لا يتم خصم أي مبلغ.<br>بطاقة ناجحة: <code>4242 4242 4242 4242</code> · بطاقة مرفوضة: <code>4000 0000 0000 0002</code> · أي تاريخ مستقبلي وأي CVV.</div>
+            <div class="field"><label for="cNum">رقم البطاقة</label><input id="cNum" class="ltr" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000"></div>
+            <div class="grid-2">
+              <div class="field"><label for="cExp">تاريخ الانتهاء</label><input id="cExp" class="ltr" placeholder="MM/YY" autocomplete="cc-exp"></div>
+              <div class="field"><label for="cCvv">CVV</label><input id="cCvv" class="ltr" inputmode="numeric" maxlength="4" autocomplete="cc-csc"></div>
+            </div>
+          </div>
+          <div id="payErr" class="alert error hidden"></div>
+          <button class="btn block" id="payBtn">ادفعي الآن</button>
+        </form>
+      </div>
+    </div>
+    <aside class="card" id="summary"></aside>
+  </div>
+</main>
+<script>
+App.layout("cart");
+let cat, user, quote;
+async function refresh() {
+  const items = App.cart.get();
+  const box = App.qs("#items");
+  if (!items.length) {
+    box.innerHTML = `<div class="empty"><p>سلتك فاضية.</p><a class="btn" href="quiz.html">حددي روتينك</a> <a class="btn outline" href="kits.html">تصفحي الكيتات</a></div>`;
+    App.qs("#summary").classList.add("hidden"); App.qs("#checkout").classList.add("hidden"); return;
+  }
+  quote = await App.api("/api/cart/quote", { body: { items } });
+  box.innerHTML = items.map((it, i) => {
+    const k = cat.kMap[it.kitId]; if (!k) return "";
+    const unit = quote.lines[i].unitPrice;
+    return `<div class="cart-item">
+      <div class="kit-visual" style="background:${k.color}">${App.kitSVG(k, it.productIds)}</div>
+      <div><b>${App.esc(k.name)}</b> <span class="tag">${App.TIER_AR[it.tier]}</span>
+        <div class="small muted">${it.purchaseType === "subscription" ? "🔁 اشتراك شهري" : "شراء مرة واحدة"} · ${it.productIds.length} منتجات</div>
+        <div class="small muted">${it.productIds.map(id => App.esc(cat.pMap[id] ? cat.pMap[id].name : id)).join("، ")}</div>
+        <div class="row" style="margin-top:8px"><div class="qty"><button data-i="${i}" data-d="1">+</button><span>${it.qty}</span><button data-i="${i}" data-d="-1">−</button></div>
+        <button class="link-btn small" data-rm="${i}">حذف</button></div></div>
+      <div class="price">${App.fmt(unit * it.qty)}</div></div>`;
+  }).join("");
+  const hasSub = items.some(i => i.purchaseType === "subscription");
+  App.qs("#summary").classList.remove("hidden");
+  App.qs("#summary").innerHTML = `<h2 style="font-size:1.3rem">ملخص الطلب</h2>
+    <div class="summary-row"><span>المجموع</span><span>${App.fmt(quote.subtotal)}</span></div>
+    <div class="summary-row"><span>الشحن</span><span>${quote.shipping ? App.fmt(quote.shipping) : "مجاني"}</span></div>
+    ${quote.shipping ? `<p class="small muted" style="margin:0">أضيفي ${App.fmt(200 - quote.subtotal)} للشحن المجاني</p>` : ""}
+    <div class="summary-row total"><span>الإجمالي</span><span>${App.fmt(quote.total)}</span></div>
+    <p class="small muted">الأسعار شاملة ضريبة القيمة المضافة.</p>
+    ${hasSub ? `<p class="alert info small">الاشتراك يتجدد تلقائياً كل شهر بنفس السعر، وتقدرين توقفينه من حسابك.</p>` : ""}
+    <button class="btn block" id="goCheckout">إتمام الطلب</button>`;
+  App.qs("#codLabel").classList.toggle("hidden", hasSub);
+  App.qsa("[data-d]").forEach(b => b.onclick = () => { const its = App.cart.get(); const it = its[b.dataset.i]; it.qty = Math.max(1, Math.min(10, it.qty + +b.dataset.d)); App.cart.save(its); refresh(); });
+  App.qsa("[data-rm]").forEach(b => b.onclick = () => { const its = App.cart.get(); its.splice(b.dataset.rm, 1); App.cart.save(its); refresh(); });
+  App.qs("#goCheckout").onclick = () => { App.qs("#checkout").classList.remove("hidden"); App.qs("#checkout").scrollIntoView({ behavior: "smooth" }); };
+}
+
+App.qsa("input[name=pm]").forEach(r => r.onchange = () => {
+  App.qsa(".pay-methods label").forEach(l => l.classList.toggle("active", l.querySelector("input").checked));
+  App.qs("#cardFields").classList.toggle("hidden", r.value === "cod" && r.checked);
+  App.qs("#payBtn").textContent = App.qs("input[name=pm]:checked").value === "cod" ? "تأكيد الطلب" : "ادفعي الآن";
+});
+App.qs("#cNum").oninput = e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim(); };
+App.qs("#cExp").oninput = e => { let v = e.target.value.replace(/\D/g, "").slice(0, 4); if (v.length > 2) v = v.slice(0, 2) + "/" + v.slice(2); e.target.value = v; };
+
+App.qs("#form").onsubmit = async e => {
+  e.preventDefault();
+  const err = App.qs("#payErr"); err.classList.add("hidden");
+  if (!user) { App.qs("#loginNote").classList.remove("hidden"); return; }
+  const method = App.qs("input[name=pm]:checked").value;
+  const btn = App.qs("#payBtn"); btn.disabled = true; btn.textContent = "جاري المعالجة…";
+  try {
+    const { order } = await App.api("/api/orders", { body: {
+      items: App.cart.get(),
+      address: { name: App.qs("#aName").value, phone: App.qs("#aPhone").value, city: App.qs("#aCity").value, street: App.qs("#aStreet").value },
+      payment: method === "cod" ? { method: "cod" } : { method: "card", cardNumber: App.qs("#cNum").value, expiry: App.qs("#cExp").value, cvv: App.qs("#cCvv").value }
+    } });
+    App.cart.clear();
+    location.href = `order.html?id=${order.id}&new=1`;
+  } catch (ex) {
+    err.textContent = ex.message; err.classList.remove("hidden");
+    if (ex.status === 401) App.qs("#loginNote").classList.remove("hidden");
+  } finally { btn.disabled = false; btn.textContent = method === "cod" ? "تأكيد الطلب" : "ادفعي الآن"; }
+};
+
+(async () => {
+  [cat, user] = await Promise.all([App.catalog(), App.me()]);
+  if (user) { App.qs("#aName").value = user.name || ""; App.qs("#aPhone").value = user.phone || ""; if (user.city) App.qs("#aCity").value = user.city; }
+  else App.qs("#loginNote").classList.remove("hidden");
+  refresh();
+})();
+</script>
+</body>
+</html>

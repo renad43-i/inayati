@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 72" role="img" aria-label="عنايتي Inayati">
+  <g transform="translate(192 4)">
+    <circle cx="32" cy="32" r="30" fill="#F2D4D2"/>
+    <path d="M32 12 C40 24 46 31 46 39 a14 14 0 0 1-28 0 C18 31 24 24 32 12Z" fill="#6F9277"/>
+    <path d="M32 50 C32 40 36 33 42 29 C40 37 37 44 32 50Z" fill="#FBF7F1" opacity=".9"/>
+    <circle cx="26" cy="36" r="3" fill="#FBF7F1" opacity=".9"/>
+  </g>
+  <text x="182" y="40" text-anchor="end" font-family="El Messiri, Tajawal, sans-serif" font-size="34" font-weight="700" fill="#2F3B30">عنايتي</text>
+  <text x="182" y="62" text-anchor="end" font-family="Poppins, Arial, sans-serif" font-size="13" letter-spacing="4" fill="#6F9277">INAYATI</text>
+</svg>

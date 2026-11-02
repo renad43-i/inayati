@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<title>تتبع الطلب | عنايتي</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/mock-api.js"></script><script src="js/packshots.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<div style="background:#2F3B30;color:#FBF7F1;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
+<main class="container" style="max-width:820px;padding:36px 0">
+  <div id="box" class="card"><p class="muted">جاري التحميل…</p></div>
+</main>
+<script>
+App.layout("account");
+(async () => {
+  const box = App.qs("#box");
+  try {
+    const [o, cat] = await Promise.all([App.api(`/api/orders/${encodeURIComponent(App.params.get("id"))}`), App.catalog()]);
+    const flow = ["paid", "preparing", "shipped", "delivered"];
+    const reached = o.status === "pending_cod" ? 0 : flow.indexOf(o.status);
+    const labels = ["تم الطلب", "قيد التجهيز", "تم الشحن", "تم التوصيل"];
+    box.innerHTML = `
+      ${App.params.get("new") ? `<div class="alert ok"><b>شكراً لك! تم استلام طلبك 🎉</b><br>${o.payment_ref ? "رقم العملية: " + App.esc(o.payment_ref) : "الدفع عند الاستلام"}</div>` : ""}
+      <div class="row"><h1 style="font-size:1.6rem;margin:0">طلب #${o.id}</h1><span class="status ${o.status}">${App.esc(o.status_ar)}</span><span class="spacer"></span><span class="muted small">${App.dateAr(o.created_at)}</span></div>
+      ${o.source === "renewal" ? `<p class="small muted">تجديد شهري للاشتراك #${o.subscription_id}</p>` : ""}
+      ${o.status === "cancelled" ? `<p class="alert error">تم إلغاء هذا الطلب.</p>` : `<div class="tracker">${labels.map((l, i) => `<div class="t-step ${i <= reached ? "done" : ""}"><div class="dot">${i <= reached ? "✓" : i + 1}</div>${l}</div>`).join("")}</div>`}
+      <h3>المنتجات</h3>
+      ${o.items.map(it => { const k = cat.kMap[it.kit_id]; return `<div class="cart-item" style="grid-template-columns:64px 1fr auto">
+        <div class="kit-visual" style="background:${k ? k.color : "#eee"}">${k ? App.kitSVG(k, it.product_ids) : ""}</div>
+        <div><b>${App.esc(it.kit_name)}</b> <span class="tag">${App.TIER_AR[it.tier]}</span> × ${it.qty}
+        <div class="small muted">${it.purchase_type === "subscription" ? "🔁 اشتراك شهري" : "مرة واحدة"} · ${it.product_ids.map(id => App.esc(cat.pMap[id] ? cat.pMap[id].name : id)).join("، ")}</div></div>
+        <span>${App.fmt(it.unit_price * it.qty)}</span></div>`; }).join("")}
+      <div style="max-width:320px;margin-inline-start:auto;margin-top:12px">
+        <div class="summary-row"><span>المجموع</span><span>${App.fmt(o.subtotal)}</span></div>
+        <div class="summary-row"><span>الشحن</span><span>${o.shipping ? App.fmt(o.shipping) : "مجاني"}</span></div>
+        <div class="summary-row total"><span>الإجمالي</span><span>${App.fmt(o.total)}</span></div></div>
+      <h3>سجل الحالة</h3>
+      <ul class="timeline">${o.events.map(e => `<li><b>${App.esc(e.note)}</b><div class="small muted">${App.dateAr(e.created_at)}</div></li>`).join("")}</ul>
+      <h3>عنوان التوصيل</h3><p class="small">${App.esc(o.address.name)} · <span dir="ltr">${App.esc(o.address.phone)}</span><br>${App.esc(o.address.city)} — ${App.esc(o.address.street)}</p>
+      <div class="row"><a class="btn outline" href="account.html">طلباتي</a>${["paid", "pending_cod"].includes(o.status) && o.source !== "renewal" ? `<button class="btn danger" id="cancel">إلغاء الطلب</button>` : ""}</div>`;
+    const c = App.qs("#cancel");
+    if (c) c.onclick = async () => { if (!confirm("متأكدة تبين تلغين الطلب؟")) return; try { await App.api(`/api/orders/${o.id}/cancel`, { method: "POST" }); location.reload(); } catch (e) { App.toast(e.message); } };
+  } catch (e) {
+    box.innerHTML = e.status === 401 ? `<p>سجلي دخولك لعرض الطلب. <a href="account.html?next=${encodeURIComponent(location.pathname.slice(1) + location.search)}">تسجيل الدخول</a></p>` : `<p class="empty">${App.esc(e.message)}</p>`;
+  }
+})();
+</script>
+</body>
+</html>
