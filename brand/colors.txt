@@ -1,0 +1,9 @@
+RENAURA – Palette A
+Velvet Red   #8E1B22  (brand name, buttons, prices)
+Dark Olive   #3E4130  (body text, menus, tagline)
+Light Cream  #F4EFEA  (background)
+
+Skin tones in the arcs (outer to inner):
+#E3B793 straight · #C68E64 wavy · #9A6443 curly · #5C3722 coily
+
+Font: Cormorant Garamond (Google Fonts) – logo text is converted to outlines.
