@@ -47,6 +47,12 @@
           if ((s.goodFor || []).includes("dandruff") && !(p.goodFor || []).includes("dandruff")) p.goodFor = [...(p.goodFor || []), "dandruff"]; });
         mem.m2026_11 = true;
       }
+      if (!mem.m2026_11b) {
+        const L = "ء-ي", re = new RegExp(`(?<![${L}])((?:و|ف|ب|ل)?(?:ال|لل)?)كيت(ات|ين|ك)?(?![${L}])`, "g");
+        const fix = v => typeof v === "string" ? v.replace(re, (x, a, b) => a + "روتين" + (b || "")) : v;
+        mem.kits.forEach(k => { const s = KITS.find(x => x.id === k.id); if (!s) return; k.name = fix(k.name); k.for = fix(k.for); k.tagline = fix(k.tagline); k.routine = JSON.parse(fix(JSON.stringify(k.routine || {}))); });
+        mem.m2026_11b = true;
+      }
       save();
     }
     return mem;
@@ -113,12 +119,12 @@
         const p = pMap[it.productId] || bad("منتج غير متوفر");
         return { product: p, kit: null, tier: "single", productIds: [p.id], qty: Math.min(10, Math.max(1, parseInt(it.qty, 10) || 1)), purchaseType: "once", unitPrice: p.price };
       }
-      const kit = kMap[it.kitId] || bad("كيت غير متوفر");
+      const kit = kMap[it.kitId] || bad("روتين غير متوفر");
       if (!Engine.TIERS.includes(it.tier)) bad("مستوى غير صحيح");
       const qty = Math.min(10, Math.max(1, parseInt(it.qty, 10) || 1));
       const purchaseType = it.purchaseType === "subscription" ? "subscription" : "once";
       const productIds = Array.isArray(it.productIds) && it.productIds.length ? it.productIds : kit.tiers[it.tier];
-      if (productIds.some(id => !pMap[id] || pMap[id].cat !== kit.cat)) bad("منتجات غير صحيحة في الكيت");
+      if (productIds.some(id => !pMap[id] || pMap[id].cat !== kit.cat)) bad("منتجات غير صحيحة في الروتين");
       return { kit, tier: it.tier, productIds, qty, purchaseType, unitPrice: Engine.kitPrice(productIds, pMap, purchaseType) };
     });
     const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0), shipping = Engine.shippingFor(subtotal, delivery, city);
@@ -268,7 +274,7 @@
     ["POST", /^\/api\/admin\/consultations\/(\d+)$/, (b, m) => {
       needAdmin(); const d = load(), c = d.consults.find(x => x.id === +m[1]) || bad("الاستشارة غير موجودة", 404);
       if (!["confirmed", "completed", "cancelled"].includes(b.status)) bad("حالة غير صحيحة");
-      if (b.recommendedKit && !d.kits.some(k => k.id === b.recommendedKit)) bad("كيت غير موجود");
+      if (b.recommendedKit && !d.kits.some(k => k.id === b.recommendedKit)) bad("روتين غير موجود");
       Object.assign(c, { status: b.status, doctor_note: b.doctorNote || null, recommended_kit: b.recommendedKit || null }); save(); return consultFull(c);
     }],
     /* ----- الإدارة ----- */
@@ -324,11 +330,11 @@
   ];
   function saveKit(k, isNew, id) {
     needAdmin(); const d = load();
-    if (!id || !k.name || (isNew && !["skin", "hair"].includes(k.cat))) bad("بيانات الكيت ناقصة");
+    if (!id || !k.name || (isNew && !["skin", "hair"].includes(k.cat))) bad("بيانات الروتين ناقصة");
     for (const t of Engine.TIERS) if (!Array.isArray(k.tiers && k.tiers[t]) || !k.tiers[t].length) bad("كل مستوى يحتاج منتجاً واحداً على الأقل");
     const data = { name: k.name, for: k.for || "", tagline: k.tagline || "", color: k.color || "#EEE", routine: k.routine || { morning: [], evening: [], weekly: [] }, tiktok: k.tiktok || "", active: k.active !== false, tiers: k.tiers };
-    if (isNew) { if (d.kits.find(x => x.id === id)) bad("رمز الكيت مستخدم"); d.kits.push({ id, cat: k.cat, ...data }); }
-    else Object.assign(d.kits.find(x => x.id === id) || bad("الكيت غير موجود", 404), data);
+    if (isNew) { if (d.kits.find(x => x.id === id)) bad("رمز الروتين مستخدم"); d.kits.push({ id, cat: k.cat, ...data }); }
+    else Object.assign(d.kits.find(x => x.id === id) || bad("الروتين غير موجود", 404), data);
     save(); return { ok: true };
   }
 

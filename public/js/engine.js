@@ -138,39 +138,39 @@
   }
 
   /* ---------- قواعد التوصية ----------
-     القاعدة 1: البشرة الحساسة لها الأولوية دائماً ← كيت التهدئة (ونتجنب العطور تلقائياً)
+     القاعدة 1: البشرة الحساسة لها الأولوية دائماً ← روتين التهدئة (ونتجنب العطور تلقائياً)
      القاعدة 2: المشكلة الأساسية تتقدم على النوع: حبوب ← صفاء، تصبغات ← الإشراقة
      القاعدة 3: جفاف مع بشرة دهنية/مختلطة ← التوازن الذكي، وإلا ← الترطيب العميق
      القاعدة 4: مسام مع بشرة جافة ← التوازن الذكي، وإلا ← التوازن والنقاء
      القاعدة 5: بدون مشكلة ← حسب نوع البشرة
      القاعدة 6: الشعر ← حسب نوع الشعر مباشرة
      القاعدة 7: الميزانية (حتى 250 / 250–400 / أكثر من 400) تحدد المستوى (أساسي/متكامل/فاخر)، وإذا تجاوز المجموع الميزانية
-               نخفّض مستوى كيت الشعر أولاً ثم البشرة
+               نخفّض مستوى روتين الشعر أولاً ثم البشرة
      القاعدة 8: أي منتج فيه مكوّن تتحسس منه يُستبدل ببديل من نفس الخطوة يناسب نوعها،
                وإذا ما فيه بديل يُحذف ونوضح ذلك */
   function pickSkinKit(type, concern, barrier) {
     if (barrier && type !== "sensitive" && concern !== "hormonal" && concern !== "fungal") return { kit: "k-sensitive", barrier: true,
-      why: "حاجز بشرتك متضرر، فأول شي نرممه قبل أي علاج: كيت التهدئة مع كريم ترميم بالسيراميد. وقّفي التقشير والريتينول أسبوعين إلى أربعة، وبعدها ترجعين تعالجين مشكلتك الأساسية." };
+      why: "حاجز بشرتك متضرر، فأول شي نرممه قبل أي علاج: روتين التهدئة مع كريم ترميم بالسيراميد. وقّفي التقشير والريتينول أسبوعين إلى أربعة، وبعدها ترجعين تعالجين مشكلتك الأساسية." };
     if (type === "sensitive") return { kit: "k-sensitive", consult: concern === "hormonal" || concern === "fungal", avoidFungal: concern === "fungal", why: "بشرتك حساسة، فبدأنا بالتهدئة وتقوية الحاجز قبل أي علاج." };
     if (concern === "hormonal") return { kit: "k-acne", consult: true,
-      why: "الحبوب الهرمونية سببها من الداخل، فكيت صفاء عناية مساندة تهدّي الالتهاب وتمنع الانسداد، والعلاج الأساسي عند الطبيبة." };
+      why: "الحبوب الهرمونية سببها من الداخل، فروتين صفاء عناية مساندة تهدّي الالتهاب وتمنع الانسداد، والعلاج الأساسي عند الطبيبة." };
     if (concern === "fungal") return { kit: "k-acne", consult: true, avoidFungal: true,
-      why: "اخترنا كيت صفاء بعد استبعاد المنتجات اللي ممكن تغذي الفطريات، وننصحك تتأكدين من التشخيص مع الطبيبة." };
-    if (concern === "marks") return { kit: "k-bright", why: "اخترنا كيت الإشراقة لأنه يخفف آثار الحبوب ويوحّد لون البشرة، مع واقي شمس يمنعها تغمق." };
-    if (concern === "acne") return { kit: "k-acne", why: "اخترنا كيت صفاء لأن الحبوب هي مشكلتك الأساسية." };
-    if (concern === "pigment") return { kit: "k-bright", why: "اخترنا كيت الإشراقة بفيتامين C لعلاج التصبغات والبهتان." };
+      why: "اخترنا روتين صفاء بعد استبعاد المنتجات اللي ممكن تغذي الفطريات، وننصحك تتأكدين من التشخيص مع الطبيبة." };
+    if (concern === "marks") return { kit: "k-bright", why: "اخترنا روتين الإشراقة لأنه يخفف آثار الحبوب ويوحّد لون البشرة، مع واقي شمس يمنعها تغمق." };
+    if (concern === "acne") return { kit: "k-acne", why: "اخترنا روتين صفاء لأن الحبوب هي مشكلتك الأساسية." };
+    if (concern === "pigment") return { kit: "k-bright", why: "اخترنا روتين الإشراقة بفيتامين C لعلاج التصبغات والبهتان." };
     if (concern === "dryness") return (type === "oily" || type === "combo")
       ? { kit: "k-combo", why: "بشرتك دهنية لكنها تعاني من الجفاف، فتحتاج توازن: ترطيب بدون ثقل." }
       : { kit: "k-dry", why: "الجفاف هو مشكلتك الأساسية، فاخترنا الترطيب العميق." };
     if (concern === "pores") return type === "dry"
       ? { kit: "k-combo", why: "المسام واضحة لكن بشرتك تميل للجفاف، فاخترنا التوازن الذكي." }
-      : { kit: "k-oily", why: "اخترنا كيت التوازن والنقاء بالنياسيناميد لتقليل المسام واللمعان." };
+      : { kit: "k-oily", why: "اخترنا روتين التوازن والنقاء بالنياسيناميد لتقليل المسام واللمعان." };
     const map = { dry: "k-dry", oily: "k-oily", combo: "k-combo", normal: "k-normal" };
-    return { kit: map[type] || "k-normal", why: "اخترنا الكيت المناسب لنوع بشرتك للمحافظة عليها." };
+    return { kit: map[type] || "k-normal", why: "اخترنا الروتين المناسب لنوع بشرتك للمحافظة عليها." };
   }
   function pickHairKit(type) {
     const map = { dry: "h-dry", oily: "h-oily", curly: "h-curly", damaged: "h-damaged", normal: "h-normal" };
-    return { kit: map[type] || "h-normal", why: "اخترنا الكيت حسب نوع شعرك." };
+    return { kit: map[type] || "h-normal", why: "اخترنا الروتين حسب نوع شعرك." };
   }
 
   /* أسباب استبعاد منتج: مكوّن تتحسس منه، أو (للحبوب الفطرية) منتج قد يغذي الفطريات */
@@ -200,7 +200,7 @@
     const answers = normalize(rawAnswers);
     const productMap = Object.fromEntries(catalog.products.map(p => [p.id, p]));
     const kitMap = Object.fromEntries(catalog.kits.map(k => [k.id, k]));
-    // حساسية العميلة تنطبق على كل الكيتات؛ أما استبعاد العطور للبشرة الحساسة والمنتجات اللي تغذي الفطريات فيخص كيت البشرة بس
+    // حساسية العميلة تنطبق على كل الروتينات؛ أما استبعاد العطور للبشرة الحساسة والمنتجات اللي تغذي الفطريات فيخص روتين البشرة بس
     const userAllergens = (answers.allergies || []).filter(a => a !== "none");
     const allergens = [...userAllergens];
     const skinAllergens = [...userAllergens];
@@ -233,7 +233,7 @@
     });
     let result = build();
     const total = () => result.reduce((s, r) => s + r.price, 0);
-    // القاعدة 7: نخفّض من آخر كيت (الشعر) أولاً
+    // القاعدة 7: نخفّض من آخر روتين (الشعر) أولاً
     while (total() > max) {
       let idx = -1;
       for (let i = tiers.length - 1; i >= 0; i--) if (tiers[i] !== "basic") { idx = i; break; }
@@ -243,12 +243,12 @@
     }
     const notes = [];
     if (total() > max && result.length > 1) {
-      notes.push("الكيتين معاً يتجاوزان ميزانيتك قليلاً، تقدرين تبدئين بكيت البشرة وتضيفين الشعر لاحقاً.");
+      notes.push("الروتينين معاً يتجاوزان ميزانيتك قليلاً، تقدرين تبدئين بروتين البشرة وتضيفين الشعر لاحقاً.");
     }
     if (allergens.length) notes.push("استبعدنا المنتجات اللي فيها: " + allergens.map(a => REASON_AR[a]).join("، ") + ".");
     const consult = picks.some(p => p.consult) || !!answers.seeDoctor || !!answers.dandruffSevere;
     const consultWhy = answers.doctorReason || (answers.concern === "hormonal"
-      ? "الحبوب الهرمونية تحتاج تقييم طبي (أحياناً تحاليل أو علاج بوصفة)، والكيت يساندك بس ما يغني عن العلاج."
+      ? "الحبوب الهرمونية تحتاج تقييم طبي (أحياناً تحاليل أو علاج بوصفة)، والروتين يساندك بس ما يغني عن العلاج."
       : answers.concern === "fungal" ? "الحبوب الفطرية تشبه الحبوب العادية، والطبيبة تأكد التشخيص وتصرف العلاج المضاد للفطريات إذا احتجتي."
       : answers.dandruffSevere ? "القشرة الكثيفة أو اللي معها احمرار ممكن تكون التهاب جلدي دهني (seborrheic dermatitis)، وهذا تشخصه الطبيبة وأحياناً يحتاج علاج بوصفة." : "");
     return { kits: result, total: total(), notes, allergens, consult, consultWhy, profile: answers.profile };
@@ -318,7 +318,7 @@
     return { best, bestWhy: pick && best && best.brand.toUpperCase() === pick[0].toUpperCase() ? pick[2] : "", value, luxury: luxury && value && luxury.price > value.price ? luxury : null, list };
   }
 
-  /* «ابني روتينك»: لكل خطوة في الكيت نطلع ترشيحنا + بدائل من ماركات ثانية تحل نفس الاحتياج */
+  /* «ابني روتينك»: لكل خطوة في الروتين نطلع ترشيحنا + بدائل من ماركات ثانية تحل نفس الاحتياج */
   function stepOptions(kitRes, section, profile, products, allergens) {
     const pMap = Object.fromEntries(products.map(p => [p.id, p]));
     const concerns = (profile && (section === "skin" ? profile.skinConcerns : profile.hairConcerns)) || [];
@@ -339,7 +339,7 @@
     }).filter(Boolean);
   }
 
-  /* «ابني روتينك» الكامل: كل أنواع منتجات القسم (مو بس اللي في الكيت).
+  /* «ابني روتينك» الكامل: كل أنواع منتجات القسم (مو بس اللي في الروتين).
      لكل نوع: قائمة مرتبة من الأنسب للأقل، والعميلة تختار وش تضيف، وتقدر تشيل أي منتج ما يعجبها ويطلع لها اللي بعده. */
   const LEAVE = p => /leave[- ]?in/i.test(p.nameEn || ""), MOUSSE = p => /mousse|whip/i.test(p.nameEn || "");
   const WASH = p => /co-?wash|conditioning wash|cleans|shampoo/i.test(p.nameEn || "");
@@ -385,7 +385,7 @@
       const kitP = kitProducts.find(p => slotOf(p) === key);
       const c = pool.filter(p => slotOf(p) === key && (!kitP || p.id !== kitP.id));
       if (kitP) c.push(kitP);
-      // الأنسب: يحل أكثر احتياجاتها، بعدها منتج الكيت، والمنتجات اللي مكوناتها مراجعة، وبعدها السعر
+      // الأنسب: يحل أكثر احتياجاتها، بعدها منتج الروتين، والمنتجات اللي مكوناتها مراجعة، وبعدها السعر
       const score = p => overlap(p) * 3 + (kitP && p.id === kitP.id ? 1 : 0) + (p.kitEligible !== false ? 0.5 : 0);
       c.sort((a, b) => score(b) - score(a) || a.price - b.price);
       let cands = c;

@@ -52,7 +52,7 @@ App.layout("shop");
           <a class="btn tiktok sm" href="${App.esc(App.ttHref(p.tiktok))}" target="_blank" rel="noopener">${App.tiktokIcon} شاهدي الريفيوهات</a>
         </div>
         <div style="margin-top:14px">${App.consultCTA(false, "مو متأكدة إذا يناسبك؟ أو صار عندك تقشير أو احمرار أو حبوب بعد الاستخدام؟ الطبيبة تساعدك تختارين الصح.")}</div>
-        ${kits.length ? `<div class="card" style="margin-top:18px"><b>موجود في روتين متكامل</b><div class="small muted">وفري 15% لما تاخذينه ضمن كيت:</div>
+        ${kits.length ? `<div class="card" style="margin-top:18px"><b>موجود في روتين متكامل</b><div class="small muted">وفري 15% لما تاخذينه ضمن روتين:</div>
           <div class="row" style="margin-top:8px">${kits.map(k => `<a class="btn outline sm" href="kit.html?id=${k.id}">${App.esc(k.name)}</a>`).join("")}</div></div>` : ""}
       </div>`;
     App.qs("#plus").onclick = () => { qty = Math.min(10, qty + 1); draw(); };

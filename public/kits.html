@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<title>الكيتات | رينورا</title>
+<title>الروتينات | رينورا</title>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon-180.png">
@@ -12,7 +12,7 @@
 </head>
 <body>
 <main class="container section">
-  <div class="section-head"><span class="eyebrow">الكيتات</span><h1>اختاري كيتك</h1>
+  <div class="section-head"><span class="eyebrow">الروتينات</span><h1>اختاري روتينك</h1>
     <p class="muted">ما تعرفين وش يناسبك؟ <a href="quiz.html">خلي الاختبار يختار لك</a>.</p></div>
   <div class="filters" id="filters">
     <button class="chip" data-cat="all">الكل</button>
@@ -28,7 +28,7 @@ App.catalog().then(cat => {
   const draw = () => {
     App.qsa("#filters .chip").forEach(c => c.classList.toggle("active", c.dataset.cat === current));
     const list = cat.kits.filter(k => current === "all" || k.cat === current);
-    App.qs("#grid").innerHTML = list.length ? list.map(k => App.kitCard(k, cat)).join("") : `<p class="empty">لا توجد كيتات حالياً</p>`;
+    App.qs("#grid").innerHTML = list.length ? list.map(k => App.kitCard(k, cat)).join("") : `<p class="empty">لا توجد روتينات حالياً</p>`;
   };
   App.qsa("#filters .chip").forEach(c => c.onclick = () => { current = c.dataset.cat; history.replaceState(null, "", current === "all" ? "kits.html" : `kits.html?cat=${current}`); draw(); });
   draw();
