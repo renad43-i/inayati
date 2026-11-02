@@ -51,6 +51,7 @@
         const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
         mem.products.forEach(p => { const s = byId[p.id]; if (!s) return;
           if (s.demo) p.active = false;
+          if (p.brand === "LION PAIR" && p.nameEn === "Acne Care Cream") Object.assign(p, { nameEn: s.nameEn, name: s.name, size: s.size, price: s.price, goodFor: s.goodFor });
           if ((s.goodFor || []).includes("glow") && !(p.goodFor || []).includes("glow")) p.goodFor = [...(p.goodFor || []), "glow"]; });
         const haveK = new Set(mem.kits.map(k => k.id));
         KITS.forEach(k => { if (!haveK.has(k.id)) mem.kits.push({ ...clone(k), active: true }); });
