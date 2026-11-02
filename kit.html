@@ -70,7 +70,7 @@ App.layout("kits");
         <div class="tiktok-box">
           <svg width="34" viewBox="0 0 24 24" fill="#111" aria-hidden="true"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2-2.8V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>
           <div style="flex:1"><b>ريفيوهات حقيقية على تيك توك</b><div class="small muted">شوفي تجارب الناس مع منتجات هذا الكيت، ولكل منتج زر ريفيو خاص تحت</div></div>
-          <a class="btn tiktok sm" href="${App.esc(kit.tiktok || "https://www.tiktok.com/@inayati.sa")}" target="_blank" rel="noopener">${App.tiktokIcon} شاهدي الريفيوهات</a>
+          <a class="btn tiktok sm" href="${App.esc(App.ttHref(kit.tiktok || "https://www.tiktok.com/@inayati.sa"))}" target="_blank" rel="noopener">${App.tiktokIcon} شاهدي الريفيوهات</a>
         </div>
 
         <div class="card" style="margin-top:22px">
@@ -87,7 +87,7 @@ App.layout("kits");
             ${p.contains.length ? `<div class="small muted">يحتوي: ${p.contains.map(a => App.ALLERGEN_AR[a]).join("، ")}</div>` : `<div class="small" style="color:var(--ok)">خالٍ من العطور والكحول وزيوت المكسرات</div>`}
             ${App.suitabilityHTML(p)}
             <div class="row" style="margin-top:6px"><span class="small muted">قيمته منفرد ${App.fmt(p.price)}</span><span class="spacer"></span>
-            ${p.tiktok ? `<a class="tt-link" href="${App.esc(p.tiktok)}" target="_blank" rel="noopener">${App.tiktokIcon} ريفيوهات تيك توك</a>` : ""}</div></div></li>`; }).join("")}</ul></div>
+            ${p.tiktok ? `<a class="tt-link" href="${App.esc(App.ttHref(p.tiktok))}" target="_blank" rel="noopener">${App.tiktokIcon} ريفيوهات تيك توك</a>` : ""}</div></div></li>`; }).join("")}</ul></div>
           <div class="routine ${state.tab === "routine" ? "" : "hidden"}">
             ${kit.cat === "skin" ? `<h4>☀️ الصباح</h4>${list(r.morning)}<h4>🌙 المساء</h4>${list(r.evening)}` : (r.morning && r.morning.length ? `<h4>يومياً</h4>${list(r.morning)}` : "") + (r.evening && r.evening.length ? `<h4>المساء</h4>${list(r.evening)}` : "")}
             ${r.weekly && r.weekly.length ? `<h4>${kit.cat === "skin" ? "أسبوعياً ونصائح" : "روتين الغسيل الأسبوعي"}</h4>${list(r.weekly)}` : ""}

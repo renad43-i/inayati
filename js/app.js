@@ -148,5 +148,18 @@ const App = (() => {
     return () => ({ method: "card", cardNumber: qs(`#${prefix}Num`).value, expiry: qs(`#${prefix}Exp`).value, cvv: qs(`#${prefix}Cvv`).value });
   }
 
-  return { api, catalog, suitabilityHTML, downscaleImage, cardFieldsHTML, wireCardFields, me, cart, layout, toast, fmt, esc, qs, qsa, params, kitSVG, kitCard, productImg, tiktokIcon, TIER_AR, STEP_AR, ALLERGEN_AR, dateAr };
+  /* روابط ريفيوهات تيك توك: تطبيق تيك توك في الجوال ما يفتح روابط البحث (يروح للصفحة الرئيسية)،
+     فنفتح في الجوال بحث Google عن فيديوهات تيك توك لنفس المنتج، وكل فيديو ينفتح في التطبيق مباشرة.
+     في الكمبيوتر يبقى بحث تيك توك نفسه. روابط الفيديو المحددة من لوحة الإدارة ما تتغير. */
+  const isMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (window.matchMedia && matchMedia("(pointer: coarse)").matches && innerWidth < 900);
+  function ttHref(url) {
+    try {
+      const u = new URL(url);
+      if (!isMobile() || !/tiktok\.com$/.test(u.hostname) || !u.pathname.startsWith("/search")) return url;
+      const q = u.searchParams.get("q") || "";
+      return "https://www.google.com/search?q=" + encodeURIComponent(q + " site:tiktok.com") + "&tbm=vid";
+    } catch { return url; }
+  }
+
+  return { api, catalog, ttHref, suitabilityHTML, downscaleImage, cardFieldsHTML, wireCardFields, me, cart, layout, toast, fmt, esc, qs, qsa, params, kitSVG, kitCard, productImg, tiktokIcon, TIER_AR, STEP_AR, ALLERGEN_AR, dateAr };
 })();
