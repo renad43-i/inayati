@@ -7,8 +7,8 @@
 <link rel="apple-touch-icon" href="assets/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Noto+Naskh+Arabic:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=mvyuhxya">
-<script src="js/data.js?v=mvyuhxya"></script><script src="js/engine.js?v=mvyuhxya"></script><script src="js/mock-api.js?v=mvyuhxya"></script><script src="js/packshots.js?v=mvyuhxya"></script><script src="js/app.js?v=mvyuhxya"></script>
+<link rel="stylesheet" href="css/style.css?v=mvzttz54">
+<script src="js/data.js?v=mvzttz54"></script><script src="js/engine.js?v=mvzttz54"></script><script src="js/mock-api.js?v=mvzttz54"></script><script src="js/packshots.js?v=mvzttz54"></script><script src="js/app.js?v=mvzttz54"></script>
 </head>
 <body>
 <div style="background:#3E4130;color:#F4EFEA;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
@@ -139,6 +139,8 @@ function productForm(p) {
     <div class="field"><label>الاسم بالعربي</label><input name="name" value="${App.esc(p.name)}" required></div>
     <div class="field"><label>الاسم الإنجليزي (يُستخدم في الصورة وبحث تيك توك)</label><input name="nameEn" value="${App.esc(p.nameEn)}" class="ltr"></div>
     <div class="field"><label>رابط ريفيو تيك توك (اختياري — يُنشأ تلقائياً)</label><input name="tiktok" value="${App.esc(p.tiktok)}" class="ltr"></div>
+    <div class="field"><label>رابط صورة المنتج (اختياري)</label><input name="image" value="${App.esc(p.image || "")}" class="ltr" placeholder="https://… أو assets/products/…">
+      <div class="small muted">رابط يبدأ بـ https، أو ملف تحطينه في مجلد public/assets/products. استخدمي صورة لك حق استخدامها أو صورة البراند الرسمية. بدون صورة يطلع رسم العبوة.</div></div>
     <div class="field"><label>القسم في المتجر</label><select name="category">${Object.entries({ ...CATEGORIES.skin, ...CATEGORIES.hair }).map(([k, v]) => `<option value="${k}" ${p.category === k ? "selected" : ""}>${v}</option>`).join("")}</select></div>
     <div class="grid-2"><div class="field"><label>الخطوة</label><select name="step">${STEPS.map(s => `<option value="${s}" ${s === p.step ? "selected" : ""}>${App.STEP_AR[s]}</option>`).join("")}</select></div>
     <div class="field"><label>الحجم</label><input name="size" value="${App.esc(p.size)}"></div>
@@ -155,7 +157,7 @@ function productForm(p) {
     if (e.submitter && e.submitter.value === "cancel") return;
     e.preventDefault();
     const f = new FormData(form);
-    const body = { id: f.get("id") || p.id, cat: f.get("cat") || p.cat, brand: f.get("brand"), country: f.get("country"), nameEn: f.get("nameEn"), tiktok: f.get("tiktok"), name: f.get("name"), step: f.get("step"), size: f.get("size"), price: +f.get("price"), stock: +f.get("stock"), desc: f.get("desc"), suits: vals("suits"), contains: vals("contains"), goodFor: vals("goodFor"), category: f.get("category"), fungal: f.get("fungal") === "" ? null : f.get("fungal") === "true", active: !!f.get("active") };
+    const body = { id: f.get("id") || p.id, cat: f.get("cat") || p.cat, brand: f.get("brand"), country: f.get("country"), nameEn: f.get("nameEn"), tiktok: f.get("tiktok"), name: f.get("name"), step: f.get("step"), size: f.get("size"), price: +f.get("price"), stock: +f.get("stock"), desc: f.get("desc"), suits: vals("suits"), contains: vals("contains"), goodFor: vals("goodFor"), category: f.get("category"), image: f.get("image") || "", fungal: f.get("fungal") === "" ? null : f.get("fungal") === "true", active: !!f.get("active") };
     try { await App.api(isNew ? "/api/admin/products" : `/api/admin/products/${p.id}`, { method: isNew ? "POST" : "PUT", body }); dlg.close(); App.toast("تم الحفظ"); sections.products(); }
     catch (ex) { const el = App.qs("#fErr"); el.textContent = ex.message; el.classList.remove("hidden"); }
   };

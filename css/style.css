@@ -306,9 +306,13 @@ dialog::backdrop { background: rgba(47,59,48,.4); }
 /* ---------- المتجر ---------- */
 .problem-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: -10px 0 8px; }
 .problem-chips .chip { font-size: .9rem; padding: 6px 14px; }
+.actives-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin: 4px 0 8px; }
+.chip.sm { font-size: .82rem; padding: 4px 12px; }
 .shop-filters { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0 12px; padding: 16px 18px 4px; margin-top: 18px; }
 @media (max-width: 1000px) { .shop-filters { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 560px) { .shop-filters { grid-template-columns: 1fr 1fr; } }
+.preg-filter { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: .9rem; margin: 0 0 12px; grid-column: 1 / -1; cursor: pointer; }
+.preg-filter input { width: 18px; height: 18px; accent-color: var(--sage); }
 .shop-filters .field { min-width: 0; margin-bottom: 12px; } .shop-filters label { font-size: .82rem; } .shop-filters select, .shop-filters input { padding: 8px 10px; font-size: .9rem; }
 .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
 @media (max-width: 560px) { .shop-grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
@@ -388,3 +392,10 @@ a.card:hover, .kit-card:hover, .shop-card:hover { transform: translateY(-3px); b
 .hero-art.real .hero-strands { position: absolute; inset: 0; width: 100%; height: 100%; }
 .hero-art.real .hero-prod { position: absolute; inset: auto 6% 12% 6%; }
 .hero-art.real .hero-prod svg { width: 100%; filter: drop-shadow(0 12px 18px rgba(62, 65, 48, .18)); }
+
+/* صور المنتجات الحقيقية (من لوحة الإدارة) مع رجوع لرسم العبوة لو ما تحملت */
+.pimg { display: block; width: 100%; height: 100%; }
+.pimg img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.pimg > svg { display: none; }
+.pimg.fail img { display: none; }
+.pimg.fail > svg { display: block; }

@@ -7,8 +7,8 @@
 <link rel="apple-touch-icon" href="assets/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Noto+Naskh+Arabic:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=mvyuhxya">
-<script src="js/data.js?v=mvyuhxya"></script><script src="js/engine.js?v=mvyuhxya"></script><script src="js/mock-api.js?v=mvyuhxya"></script><script src="js/packshots.js?v=mvyuhxya"></script><script src="js/app.js?v=mvyuhxya"></script>
+<link rel="stylesheet" href="css/style.css?v=mvzttz54">
+<script src="js/data.js?v=mvzttz54"></script><script src="js/engine.js?v=mvzttz54"></script><script src="js/mock-api.js?v=mvzttz54"></script><script src="js/packshots.js?v=mvzttz54"></script><script src="js/app.js?v=mvzttz54"></script>
 </head>
 <body>
 <div style="background:#3E4130;color:#F4EFEA;text-align:center;font-size:13px;padding:6px 16px">نسخة عرض تعمل داخل المتصفح · البيانات تنحفظ على جهازك فقط · الدفع تجريبي</div>
@@ -42,6 +42,8 @@ App.layout("shop");
         <p class="small muted">شامل الضريبة · شحن مجاني فوق 200 ر.س</p>
         <p>${App.esc(p.desc)}</p>
         ${App.suitabilityHTML(p)}
+        ${Engine.pregnancyUnsafe(p) ? `<p class="alert info small" style="margin:8px 0">🤰 هذا المنتج ما يناسب الحامل والمرضع (فيه ريتينول أو ساليسيليك مركّز). <a href="shop.html?section=${p.cat}&problem=${(p.goodFor || []).find(k => PROBLEMS[p.cat][k]) || ""}&preg=1">شوفي بدائل آمنة</a></p>` : ""}
+        ${activesOf(p).length ? `<p class="small" style="margin-top:6px"><b>المكوّن الفعال:</b> ${activesOf(p).map(k => `<a class="tag sage" href="shop.html?section=${p.cat}&active=${k}">${App.esc(ACTIVES[k].name)}</a>`).join(" ")}</p>` : ""}
         ${p.contains && p.contains.length ? `<p class="small muted" style="margin-top:6px">يحتوي: ${p.contains.map(a => App.ALLERGEN_AR[a]).join("، ")}</p>` : ""}
         <div class="row" style="margin-top:16px">
           <div class="qty"><button id="plus" aria-label="زيادة">+</button><span>${qty}</span><button id="minus" aria-label="نقص">−</button></div>

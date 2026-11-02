@@ -28,6 +28,12 @@
         { v: "combo", t: "لامعة في الجبهة والأنف فقط", d: "والخدود طبيعية أو جافة" },
         { v: "normal", t: "مريحة ومتوازنة", d: "ما ألاحظ شي" },
         { v: "sensitive", t: "تحمر أو تحرقني بسهولة", d: "تتهيج من منتجات كثيرة" } ] },
+    { id: "age", title: "كم عمرك؟", sub: "عشان نختار روتين يناسب مرحلتك", type: "multi", when: a => has(a.focus, "skin"),
+      options: [
+        { v: "teen", t: "من 13 إلى 17" },
+        { v: "young", t: "من 18 إلى 29" },
+        { v: "mid", t: "من 30 إلى 44" },
+        { v: "mature", t: "45 وفوق" } ] },
     { id: "barrier", title: "هل حاجز بشرة وجهك متضرر؟", sub: "علامات ضعف حاجز بشرة الوجه · اختاري كل اللي ينطبق", type: "multi", when: a => has(a.focus, "skin"),
       options: [
         { v: "sting", t: "تحرقني أو تلسعني المنتجات", d: "حتى المرطب العادي، أو الماء أحياناً" },
@@ -44,6 +50,9 @@
         { v: "pigment", t: "تصبغات وكلف وبهتان" },
         { v: "dryness", t: "جفاف وخشونة" },
         { v: "pores", t: "مسام واسعة ولمعان" },
+        { v: "glow", t: "بهتان وأبي نضارة وترطيب", d: "بشرتي باهتة أو عطشانة ومو مشرقة" },
+        { v: "aging", t: "تجاعيد وخطوط", d: "خطوط حول العين والجبهة، أو البشرة فقدت شدها" },
+        { v: "eyes", t: "هالات أو انتفاخ تحت العين" },
         { v: "none", t: "ولا شي محدد", exclusive: true } ] },
     { id: "marks", title: "آثار الحبوب عندك وش شكلها؟", sub: "ضغطي على الأثر بكوب زجاج شفاف وشوفي", type: "multi", when: a => has(a.focus, "skin") && anyOf(a.concern, ["acne", "hormonal", "fungal", "marks"]),
       options: [
@@ -57,6 +66,7 @@
         { v: "curly", t: "مموج أو كيرلي", d: "تموجات أو حلقات واضحة" },
         { v: "coily", t: "كِنكي / مجعد جداً", d: "حلقات صغيرة جداً أو زقزاق" },
         { v: "damaged", t: "مصبوغ أو تالف من الحرارة" },
+        { v: "splitEnds", t: "أطرافه متقصفة" },
         { v: "hairfall", t: "يتساقط" },
         { v: "dandruff", t: "قشرة أو حكة في الفروة" },
         { v: "normal", t: "عادي", exclusive: true } ] },
@@ -81,6 +91,10 @@
         { v: "alcohol", t: "الكحول" },
         { v: "nuts", t: "زيوت المكسرات" },
         { v: "none", t: "لا يوجد", exclusive: true } ] },
+    { id: "pregnant", title: "هل أنتِ حامل أو مرضع؟", sub: "نستبعد المكونات اللي ما تناسب الحمل والرضاعة مثل الريتينول", type: "multi",
+      options: [
+        { v: "yes", t: "إيه، حامل أو مرضع" },
+        { v: "no", t: "لا", exclusive: true } ] },
     { id: "budget", title: "كم ميزانيتك الشهرية للعناية؟", sub: "لو اخترتي أكثر من وحدة نعتمد الأعلى", type: "multi",
       options: [
         { v: "low", t: "حتى 250 ر.س" },
@@ -97,11 +111,11 @@
     const skinType = skinTypes.includes("sensitive") ? "sensitive" : (skinTypes.includes("oily") && skinTypes.includes("dry")) ? "combo"
       : ["combo", "oily", "dry", "normal"].find(t => skinTypes.includes(t)) || "normal";
     const concerns = arr(a.concern).filter(c => c !== "none");
-    const concern = ["hormonal", "fungal", "acne", "marks", "pigment", "dryness", "pores"].find(c => concerns.includes(c)) || "none";
+    const concern = ["hormonal", "fungal", "acne", "marks", "pigment", "aging", "dryness", "pores", "glow", "eyes"].find(c => concerns.includes(c)) || "none";
     const marks = arr(a.marks).filter(x => x !== "none");
     const barrier = arr(a.barrier).filter(x => x !== "no");
     const hairTypes = arr(a.hairType);
-    const hairType = ["damaged", "coily", "curly", "oily", "dry", "normal"].find(t => hairTypes.includes(t)) || (anyOf(hairTypes, ["hairfall", "dandruff"]) ? "oily" : "normal");
+    const hairType = ["damaged", "coily", "curly", "oily", "dry", "normal"].find(t => hairTypes.includes(t)) || (anyOf(hairTypes, ["hairfall", "dandruff"]) ? "oily" : hairTypes.includes("splitEnds") ? "damaged" : "normal");
     const thickness = arr(a.hairThickness), frizz = arr(a.frizz).filter(x => x !== "no"), dandruff = arr(a.dandruff);
     const budgets = arr(a.budget);
     const budget = ["high", "mid", "low"].find(b => budgets.includes(b)) || "mid";
@@ -109,10 +123,10 @@
       ...concerns, ...(marks.includes("pie") ? ["redness", "marks"] : []), ...(marks.includes("pih") ? ["pigment", "marks"] : []),
       ...(skinTypes.includes("dry") ? ["dryness"] : []), ...(skinTypes.includes("oily") || skinTypes.includes("combo") ? ["oil"] : []), ...(skinTypes.includes("sensitive") ? ["redness", "barrier"] : []), ...(barrier.length ? ["barrier", "redness"] : []), ...(barrier.includes("tight") ? ["dryness"] : [])
     ])];
-    const HMAP = { dry: ["dryness"], oily: ["oilyScalp"], curly: ["curls"], coily: ["curls", "dryness"], damaged: ["damage"], hairfall: ["hairfall"], dandruff: ["dandruff", "sensitiveScalp"] };
+    const HMAP = { dry: ["dryness"], oily: ["oilyScalp"], curly: ["curls"], coily: ["curls", "dryness"], damaged: ["damage"], hairfall: ["hairfall"], dandruff: ["dandruff", "sensitiveScalp"], splitEnds: ["splitEnds", "damage"] };
     const hairConcerns = [...new Set([...hairTypes.flatMap(t => HMAP[t] || []), ...(frizz.length ? ["frizz"] : []), ...(thickness.includes("thick") ? ["dryness"] : [])])];
     return { ...a, focus, skinType, concern, hairType: hairType === "coily" ? "curly" : hairType, budget, allergies: arr(a.allergies),
-      barrierDamaged: barrier.length > 0, dandruffSevere: anyOf(dandruff, ["severe", "red"]), profile: { skinTypes, concerns, marks, barrier, dandruff, hairTypes, thickness, frizz, skinConcerns, hairConcerns } };
+      barrierDamaged: barrier.length > 0, age: arr(a.age)[0] || "", pregnant: arr(a.pregnant).includes("yes"), dandruffSevere: anyOf(dandruff, ["severe", "red"]), profile: { skinTypes, concerns, marks, barrier, dandruff, hairTypes, thickness, frizz, skinConcerns, hairConcerns } };
   }
 
   const BUDGET_MAX = { low: 250, mid: 400, high: Infinity };
@@ -148,7 +162,9 @@
                نخفّض مستوى روتين الشعر أولاً ثم البشرة
      القاعدة 8: أي منتج فيه مكوّن تتحسس منه يُستبدل ببديل من نفس الخطوة يناسب نوعها،
                وإذا ما فيه بديل يُحذف ونوضح ذلك */
-  function pickSkinKit(type, concern, barrier) {
+  function pickSkinKit(type, concern, barrier, age) {
+    if (age === "teen" && type !== "sensitive" && !barrier && ["acne", "none", "pores", "dryness", "glow", "marks"].includes(concern))
+      return { kit: "k-teen", why: "اخترنا روتين المراهقات: خطوات قليلة ولطيفة تنظف وترطب وتحمي من الشمس، بدون مكونات قوية ما تحتاجها بشرتك الحين." };
     if (barrier && type !== "sensitive" && concern !== "hormonal" && concern !== "fungal") return { kit: "k-sensitive", barrier: true,
       why: "حاجز بشرتك متضرر، فأول شي نرممه قبل أي علاج: روتين التهدئة مع كريم ترميم بالسيراميد. وقّفي التقشير والريتينول أسبوعين إلى أربعة، وبعدها ترجعين تعالجين مشكلتك الأساسية." };
     if (type === "sensitive") return { kit: "k-sensitive", consult: concern === "hormonal" || concern === "fungal", avoidFungal: concern === "fungal", why: "بشرتك حساسة، فبدأنا بالتهدئة وتقوية الحاجز قبل أي علاج." };
@@ -162,6 +178,8 @@
     if (concern === "dryness") return (type === "oily" || type === "combo")
       ? { kit: "k-combo", why: "بشرتك دهنية لكنها تعاني من الجفاف، فتحتاج توازن: ترطيب بدون ثقل." }
       : { kit: "k-dry", why: "الجفاف هو مشكلتك الأساسية، فاخترنا الترطيب العميق." };
+    if (concern === "aging" || (concern === "eyes" && (age === "mid" || age === "mature"))) return { kit: "k-age", why: "اخترنا روتين الشباب والتجديد: ببتيدات الصبح، وريتينول بالليل، وواقي شمس كل يوم لأنه أهم شي ضد الخطوط." + (concern === "eyes" ? " وأضفنا لك عناية لتحت العين." : "") };
+    if (concern === "glow") return { kit: "k-glow", why: "اخترنا روتين النضارة والترطيب: ترطيب على طبقات بالهيالورونيك، وفيتامين C للإشراقة، وواقي يحافظ عليها." };
     if (concern === "pores") return type === "dry"
       ? { kit: "k-combo", why: "المسام واضحة لكن بشرتك تميل للجفاف، فاخترنا التوازن الذكي." }
       : { kit: "k-oily", why: "اخترنا روتين التوازن والنقاء بالنياسيناميد لتقليل المسام واللمعان." };
@@ -174,8 +192,13 @@
   }
 
   /* أسباب استبعاد منتج: مكوّن تتحسس منه، أو (للحبوب الفطرية) منتج قد يغذي الفطريات */
+  // الحمل والرضاعة: نستبعد الريتينويدات، والساليسيليك اللي يبقى على البشرة (الغسول مسموح)
+  const PREG_RE = /retinol|retinal|retinoid|adapalene|tretinoin|الريتينول|الريتينال/i;
+  const pregnancyUnsafe = p => PREG_RE.test((p.nameEn || "") + " " + (p.name || "") + " " + (p.desc || "")) ||
+    (/salicylic|\bbha\b|الساليسيليك|drying lotion/i.test((p.nameEn || "") + " " + (p.desc || "")) && !/cleanser|wash|gel cleanser|shampoo|غسول|شامبو/i.test((p.nameEn || "") + " " + (p.name || "")) && p.cat === "skin");
   const badReasons = (p, allergens) => {
     const r = (p.contains || []).filter(c => allergens.includes(c));
+    if (allergens.includes("pregnancy") && pregnancyUnsafe(p)) r.push("pregnancy");
     if (allergens.includes("fungal") && p.cat === "skin" && p.fungal === false) r.push("fungal");
     return r;
   };
@@ -202,13 +225,14 @@
     const kitMap = Object.fromEntries(catalog.kits.map(k => [k.id, k]));
     // حساسية العميلة تنطبق على كل الروتينات؛ أما استبعاد العطور للبشرة الحساسة والمنتجات اللي تغذي الفطريات فيخص روتين البشرة بس
     const userAllergens = (answers.allergies || []).filter(a => a !== "none");
+    if (answers.pregnant && !userAllergens.includes("pregnancy")) userAllergens.push("pregnancy");
     const allergens = [...userAllergens];
     const skinAllergens = [...userAllergens];
     if ((answers.skinType === "sensitive" || answers.barrierDamaged) && !skinAllergens.includes("fragrance")) skinAllergens.push("fragrance");
 
     const picks = [];
     if (answers.focus !== "hair") {
-      const sk = pickSkinKit(answers.skinType, answers.concern, answers.barrierDamaged);
+      const sk = pickSkinKit(answers.skinType, answers.concern, answers.barrierDamaged, answers.age);
       if (answers.barrierDamaged && !sk.barrier) sk.why += " وبما إن حاجز بشرتك متضرر، رشحنا لك كريم ترميم، وخففي الأحماض والريتينول لين يرتاح.";
       if (sk.avoidFungal && !skinAllergens.includes("fungal")) skinAllergens.push("fungal");
       skinAllergens.forEach(x => { if (!allergens.includes(x)) allergens.push(x); });
@@ -254,7 +278,7 @@
     return { kits: result, total: total(), notes, allergens, consult, consultWhy, profile: answers.profile };
   }
 
-  const REASON_AR = { fragrance: "العطور", alcohol: "الكحول", nuts: "زيوت المكسرات", fungal: "مكونات قد تغذي الفطريات" };
+  const REASON_AR = { fragrance: "العطور", alcohol: "الكحول", nuts: "زيوت المكسرات", fungal: "مكونات قد تغذي الفطريات", pregnancy: "مكونات ما تناسب الحمل والرضاعة (مثل الريتينول والساليسيليك المركّز)" };
 
   /* ---------- تحليل البشرة بالذكاء الاصطناعي ----------
      نفس التعليمات تُستخدم في الخادم (Anthropic API) وفي نسخة الرابط (قدرة "اسألي Claude"). */
@@ -276,7 +300,7 @@
 }
 قواعد: "hormonal" فقط إذا الحبوب عميقة/ملتهبة ومتركزة حول الذقن والفك. "fungal" فقط إذا حبوب صغيرة متشابهة جداً ومتجمعة (غالباً الجبهة) — ودائماً مع seeDoctor = true لأنها تحتاج تأكيد.
 اجعلي seeDoctor = true أيضاً إذا ظهرت حبوب كيسية أو التهاب شديد أو بقع غير معتادة أو أي شيء يحتاج تقييم طبي.`;
-  const AI_KEYS = { skinType: ["dry", "oily", "combo", "normal", "sensitive"], concern: ["acne", "hormonal", "fungal", "pigment", "dryness", "pores", "none"] };
+  const AI_KEYS = { skinType: ["dry", "oily", "combo", "normal", "sensitive"], concern: ["acne", "hormonal", "fungal", "pigment", "dryness", "pores", "glow", "aging", "none"] };
   /* يحوّل نتيجة التحليل + اختيارات العميلة (الميزانية والحساسية) إلى إجابات الاختبار */
   function analysisToAnswers(ai, extra = {}) {
     return {
@@ -361,11 +385,12 @@
       { key: "serum", label: "سيروم", m: p => p.category === "serum" },
       { key: "mask", label: "ماسك", m: p => p.step === "mask" || /mask|jelly/i.test(p.nameEn || "") },
       { key: "treatment", label: "علاج موضعي ومقشر", m: p => p.category === "treatment" },
+      { key: "eye", label: "العناية بالعين", m: p => p.category === "eye" },
       { key: "moisturizer", label: "مرطب", barrierLabel: "مرطب وكريم ترميم", m: p => p.category === "moisturizer" },
       { key: "spf", label: "واقي شمس", m: p => p.category === "spf" }
     ]
   };
-  const SLOT_ORDER = { hair: ["shampoo", "conditioner", "mask", "serum", "oil", "leavein", "mousse", "heat", "scalp"], skin: ["cleanser", "toner", "serum", "treatment", "moisturizer", "spf", "mask"] };
+  const SLOT_ORDER = { hair: ["shampoo", "conditioner", "mask", "serum", "oil", "leavein", "mousse", "heat", "scalp"], skin: ["cleanser", "toner", "serum", "treatment", "eye", "moisturizer", "spf", "mask"] };
   const slotOf = p => { const sl = SLOTS[p.cat]; if (!sl) return null; const f = sl.find(s => s.m(p)); return f ? f.key : null; };
   function routineSlots(kitRes, section, profile, products, allergens) {
     const pMap = Object.fromEntries(products.map(p => [p.id, p]));
@@ -373,14 +398,15 @@
     const fine = profile && profile.thickness && profile.thickness.includes("fine");
     const al = allergens || [];
     let pool = products.filter(p => p.active !== false && p.cat === section && !p.demo);
-    if (al.filter(x => x !== "fungal").length) pool = pool.filter(p => p.kitEligible !== false && !badReasons(p, al).length);
+    if (al.filter(x => x !== "fungal" && x !== "pregnancy").length) pool = pool.filter(p => p.kitEligible !== false && !badReasons(p, al).length);
+    if (al.includes("pregnancy")) pool = pool.filter(p => !pregnancyUnsafe(p));
     if (al.includes("fungal")) pool = pool.filter(p => p.fungal !== false);
     if (fine && section === "hair") pool = pool.filter(p => !["tub", "jar"].includes((p.pack || {}).shape) || p.category === "mask");
     const overlap = p => (p.goodFor || []).filter(g => concerns.includes(g)).length;
     const kitProducts = (kitRes.productIds || []).map(id => pMap[id]).filter(Boolean);
     const barrier = profile && profile.barrier && profile.barrier.length;
     const dandruff = concerns.includes("dandruff"), severe = profile && profile.dandruff && profile.dandruff.some(x => x === "severe" || x === "red");
-    return SLOT_ORDER[section].map(key => {
+    return SLOT_ORDER[section].map(key => { let included = false;
       const def = SLOTS[section].find(s => s.key === key);
       const kitP = kitProducts.find(p => slotOf(p) === key);
       const c = pool.filter(p => slotOf(p) === key && (!kitP || p.id !== kitP.id));
@@ -393,9 +419,11 @@
       if (barrier && key === "moisturizer") cands = [...cands].sort((a, b) => ((b.goodFor || []).includes("barrier") - (a.goodFor || []).includes("barrier")));
       // قشرة: شامبو القشرة يصير الأول (والعلاجي أول لو القشرة كثيفة)
       if (dandruff && key === "shampoo") { const dd = p => (p.goodFor || []).includes("dandruff") ? (severe && /ketoconazole|ds|t\/gel|medicated/i.test(p.nameEn) ? 2 : 1) : 0; cands = [...cands].sort((a, b) => dd(b) - dd(a)); }
-      return { key, label: barrier && def.barrierLabel ? def.barrierLabel : dandruff && key === "shampoo" ? "شامبو القشرة" : def.label, candidates: cands.map(p => p.id), included: !!kitP };
+      // مشاكل لها خطوة خاصة: الهالات ← العناية بالعين، الأطراف المتقصفة ← زيت الشعر
+      if (((key === "eye" && concerns.includes("eyes")) || (key === "oil" && concerns.includes("splitEnds"))) && !kitP && cands.length) included = true;
+      return { key, label: barrier && def.barrierLabel ? def.barrierLabel : dandruff && key === "shampoo" ? "شامبو القشرة" : def.label, candidates: cands.map(p => p.id), included: included || !!kitP };
     }).filter(s => s.candidates.length);
   }
 
-  return { DELIVERY, EXPRESS_CITIES, QUIZ, routineSlots, slotOf, TIERS, REASON_AR, solutionsFor, normalize, stepOptions, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
+  return { DELIVERY, EXPRESS_CITIES, QUIZ, routineSlots, slotOf, pregnancyUnsafe, TIERS, REASON_AR, solutionsFor, normalize, stepOptions, ANALYSIS_PROMPT, analysisToAnswers, parseJSONLoose, KIT_DISCOUNT, SUB_DISCOUNT, kitPrice, sumProducts, shippingFor, recommend };
 });
