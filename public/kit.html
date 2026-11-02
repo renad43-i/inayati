@@ -27,9 +27,9 @@ App.layout("kits");
   // لو جاية من نتيجة الاختبار نستخدم المنتجات المخصصة (بعد استبدال مسببات الحساسية)
   let custom = null;
   try {
-    const rec = JSON.parse(sessionStorage.getItem("inayati_last_rec"));
+    const rec = JSON.parse(sessionStorage.getItem("inayati_last_rec_v2"));
     const r = rec && rec.res.kits[+App.params.get("rec")];
-    if (r && r.kitId === kit.id) custom = r;
+    if (r && r.kitId === kit.id && Array.isArray(r.productIds) && r.productIds.every(id => cat.pMap[id] && cat.pMap[id].cat === kit.cat)) custom = r;
   } catch {}
 
   const state = { tier: (custom && custom.tier) || App.params.get("tier") || "full", type: "subscription", qty: 1, tab: "products" };

@@ -103,7 +103,7 @@ App.qs("#form").onsubmit = async e => {
       catch (ex) { if (ex.status === 503 || ex.status === 403) { useLocal(); out = await analyzeLocal(budget, allergies); } else throw ex; }
     }
     const cat = await App.catalog();
-    try { sessionStorage.setItem("inayati_last_analysis", JSON.stringify(out.analysis)); sessionStorage.setItem("inayati_last_rec", JSON.stringify({ answers: out.answers, res: out.recommendation })); } catch {}
+    try { sessionStorage.setItem("inayati_last_analysis", JSON.stringify(out.analysis)); sessionStorage.setItem("inayati_last_rec_v2", JSON.stringify({ answers: out.answers, res: out.recommendation })); } catch {}
     render(out, cat);
   } catch (ex) { showErr(ex.message); }
   finally { App.qs("#status").textContent = ""; refresh(); }

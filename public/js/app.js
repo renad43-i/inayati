@@ -31,7 +31,7 @@ const App = (() => {
   const me = (refresh) => (refresh || !mePromise) ? (mePromise = api("/api/auth/me").then(r => r.user)) : mePromise;
 
   /* ---------- السلة (تُحفظ في المتصفح، والسعر النهائي يحسبه الخادم) ---------- */
-  const CART_KEY = "inayati_cart_v1";
+  const CART_KEY = "inayati_cart_v2";
   const cart = {
     get() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { return []; } },
     save(items) { try { localStorage.setItem(CART_KEY, JSON.stringify(items)); } catch {} updateBadge(); },
@@ -76,6 +76,21 @@ const App = (() => {
     user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`,
     menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`
   };
+  /* أي خطأ غير متوقع يظهر كرسالة واضحة بدل صفحة فاضية */
+  function showFatal(msg) {
+    if (document.getElementById("fatalBox")) return;
+    const box = document.createElement("div");
+    box.id = "fatalBox"; box.className = "container";
+    box.innerHTML = `<div class="alert error" style="margin:16px auto">صار خطأ في عرض الصفحة. <button class="link-btn" id="fatalReset">اضغطي هنا لتنظيف بيانات الموقع وإعادة المحاولة</button><div class="small" style="direction:ltr;text-align:left;opacity:.7;margin-top:6px">${esc(msg).slice(0, 200)}</div></div>`;
+    (document.querySelector("main") || document.body).prepend(box);
+    document.getElementById("fatalReset").onclick = () => {
+      try { sessionStorage.clear(); ["inayati_cart_v1", "inayati_cart_v2"].forEach(k => localStorage.removeItem(k)); } catch {}
+      location.reload();
+    };
+  }
+  window.addEventListener("error", e => showFatal(e.message || "error"));
+  window.addEventListener("unhandledrejection", e => { const m = e.reason && (e.reason.message || String(e.reason)); if (!(e.reason && e.reason.status)) showFatal(m || "error"); });
+
   function layout(active) {
     const links = [["index.html", "الرئيسية", "home"], ["quiz.html", "حددي روتينك", "quiz"], ["analysis.html", "تحليل البشرة", "analysis"], ["consult.html", "استشيري طبيبة", "consult"], ["kits.html", "الكيتات", "kits"], ["account.html", "حسابي", "account"]];
     const header = document.createElement("header");
