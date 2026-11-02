@@ -133,7 +133,7 @@ function priceCart(items, delivery, city) {
     const purchaseType = it.purchaseType === "subscription" ? "subscription" : "once";
     // المنتجات المخصصة (بعد استبدال مسببات الحساسية) يجب أن تكون منتجات فعّالة من نفس فئة الكيت
     let productIds = Array.isArray(it.productIds) && it.productIds.length ? it.productIds : kit.tiers[it.tier];
-    if (productIds.length > 8 || productIds.some(id => !pMap[id] || pMap[id].cat !== kit.cat)) throw new Error("منتجات غير صحيحة في الكيت");
+    if (productIds.length > 12 || productIds.some(id => !pMap[id] || pMap[id].cat !== kit.cat)) throw new Error("منتجات غير صحيحة في الكيت");
     lines.push({ kit, tier: it.tier, productIds, qty, purchaseType, unitPrice: Engine.kitPrice(productIds, pMap, purchaseType) });
   }
   const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0);

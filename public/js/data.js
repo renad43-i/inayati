@@ -342,7 +342,7 @@ KITS.forEach(k => {
 const CONCERN_TAGS = {
   acne: "الحبوب العادية", hormonal: "الحبوب الهرمونية (عناية مساندة)", fungal: "الحبوب الفطرية",
   marks: "آثار الحبوب", pigment: "التصبغات والكلف", dryness: "الجفاف", oil: "الدهون واللمعان",
-  pores: "المسام الواسعة", redness: "الاحمرار والتحسس", barrier: "ضعف حاجز البشرة",
+  pores: "المسام الواسعة", redness: "الاحمرار والتحسس", barrier: "ضعف حاجز البشرة", dandruff: "القشرة وحكة الفروة",
   shine: "لمعان الشعر", frizz: "الهيشان", curls: "تعريف الكيرلي", damage: "الشعر التالف والمصبوغ",
   heat: "الحماية من الحرارة", oilyScalp: "الفروة الدهنية", hairfall: "تساقط الشعر", sensitiveScalp: "الفروة الحساسة"
 };
@@ -394,10 +394,10 @@ PRODUCTS.forEach(p => { const t = PRODUCT_TAGS[p.id] || [null, []]; p.fungal = p
 const COUNTRIES = {
   US: "🇺🇸 أمريكا", CA: "🇨🇦 كندا", UK: "🇬🇧 بريطانيا", BR: "🇧🇷 البرازيل", FR: "🇫🇷 فرنسا", JP: "🇯🇵 اليابان",
   KR: "🇰🇷 كوريا", AU: "🇦🇺 أستراليا", TH: "🇹🇭 تايلند", SA: "🇸🇦 السعودية", EG: "🇪🇬 مصر", CH: "🇨🇭 سويسرا",
-  NL: "🇬🇧🇳🇱 بريطانيا وهولندا", DE: "🇩🇪 ألمانيا"
+  NL: "🇬🇧🇳🇱 بريطانيا وهولندا", DE: "🇩🇪 ألمانيا", BE: "🇧🇪 بلجيكا"
 };
 const CATEGORIES = {
-  hair: { shampoo: "شامبو", conditioner: "بلسم", mask: "ماسكات", oil: "زيوت", treatment: "علاجات", styling: "تصفيف", heat: "حماية من الحرارة", curly: "كيرلي وكِنكي" },
+  hair: { shampoo: "شامبو", conditioner: "بلسم", mask: "ماسكات", hairserum: "سيروم الشعر", oil: "زيوت", treatment: "علاجات", styling: "تصفيف", mousse: "موس", heat: "حماية من الحرارة", curly: "كيرلي وكِنكي" },
   skin: { cleanser: "غسول", moisturizer: "مرطبات", serum: "سيرومات", spf: "واقي شمس", treatment: "علاجات العناية بالوجه" }
 };
 /* البراند: [البلد، لون العبوة، لون الغطاء، لون الكتابة] */
@@ -450,7 +450,8 @@ const SHOP_BRANDS = {
   "NUT BOTANICALS": ["EG", "#EFEBE9", "#795548", "#4E342E"], "INFINITY": ["EG", "#EDE7F6", "#5E35B1", "#4527A0"],
   "PANTENE": ["CH", "#FFFFFF", "#C9A24B", "#7B5E1F"], "DOVE": ["NL", "#FFFFFF", "#1A237E", "#1A237E"], "SUNSILK": ["NL", "#F06292", "#D81B60", "#FFFFFF"],
   "SCHWARZKOPF GLISS": ["DE", "#2B2B2B", "#C9A24B", "#E8C77A"], "SYOSS": ["DE", "#FFFFFF", "#111111", "#111111"], "NIVEA": ["DE", "#0D47A1", "#0D47A1", "#FFFFFF"],
-  "EUCERIN": ["DE", "#FFFFFF", "#C62828", "#1565C0"]
+  "EUCERIN": ["DE", "#FFFFFF", "#C62828", "#1565C0"],
+  "NIZORAL": ["BE", "#FFFFFF", "#C62828", "#C62828"], "DUCRAY": ["FR", "#FFFFFF", "#00838F", "#00838F"], "SEBAMED": ["DE", "#FFFFFF", "#1565C0", "#1565C0"], "SELSUN BLUE": ["US", "#1E88E5", "#0D47A1", "#FFFFFF"]
 };
 const SHOP_ROWS = [
   // ---------------- 🇺🇸 أمريكا — شعر ----------------
@@ -469,7 +470,7 @@ const SHOP_ROWS = [
   ["CURLSMITH", "curly", "In Shower Style Fixer", "جل كيرل سميث للتصفيف في الشاور", "237 مل", 119, "tube", ["curls", "frizz"]],
   ["REDKEN", "treatment", "Acidic Bonding Concentrate Intensive Treatment", "علاج ريدكن أسيديك بوندينغ المركز", "150 مل", 139, "tube", ["damage"]],
   ["MATRIX", "shampoo", "Total Results Brass Off Shampoo", "شامبو ماتريكس براس أوف للأشقر", "300 مل", 79, "bottle", ["damage"]],
-  ["PAUL MITCHELL", "shampoo", "Tea Tree Special Shampoo", "شامبو بول ميتشل بشجرة الشاي", "300 مل", 89, "bottle", ["oilyScalp"]],
+  ["PAUL MITCHELL", "shampoo", "Tea Tree Special Shampoo", "شامبو بول ميتشل بشجرة الشاي", "300 مل", 89, "bottle", ["oilyScalp", "dandruff"]],
   ["LIVING PROOF", "styling", "Perfect Hair Day Dry Shampoo", "شامبو جاف ليفنغ بروف", "198 مل", 129, "spray", ["oilyScalp"]],
   ["OUAI", "oil", "Hair Oil", "زيت الشعر من واي", "45 مل", 119, "dropper", ["shine", "frizz"]],
   ["OUAI", "shampoo", "Detox Shampoo", "شامبو واي ديتوكس", "300 مل", 129, "bottle", ["oilyScalp"]],
@@ -481,7 +482,7 @@ const SHOP_ROWS = [
   ["IT'S A 10", "treatment", "Miracle Leave-In Product", "بخاخ إتس أ تن ميراكل بدون شطف", "120 مل", 99, "spray", ["frizz", "dryness"]],
   ["AS I AM", "curly", "Coconut CoWash Cleansing Conditioner", "غسول آز آي آم بجوز الهند للكيرلي", "454 غ", 69, "tub", ["curls", "dryness"]],
   ["NOT YOUR MOTHER'S", "curly", "Curl Talk Curl Cream", "كريم نوت يور ماذرز كيرل توك", "177 مل", 49, "tube", ["curls"]],
-  ["HEAD & SHOULDERS", "shampoo", "Classic Clean Anti-Dandruff Shampoo", "شامبو هيد آند شولدرز الكلاسيكي ضد القشرة", "400 مل", 29, "bottle", ["oilyScalp"]],
+  ["HEAD & SHOULDERS", "shampoo", "Classic Clean Anti-Dandruff Shampoo", "شامبو هيد آند شولدرز الكلاسيكي ضد القشرة", "400 مل", 29, "bottle", ["dandruff", "oilyScalp"]],
   ["HERBAL ESSENCES", "shampoo", "Bio:Renew Argan Oil Repair Shampoo", "شامبو هيربال إيسنسز بزيت الأرغان", "400 مل", 35, "bottle", ["dryness", "shine"]],
   ["OGX", "shampoo", "Renewing Argan Oil of Morocco Shampoo", "شامبو أو جي إكس بزيت الأرغان المغربي", "385 مل", 45, "bottle", ["dryness", "shine"]],
   ["TRESEMMÉ", "conditioner", "Keratin Smooth Conditioner", "بلسم تريسيمي كيراتين سموث", "400 مل", 32, "bottle", ["frizz"]],
@@ -510,7 +511,7 @@ const SHOP_ROWS = [
   ["UMBERTO GIANNINI", "conditioner", "Banana Butter Nourishing Conditioner", "بلسم أومبرتو جيانيني بزبدة الموز", "250 مل", 59, "bottle", ["dryness"], ["#FBE9A6", "#F2C230", "#5D4037"]],
   ["UMBERTO GIANNINI", "mask", "Banana Butter Nourishing Super Mask", "ماسك أومبرتو جيانيني بزبدة الموز", "230 مل", 69, "jar", ["dryness", "damage"], ["#FBE9A6", "#F2C230", "#5D4037"]],
   ["UMBERTO GIANNINI", "curly", "Curl Jelly Curl Defining Gel", "جل أومبرتو جيانيني كيرل جيلي", "200 مل", 59, "tube", ["curls", "frizz"], ["#E1F5FE", "#0277BD", "#01579B"]],
-  ["UMBERTO GIANNINI", "curly", "Curl Whip Curl Defining Mousse", "موس أومبرتو جيانيني كيرل ويب", "200 مل", 59, "spray", ["curls"], ["#FCE4EC", "#D81B60", "#880E4F"]],
+  ["UMBERTO GIANNINI", "mousse", "Curl Whip Curl Defining Mousse", "موس أومبرتو جيانيني كيرل ويب", "200 مل", 59, "spray", ["curls"], ["#FCE4EC", "#D81B60", "#880E4F"]],
   ["UMBERTO GIANNINI", "curly", "Curl Leave-In Conditioner", "بلسم أومبرتو جيانيني للكيرلي بدون شطف", "200 مل", 59, "bottle", ["curls", "dryness"], ["#EDE7F6", "#5E35B1", "#311B92"]],
   ["UMBERTO GIANNINI", "shampoo", "Glossing Shampoo", "شامبو أومبرتو جيانيني للمعان", "250 مل", 55, "bottle", ["shine"], ["#F5F5F5", "#9E9E9E", "#424242"]],
   ["UMBERTO GIANNINI", "conditioner", "Glossing Conditioner", "بلسم أومبرتو جيانيني للمعان", "250 مل", 55, "bottle", ["shine"], ["#F5F5F5", "#9E9E9E", "#424242"]],
@@ -577,7 +578,7 @@ const SHOP_ROWS = [
   // ---------------- 🇰🇷 كوريا ----------------
   ["KUNDAL", "shampoo", "Honey & Macadamia Protein Repair Shampoo", "شامبو كوندال بالعسل والمكاديميا", "500 مل", 59, "pump", ["damage", "dryness"]],
   ["UNOVE", "treatment", "Deep Damage Treatment EX", "علاج يونوف ديب داميج", "320 مل", 79, "tube", ["damage"]],
-  ["AROMATICA", "shampoo", "Rosemary Scalp Scaling Shampoo", "شامبو أروماتيكا بالروزماري للفروة", "400 مل", 79, "pump", ["oilyScalp", "hairfall"]],
+  ["AROMATICA", "shampoo", "Rosemary Scalp Scaling Shampoo", "شامبو أروماتيكا بالروزماري للفروة", "400 مل", 79, "pump", ["oilyScalp", "dandruff", "hairfall"]],
   ["TORRIDEN", "serum", "DIVE-IN Low Molecular Hyaluronic Acid Serum", "سيروم توريدن دايف إن", "50 مل", 89, "dropper", ["dryness"]],
   ["DR. ALTHEA", "moisturizer", "345 Relief Cream", "كريم دكتور ألثيا 345", "50 مل", 89, "tube", ["redness", "barrier"]],
   ["CENTELLIAN24", "moisturizer", "Madeca Cream", "كريم سنتليان24 ماديكا", "50 مل", 99, "jar", ["barrier", "redness"]],
@@ -630,13 +631,32 @@ const SHOP_ROWS = [
   ["SYOSS", "conditioner", "Keratin Conditioner", "بلسم سيوس بالكيراتين", "500 مل", 29, "bottle", ["damage"]],
   ["NIVEA", "moisturizer", "Soft Moisturising Cream", "كريم نيفيا سوفت المرطب", "100 مل", 19, "jar", ["dryness"]],
   ["EUCERIN", "spf", "Sun Oil Control Gel-Cream SPF50+", "واقي يوسيرين أويل كنترول", "50 مل", 99, "tube", ["oil", "acne"]],
-  ["EUCERIN", "serum", "Hyaluron-Filler Serum", "سيروم يوسيرين هيالورون فيلر", "30 مل", 179, "dropper", ["dryness"]]
+  ["EUCERIN", "serum", "Hyaluron-Filler Serum", "سيروم يوسيرين هيالورون فيلر", "30 مل", 179, "dropper", ["dryness"]],
+  // ---------------- موس، حماية من الحرارة، وسيروم الشعر ----------------
+  ["CANTU", "mousse", "Shea Butter Wave Whip Curling Mousse", "موس كانتو ويف ويب للكيرلي", "248 مل", 45, "spray", ["curls", "frizz"]],
+  ["SHEAMOISTURE", "mousse", "Coconut & Hibiscus Frizz-Free Curl Mousse", "موس شيا مويستشر للكيرلي ضد الهيشان", "213 مل", 65, "spray", ["curls", "frizz"]],
+  ["LIVING PROOF", "mousse", "Full Thickening Mousse", "موس ليفينغ بروف لكثافة الشعر الخفيف", "149 غ", 139, "spray", ["shine"]],
+  ["KÉRASTASE", "heat", "Résistance Ciment Thermique", "كريم كيراستاس سيمنت ثيرميك للحماية من الحرارة", "150 مل", 165, "tube", ["heat", "damage"]],
+  ["L'ORÉAL PROFESSIONNEL", "heat", "Absolut Repair 10-in-1 Spray", "بخاخ لوريال بروفيشنال أبسولوت ريبير 10 في 1", "190 مل", 99, "spray", ["heat", "damage"]],
+  ["OLAPLEX", "heat", "No.9 Bond Protector Nourishing Hair Serum", "سيروم أولابلكس رقم 9 للحماية من الحرارة", "90 مل", 129, "pump", ["heat", "frizz", "shine"]],
+  ["THE ORDINARY", "hairserum", "Multi-Peptide Serum for Hair Density", "سيروم ذا أوردينري للكثافة", "60 مل", 79, "dropper", ["hairfall"]],
+  ["KÉRASTASE", "hairserum", "Genesis Sérum Anti-Chute Fortifiant", "سيروم كيراستاس جينيسيس ضد التساقط", "90 مل", 249, "dropper", ["hairfall"]],
+  // ---------------- القشرة وحكة الفروة ----------------
+  ["NIZORAL", "shampoo", "Anti-Dandruff Shampoo (Ketoconazole 2%)", "شامبو نيزورال ضد القشرة بالكيتوكونازول", "100 مل", 69, "bottle", ["dandruff"]],
+  ["VICHY", "shampoo", "Dercos Anti-Dandruff DS Shampoo", "شامبو فيشي ديركوس ضد القشرة", "200 مل", 99, "bottle", ["dandruff", "oilyScalp"]],
+  ["LA ROCHE-POSAY", "shampoo", "Kerium DS Intensive Anti-Dandruff Shampoo", "شامبو لاروش بوزيه كيريوم DS المكثف ضد القشرة", "125 مل", 89, "bottle", ["dandruff", "sensitiveScalp"]],
+  ["DUCRAY", "shampoo", "Kelual DS Anti-Dandruff Shampoo", "شامبو دوكراي كيلوال DS ضد القشرة", "100 مل", 95, "tube", ["dandruff", "sensitiveScalp"]],
+  ["BIODERMA", "shampoo", "Nodé DS+ Anti-Recurrence Shampoo", "شامبو بيوديرما نودي DS+ ضد رجوع القشرة", "125 مل", 85, "bottle", ["dandruff"]],
+  ["NEUTROGENA", "shampoo", "T/Gel Therapeutic Shampoo", "شامبو نيوتروجينا تي/جل العلاجي", "250 مل", 79, "bottle", ["dandruff"]],
+  ["SELSUN BLUE", "shampoo", "Medicated Anti-Dandruff Shampoo", "شامبو سيلسن بلو العلاجي ضد القشرة", "200 مل", 49, "bottle", ["dandruff", "oilyScalp"]],
+  ["SEBAMED", "shampoo", "Anti-Dandruff Shampoo", "شامبو سيباميد ضد القشرة", "200 مل", 55, "bottle", ["dandruff", "sensitiveScalp"]],
+  ["HEAD & SHOULDERS", "shampoo", "Itchy Scalp Care Anti-Dandruff Shampoo", "شامبو هيد آند شولدرز لحكة الفروة", "400 مل", 32, "bottle", ["dandruff", "sensitiveScalp"]]
 ];
-const STEP_OF = { shampoo: "shampoo", conditioner: "conditioner", mask: "mask", oil: "oil", treatment: "treatment", styling: "styler", heat: "protect", curly: "styler",
+const STEP_OF = { shampoo: "shampoo", conditioner: "conditioner", mask: "mask", oil: "oil", hairserum: "oil", treatment: "treatment", styling: "styler", mousse: "styler", heat: "protect", curly: "styler",
   cleanser: "cleanser", moisturizer: "moisturizer", serum: "serum", spf: "spf" };
 const CATEGORY_DESC = {
   shampoo: "شامبو ينظف الشعر وفروة الرأس.", conditioner: "بلسم يرطب الشعر ويسهل تسريحه.", mask: "ماسك عناية مكثفة مرة أو مرتين بالأسبوع.",
-  oil: "زيت أو سيروم يعطي الشعر لمعة ونعومة.", treatment: "علاج عناية مركّز.", styling: "منتج تصفيف للشعر.", heat: "يحمي الشعر من حرارة الاستشوار والمكواة.",
+  oil: "زيت أو سيروم يعطي الشعر لمعة ونعومة.", treatment: "علاج عناية مركّز.", styling: "منتج تصفيف للشعر.", heat: "يحمي الشعر من حرارة الاستشوار والمكواة.", mousse: "موس خفيف يعرّف التموجات ويعطي الشعر حجم بدون ثقل.", hairserum: "سيروم للشعر أو الفروة يعالج مشكلة محددة.",
   curly: "منتج مخصص للشعر الكيرلي والكِنكي: ترطيب وتعريف للتموجات.", cleanser: "غسول ينظف البشرة.", moisturizer: "مرطب يحافظ على رطوبة البشرة.",
   serum: "سيروم مركّز يعالج مشكلة محددة.", spf: "واقي شمس للحماية اليومية من الأشعة."
 };
@@ -708,7 +728,8 @@ const PROBLEMS = {
     heat:           { name: "تلف من الحرارة", kit: "h-damaged" },
     oilyScalp:      { name: "فروة دهنية", kit: "h-oily" },
     hairfall:       { name: "تساقط الشعر", kit: "h-oily", consult: true },
-    sensitiveScalp: { name: "فروة حساسة", kit: "h-normal" }
+    sensitiveScalp: { name: "فروة حساسة", kit: "h-normal" },
+    dandruff:       { name: "قشرة وحكة", kit: "h-oily" }
   }
 };
 const BEST_PICKS = {
@@ -730,7 +751,8 @@ const BEST_PICKS = {
   "hair:heat":     ["OLAPLEX", "No.7", "زيت يحمي من الحرارة ويرمم الشعر ويعطيه لمعة."],
   "hair:oilyScalp":["BRIOGEO", "Charcoal", "شامبو بالفحم ينظف الفروة الدهنية بعمق ويزيل التراكمات."],
   "hair:hairfall": ["MIELLE", "Rosemary", "زيت الروزماري ترند تيك توك لتقوية الشعر وتقليل التساقط. وإذا التساقط كثير استشيري الطبيبة."],
-  "hair:sensitiveScalp": ["VANICREAM", "Shampoo", "بدون عطور ولا صبغات ولا كبريتات، ألطف خيار للفروة الحساسة."]
+  "hair:sensitiveScalp": ["VANICREAM", "Shampoo", "بدون عطور ولا صبغات ولا كبريتات، ألطف خيار للفروة الحساسة."],
+  "hair:dandruff": ["HEAD & SHOULDERS", "Classic Clean", "فيه زنك بيريثيون اللي يخفف القشرة، لطيف للاستخدام اليومي وسعره مناسب. ولو القشرة عنيدة جربي Nizoral أو Vichy Dercos مرتين بالأسبوع."]
 };
 
 const TIER_LABELS = {
